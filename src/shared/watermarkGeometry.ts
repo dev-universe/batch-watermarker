@@ -2,7 +2,7 @@ import type { AnchorPosition } from "./types";
 
 export const WATERMARK_MAX_COVERAGE = 0.28;
 
-export const fitWithin = (
+const fitWithin = (
   targetWidth: number,
   targetHeight: number,
   boxWidth: number,
@@ -14,20 +14,6 @@ export const fitWithin = (
     height: targetHeight * ratio
   };
 };
-
-export const getWatermarkBox = (
-  canvasWidth: number,
-  canvasHeight: number,
-  watermarkWidth: number,
-  watermarkHeight: number,
-  scalePercent: number
-) =>
-  fitWithin(
-    watermarkWidth,
-    watermarkHeight,
-    canvasWidth * WATERMARK_MAX_COVERAGE * (scalePercent / 100),
-    canvasHeight * WATERMARK_MAX_COVERAGE * (scalePercent / 100)
-  );
 
 export const getRotatedBoundingBox = (width: number, height: number, rotationDegrees: number) => {
   const radians = (rotationDegrees * Math.PI) / 180;
@@ -68,7 +54,7 @@ export const getWatermarkMetrics = (
 export const getAnchorCenterPoint = (
   position: AnchorPosition,
   canvasWidth: number,
-  canvasHeight: number,
+  canvasHeight: number
 ) => {
   const west = canvasWidth / 6;
   const centerX = canvasWidth / 2;
