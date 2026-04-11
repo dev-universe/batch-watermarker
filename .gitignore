@@ -1,0 +1,10 @@
+node_modules
+dist
+dist-electron
+release
+.DS_Store
+build/generated-icons
+build/icon.iconset
+build/icon.icns
+build/icon.ico
+build/icon.png
