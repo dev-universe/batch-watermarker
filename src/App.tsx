@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type SyntheticEvent } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.mjs?url";
+import { InputFilesPanel } from "./components/InputFilesPanel";
+import { OutputPanel } from "./components/OutputPanel";
+import { PreviewPane } from "./components/PreviewPane";
+import { WatermarkPanel } from "./components/WatermarkPanel";
 import type {
-  AnchorPosition,
   InputFile,
   PreviewPayload,
   ProcessResponse,
@@ -12,7 +15,6 @@ import { getAnchorCenterPoint, getWatermarkMetrics } from "./shared/watermarkGeo
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
-const POSITIONS: AnchorPosition[] = ["NW", "N", "NE", "W", "C", "E", "SW", "S", "SE"];
 const INITIAL_SETTINGS: WatermarkSettings = {
   opacity: 7,
   scale: 100,
@@ -151,7 +153,7 @@ function App() {
       ? settings.outputDirectory
       : "접미사를 유지하려면 출력 폴더를 지정해야 합니다.";
 
-  const collectDroppedPaths = async (event: React.DragEvent<HTMLElement>) => {
+  const collectDroppedPaths = async (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     return Array.from(event.dataTransfer.files)
       .map((file) => window.watermarkApi.getPathForFile(file))
@@ -165,13 +167,13 @@ function App() {
     }
   };
 
-  const onDropInputFiles = async (event: React.DragEvent<HTMLElement>) => {
+  const onDropInputFiles = async (event: DragEvent<HTMLElement>) => {
     const paths = await collectDroppedPaths(event);
     const normalized = await window.watermarkApi.normalizeDroppedFiles(paths);
     await addInputFiles(normalized);
   };
 
-  const onDropWatermarkFile = async (event: React.DragEvent<HTMLElement>) => {
+  const onDropWatermarkFile = async (event: DragEvent<HTMLElement>) => {
     const paths = await collectDroppedPaths(event);
     const normalized = await window.watermarkApi.normalizeDroppedFiles(paths);
     const imageFile = normalized.find((file) => file.kind === "image") ?? null;
@@ -205,6 +207,36 @@ function App() {
 
   const removeInputFile = (pathToRemove: string) => {
     setInputFiles((current) => current.filter((file) => file.path !== pathToRemove));
+  };
+
+  const clearOutputDirectory = () => {
+    setSettings((current) => ({
+      ...current,
+      outputDirectory: ""
+    }));
+  };
+
+  const onOutputDirectoryChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setSettings((current) => ({
+      ...current,
+      outputDirectory: event.target.value,
+      overwriteOriginal: false
+    }));
+  };
+
+  const onSuffixChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setSettings((current) => ({ ...current, suffix: event.target.value }));
+  };
+
+  const onPreviewImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
+    setPreviewNaturalSize({
+      width: event.currentTarget.naturalWidth,
+      height: event.currentTarget.naturalHeight
+    });
+    setPreviewDisplaySize({
+      width: event.currentTarget.clientWidth,
+      height: event.currentTarget.clientHeight
+    });
   };
 
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
@@ -442,252 +474,52 @@ function App() {
           </p>
         </div>
 
-        <section className="panel">
-          <div className="panel-head">
-            <h2>입력 파일</h2>
-            <button onClick={openInputPicker}>파일 선택</button>
-          </div>
-          <div
-            className="dropzone"
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => void onDropInputFiles(event)}
-          >
-            PDF와 이미지 파일을 여기로 드래그하세요.
-          </div>
-          <div className="file-list">
-            {inputFiles.map((file) => (
-              <div
-                key={file.path}
-                className={`file-item ${selectedPreviewFile?.path === file.path ? "active" : ""}`}
-              >
-                <button className="file-pick" onClick={() => setSelectedPreviewPath(file.path)}>
-                  <span>{file.name}</span>
-                  <small>{file.kind.toUpperCase()}</small>
-                </button>
-                <button className="file-remove" onClick={() => removeInputFile(file.path)}>
-                  제거
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
+        <InputFilesPanel
+          inputFiles={inputFiles}
+          selectedPreviewPath={selectedPreviewFile?.path ?? ""}
+          onOpenInputPicker={openInputPicker}
+          onDropInputFiles={onDropInputFiles}
+          onSelectPreview={setSelectedPreviewPath}
+          onRemoveInputFile={removeInputFile}
+        />
 
-        <section className="panel">
-          <div className="panel-head">
-            <h2>워터마크 이미지</h2>
-            <button onClick={openWatermarkPicker}>이미지 선택</button>
-          </div>
-          <div
-            className={`dropzone ${watermarkFile ? "compact" : ""}`}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => void onDropWatermarkFile(event)}
-          >
-            {watermarkFile ? watermarkFile.name : "워터마크 이미지를 여기로 드래그하세요."}
-          </div>
+        <WatermarkPanel
+          settings={settings}
+          watermarkFile={watermarkFile}
+          onOpenWatermarkPicker={openWatermarkPicker}
+          onDropWatermarkFile={onDropWatermarkFile}
+          onUpdateNumericSetting={updateNumericSetting}
+          onSelectPosition={(position) => setSettings((current) => ({ ...current, position }))}
+        />
 
-          <div className="field-grid">
-            <label>
-              <span>투명도 (0~100%)</span>
-              <div className="control-row">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={settings.opacity}
-                  onChange={(event) => updateNumericSetting("opacity", event.target.value)}
-                />
-                <input
-                  className="number"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={settings.opacity}
-                  onChange={(event) => updateNumericSetting("opacity", event.target.value)}
-                />
-              </div>
-            </label>
-
-            <label>
-              <span>크기 (0~1000%)</span>
-              <div className="control-row">
-                <input
-                  type="range"
-                  min="0"
-                  max="1000"
-                  value={settings.scale}
-                  onChange={(event) => updateNumericSetting("scale", event.target.value)}
-                />
-                <input
-                  className="number"
-                  type="number"
-                  min="0"
-                  max="1000"
-                  value={settings.scale}
-                  onChange={(event) => updateNumericSetting("scale", event.target.value)}
-                />
-              </div>
-            </label>
-
-            <label>
-              <span>회전 (0~360도)</span>
-              <div className="control-row">
-                <input
-                  type="range"
-                  min="0"
-                  max="360"
-                  value={settings.rotation}
-                  onChange={(event) => updateNumericSetting("rotation", event.target.value)}
-                />
-                <input
-                  className="number"
-                  type="number"
-                  min="0"
-                  max="360"
-                  value={settings.rotation}
-                  onChange={(event) => updateNumericSetting("rotation", event.target.value)}
-                />
-              </div>
-            </label>
-          </div>
-
-          <div className="position-grid">
-            {POSITIONS.map((position) => (
-              <button
-                key={position}
-                className={settings.position === position ? "selected" : ""}
-                onClick={() => setSettings((current) => ({ ...current, position }))}
-              >
-                {position}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel">
-          <div className="panel-head">
-            <h2>출력</h2>
-            <div className="output-actions">
-              <button onClick={openOutputFolderPicker}>출력 폴더 지정</button>
-              <button
-                disabled={!settings.outputDirectory}
-                onClick={() =>
-                  setSettings((current) => ({
-                    ...current,
-                    outputDirectory: ""
-                  }))
-                }
-              >
-                지정 해제
-              </button>
-            </div>
-          </div>
-          <label>
-            <span>출력 폴더</span>
-            <input
-              type="text"
-              value={settings.outputDirectory}
-              onChange={(event) =>
-                setSettings((current) => ({
-                  ...current,
-                  outputDirectory: event.target.value,
-                  overwriteOriginal: false
-                }))
-              }
-              placeholder="원본 덮어쓰기면 비워둘 수 있습니다."
-            />
-          </label>
-          <label>
-            <span>접미사</span>
-            <input
-              type="text"
-              value={settings.suffix}
-              onChange={(event) => setSettings((current) => ({ ...current, suffix: event.target.value }))}
-              placeholder="_wm"
-            />
-          </label>
-          <p className="subtle">{outputSummary}</p>
-          <button className="primary" disabled={isProcessing} onClick={startProcessing}>
-            {isProcessing ? "처리 중..." : "워터마크 적용 시작"}
-          </button>
-          <p className="status">{statusMessage}</p>
-          {lastResult && (
-            <div className="result-list">
-              {lastResult.results.map((result) => (
-                <div key={result.outputPath} className="result-item">
-                  <strong>{result.outputPath}</strong>
-                </div>
-              ))}
-              {lastResult.errors.map((error) => (
-                <div key={error} className="result-item error">
-                  {error}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        <OutputPanel
+          settings={settings}
+          outputSummary={outputSummary}
+          isProcessing={isProcessing}
+          statusMessage={statusMessage}
+          lastResult={lastResult}
+          onOpenOutputFolderPicker={openOutputFolderPicker}
+          onClearOutputDirectory={clearOutputDirectory}
+          onOutputDirectoryChange={onOutputDirectoryChange}
+          onSuffixChange={onSuffixChange}
+          onStartProcessing={startProcessing}
+        />
       </aside>
 
-      <main className="preview-pane">
-        <div className="preview-sticky">
-          <div className="preview-head">
-            <div>
-              <p className="eyebrow">Preview</p>
-              <h2>{selectedPreviewFile?.name ?? "선택된 파일 없음"}</h2>
-            </div>
-            {previewKind === "pdf" && pdfPageCount > 0 && (
-              <div className="pdf-pager">
-                <button onClick={() => setPdfPreviewPage((current) => Math.max(1, current - 1))} disabled={pdfPreviewPage <= 1}>
-                  이전
-                </button>
-                <span>
-                  {pdfPreviewPage} / {pdfPageCount}
-                </span>
-                <button
-                  onClick={() => setPdfPreviewPage((current) => Math.min(pdfPageCount, current + 1))}
-                  disabled={pdfPreviewPage >= pdfPageCount}
-                >
-                  다음
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="preview-stage">
-            {previewBaseUrl ? (
-              <div className="preview-artboard">
-                <img
-                  ref={previewImageRef}
-                  className="preview-image"
-                  src={previewBaseUrl}
-                  alt="Preview"
-                  onLoad={(event) => {
-                    setPreviewNaturalSize({
-                      width: event.currentTarget.naturalWidth,
-                      height: event.currentTarget.naturalHeight
-                    });
-                    setPreviewDisplaySize({
-                      width: event.currentTarget.clientWidth,
-                      height: event.currentTarget.clientHeight
-                    });
-                  }}
-                />
-                {watermarkPreviewUrl && overlayStyle && overlayImageStyle && (
-                  <div className="watermark-overlay" style={overlayStyle}>
-                    <img
-                      className="watermark-overlay-image"
-                      src={watermarkPreviewUrl}
-                      alt="Watermark preview"
-                      style={overlayImageStyle}
-                    />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="empty-preview">미리볼 입력 파일을 선택하세요.</div>
-            )}
-          </div>
-        </div>
-      </main>
+      <PreviewPane
+        selectedFileName={selectedPreviewFile?.name ?? "선택된 파일 없음"}
+        previewKind={previewKind}
+        pdfPageCount={pdfPageCount}
+        pdfPreviewPage={pdfPreviewPage}
+        previewBaseUrl={previewBaseUrl}
+        watermarkPreviewUrl={watermarkPreviewUrl}
+        overlayStyle={overlayStyle}
+        overlayImageStyle={overlayImageStyle}
+        previewImageRef={previewImageRef}
+        onPreviousPdfPage={() => setPdfPreviewPage((current) => Math.max(1, current - 1))}
+        onNextPdfPage={() => setPdfPreviewPage((current) => Math.min(pdfPageCount, current + 1))}
+        onPreviewImageLoad={onPreviewImageLoad}
+      />
     </div>
   );
 }
