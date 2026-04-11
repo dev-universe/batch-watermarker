@@ -181,10 +181,19 @@ const processPdfFile = async (
   if (!watermarkMetadata.width || !watermarkMetadata.height) {
     throw new Error("Unable to read watermark dimensions.");
   }
+  const pageWatermarkCache = new Map<
+    string,
+    {
+      watermarkImage: Awaited<ReturnType<typeof pdf.embedPng>>;
+      rotatedWidth: number;
+      rotatedHeight: number;
+    }
+  >();
 
   for (const page of pdf.getPages()) {
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
+    const pageCacheKey = `${pageWidth}x${pageHeight}`;
     const metrics = getWatermarkMetrics(
       pageWidth,
       pageHeight,
@@ -198,26 +207,35 @@ const processPdfFile = async (
       pageWidth,
       pageHeight
     );
-    const rotatedWatermarkBuffer = await sharp(watermarkBuffer)
-      .resize({
-        width: Math.max(1, Math.round(metrics.base.width)),
-        height: Math.max(1, Math.round(metrics.base.height)),
-        fit: "contain"
-      })
-      .rotate(settings.rotation, {
-        background: {
-          r: 0,
-          g: 0,
-          b: 0,
-          alpha: 0
-        }
-      })
-      .png()
-      .toBuffer();
-    const watermarkImage = await pdf.embedPng(rotatedWatermarkBuffer);
-    const rotatedMetadata = await sharp(rotatedWatermarkBuffer).metadata();
-    const rotatedWidth = rotatedMetadata.width ?? Math.max(1, Math.round(metrics.rotated.width));
-    const rotatedHeight = rotatedMetadata.height ?? Math.max(1, Math.round(metrics.rotated.height));
+    let cachedWatermark = pageWatermarkCache.get(pageCacheKey);
+
+    if (!cachedWatermark) {
+      const rotatedWatermarkBuffer = await sharp(watermarkBuffer)
+        .resize({
+          width: Math.max(1, Math.round(metrics.base.width)),
+          height: Math.max(1, Math.round(metrics.base.height)),
+          fit: "contain"
+        })
+        .rotate(settings.rotation, {
+          background: {
+            r: 0,
+            g: 0,
+            b: 0,
+            alpha: 0
+          }
+        })
+        .png()
+        .toBuffer();
+      const rotatedMetadata = await sharp(rotatedWatermarkBuffer).metadata();
+      cachedWatermark = {
+        watermarkImage: await pdf.embedPng(rotatedWatermarkBuffer),
+        rotatedWidth: rotatedMetadata.width ?? Math.max(1, Math.round(metrics.rotated.width)),
+        rotatedHeight: rotatedMetadata.height ?? Math.max(1, Math.round(metrics.rotated.height))
+      };
+      pageWatermarkCache.set(pageCacheKey, cachedWatermark);
+    }
+
+    const { watermarkImage, rotatedWidth, rotatedHeight } = cachedWatermark;
     const topLeftX = anchorCenter.x - rotatedWidth / 2;
     const topLeftY = anchorCenter.y - rotatedHeight / 2;
 
