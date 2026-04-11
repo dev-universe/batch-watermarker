@@ -36,6 +36,12 @@ const clamp = (value: number, min: number, max: number) =>
 
 const humanCount = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
 
+const createObjectUrlFromPreview = (previewPayload: PreviewPayload) => {
+  const bytes = Uint8Array.from(previewPayload.data);
+  const blob = new Blob([bytes], { type: previewPayload.mimeType });
+  return URL.createObjectURL(blob);
+};
+
 function App() {
   const [inputFiles, setInputFiles] = useState<InputFile[]>([]);
   const [watermarkFile, setWatermarkFile] = useState<InputFile | null>(null);
@@ -55,28 +61,31 @@ function App() {
   const [pdfDocument, setPdfDocument] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const previewImageRef = useRef<HTMLImageElement | null>(null);
   const pdfRenderTokenRef = useRef(0);
+  const selectedPreviewFile = useMemo(
+    () => inputFiles.find((file) => file.path === selectedPreviewPath) ?? inputFiles[0] ?? null,
+    [inputFiles, selectedPreviewPath]
+  );
 
   useEffect(() => {
     void (async () => {
-      if (!selectedPreviewPath) {
+      if (!selectedPreviewFile) {
         setPreview(null);
         return;
       }
 
-      const nextPreview = await window.watermarkApi.readPreview(selectedPreviewPath);
+      const nextPreview = await window.watermarkApi.readPreview(selectedPreviewFile.path);
       setPreview(nextPreview);
     })();
-  }, [selectedPreviewPath]);
+  }, [selectedPreviewFile]);
 
   useEffect(() => {
     if (!preview || preview.kind !== "image") {
       setPreviewImageUrl("");
+      setPreviewNaturalSize({ width: 0, height: 0 });
       return;
     }
 
-    const bytes = Uint8Array.from(preview.data);
-    const blob = new Blob([bytes], { type: preview.mimeType });
-    const objectUrl = URL.createObjectURL(blob);
+    const objectUrl = createObjectUrlFromPreview(preview);
     setPreviewImageUrl(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
   }, [preview]);
@@ -89,9 +98,7 @@ function App() {
         return;
       }
       const nextPreview = await window.watermarkApi.readPreview(watermarkFile.path);
-      const bytes = Uint8Array.from(nextPreview.data);
-      const blob = new Blob([bytes], { type: nextPreview.mimeType });
-      const objectUrl = URL.createObjectURL(blob);
+      const objectUrl = createObjectUrlFromPreview(nextPreview);
       setWatermarkPreviewUrl((current) => {
         if (current) {
           URL.revokeObjectURL(current);
@@ -124,19 +131,14 @@ function App() {
     image.src = watermarkPreviewUrl;
   }, [watermarkPreviewUrl]);
 
-  const previewTarget = useMemo(
-    () => inputFiles.find((file) => file.path === selectedPreviewPath) ?? inputFiles[0] ?? null,
-    [inputFiles, selectedPreviewPath]
-  );
-
   useEffect(() => {
-    if (previewTarget && previewTarget.path !== selectedPreviewPath) {
-      setSelectedPreviewPath(previewTarget.path);
+    if (selectedPreviewFile && selectedPreviewFile.path !== selectedPreviewPath) {
+      setSelectedPreviewPath(selectedPreviewFile.path);
     }
-    if (!previewTarget && selectedPreviewPath) {
+    if (!selectedPreviewFile && selectedPreviewPath) {
       setSelectedPreviewPath("");
     }
-  }, [previewTarget, selectedPreviewPath]);
+  }, [selectedPreviewFile, selectedPreviewPath]);
 
   useEffect(() => {
     setPdfPreviewPage(1);
@@ -238,6 +240,12 @@ function App() {
   }, [preview]);
 
   useEffect(() => {
+    return () => {
+      void pdfDocument?.destroy();
+    };
+  }, [pdfDocument]);
+
+  useEffect(() => {
     let cancelled = false;
 
     void (async () => {
@@ -328,7 +336,7 @@ function App() {
     }
   };
 
-  const previewKind = preview?.kind ?? previewTarget?.kind ?? null;
+  const previewKind = preview?.kind ?? selectedPreviewFile?.kind ?? null;
   const previewBaseUrl = previewKind === "pdf" ? pdfPreviewUrl : previewKind === "image" ? previewImageUrl : "";
 
   useEffect(() => {
@@ -450,7 +458,7 @@ function App() {
             {inputFiles.map((file) => (
               <div
                 key={file.path}
-                className={`file-item ${previewTarget?.path === file.path ? "active" : ""}`}
+                className={`file-item ${selectedPreviewFile?.path === file.path ? "active" : ""}`}
               >
                 <button className="file-pick" onClick={() => setSelectedPreviewPath(file.path)}>
                   <span>{file.name}</span>
@@ -624,7 +632,7 @@ function App() {
           <div className="preview-head">
             <div>
               <p className="eyebrow">Preview</p>
-              <h2>{previewTarget?.name ?? "선택된 파일 없음"}</h2>
+              <h2>{selectedPreviewFile?.name ?? "선택된 파일 없음"}</h2>
             </div>
             {previewKind === "pdf" && pdfPageCount > 0 && (
               <div className="pdf-pager">
