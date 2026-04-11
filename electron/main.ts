@@ -73,10 +73,98 @@ const getTemporaryOutputPath = (targetPath: string) => {
   );
 };
 
+interface WatermarkAsset {
+  rotatedWatermarkBuffer: Buffer;
+  rotatedWidth: number;
+  rotatedHeight: number;
+}
+
+type WatermarkAssetCache = Map<string, WatermarkAsset>;
+
+const getWatermarkAssetCacheKey = (
+  canvasWidth: number,
+  canvasHeight: number,
+  scale: number,
+  rotation: number
+) => `${canvasWidth}x${canvasHeight}:${scale}:${rotation}`;
+
+const buildWatermarkAsset = async (
+  watermarkBuffer: Buffer,
+  canvasWidth: number,
+  canvasHeight: number,
+  watermarkWidth: number,
+  watermarkHeight: number,
+  scale: number,
+  rotation: number
+): Promise<WatermarkAsset> => {
+  const metrics = getWatermarkMetrics(
+    canvasWidth,
+    canvasHeight,
+    watermarkWidth,
+    watermarkHeight,
+    scale,
+    rotation
+  );
+  const rotatedWatermarkBuffer = await sharp(watermarkBuffer)
+    .resize({
+      width: Math.max(1, Math.round(metrics.base.width)),
+      height: Math.max(1, Math.round(metrics.base.height)),
+      fit: "contain"
+    })
+    .rotate(rotation, {
+      background: {
+        r: 0,
+        g: 0,
+        b: 0,
+        alpha: 0
+      }
+    })
+    .png()
+    .toBuffer();
+  const rotatedMetadata = await sharp(rotatedWatermarkBuffer).metadata();
+
+  return {
+    rotatedWatermarkBuffer,
+    rotatedWidth: rotatedMetadata.width ?? Math.max(1, Math.round(metrics.rotated.width)),
+    rotatedHeight: rotatedMetadata.height ?? Math.max(1, Math.round(metrics.rotated.height))
+  };
+};
+
+const getOrCreateWatermarkAsset = async (
+  cache: WatermarkAssetCache,
+  watermarkBuffer: Buffer,
+  canvasWidth: number,
+  canvasHeight: number,
+  watermarkWidth: number,
+  watermarkHeight: number,
+  scale: number,
+  rotation: number
+) => {
+  const cacheKey = getWatermarkAssetCacheKey(canvasWidth, canvasHeight, scale, rotation);
+  const cachedAsset = cache.get(cacheKey);
+  if (cachedAsset) {
+    return cachedAsset;
+  }
+
+  const asset = await buildWatermarkAsset(
+    watermarkBuffer,
+    canvasWidth,
+    canvasHeight,
+    watermarkWidth,
+    watermarkHeight,
+    scale,
+    rotation
+  );
+  cache.set(cacheKey, asset);
+  return asset;
+};
+
 const processImageFile = async (
   inputFile: InputFile,
   watermarkBuffer: Buffer,
-  request: ProcessRequest
+  request: ProcessRequest,
+  watermarkMetadata: sharp.Metadata,
+  watermarkAssetCache: WatermarkAssetCache
 ) => {
   const { settings } = request;
   const finalOutputPath = getOutputPath(
@@ -93,12 +181,18 @@ const processImageFile = async (
     throw new Error(`Unable to read image dimensions: ${inputFile.name}`);
   }
 
-  const watermarkMetadata = await sharp(watermarkBuffer).metadata();
   if (!watermarkMetadata.width || !watermarkMetadata.height) {
     throw new Error("Unable to read watermark dimensions.");
   }
 
-  const metrics = getWatermarkMetrics(
+  const anchorCenter = getAnchorCenterPoint(
+    settings.position,
+    metadata.width,
+    metadata.height
+  );
+  const { rotatedWatermarkBuffer, rotatedWidth, rotatedHeight } = await getOrCreateWatermarkAsset(
+    watermarkAssetCache,
+    watermarkBuffer,
     metadata.width,
     metadata.height,
     watermarkMetadata.width,
@@ -106,33 +200,7 @@ const processImageFile = async (
     settings.scale,
     settings.rotation
   );
-
-  const anchorCenter = getAnchorCenterPoint(
-    settings.position,
-    metadata.width,
-    metadata.height
-  );
-
-  const resizedWatermark = await sharp(watermarkBuffer)
-    .resize({
-      width: Math.max(1, Math.round(metrics.base.width)),
-      height: Math.max(1, Math.round(metrics.base.height)),
-      fit: "contain"
-    })
-    .rotate(settings.rotation, {
-      background: {
-        r: 0,
-        g: 0,
-        b: 0,
-        alpha: 0
-      }
-    })
-    .png()
-    .toBuffer();
-  const watermarkDataUrl = `data:image/png;base64,${resizedWatermark.toString("base64")}`;
-  const rotatedMetadata = await sharp(resizedWatermark).metadata();
-  const rotatedWidth = rotatedMetadata.width ?? Math.max(1, Math.round(metrics.rotated.width));
-  const rotatedHeight = rotatedMetadata.height ?? Math.max(1, Math.round(metrics.rotated.height));
+  const watermarkDataUrl = `data:image/png;base64,${rotatedWatermarkBuffer.toString("base64")}`;
   const topLeftX = anchorCenter.x - rotatedWidth / 2;
   const topLeftY = anchorCenter.y - rotatedHeight / 2;
   const watermarkLayer = Buffer.from(
@@ -166,7 +234,9 @@ const processImageFile = async (
 const processPdfFile = async (
   inputFile: InputFile,
   watermarkBuffer: Buffer,
-  request: ProcessRequest
+  request: ProcessRequest,
+  watermarkMetadata: sharp.Metadata,
+  watermarkAssetCache: WatermarkAssetCache
 ) => {
   const { settings } = request;
   const outputPath = getOutputPath(
@@ -177,7 +247,6 @@ const processPdfFile = async (
   );
   const sourceBytes = await fs.readFile(inputFile.path);
   const pdf = await PDFDocument.load(sourceBytes);
-  const watermarkMetadata = await sharp(watermarkBuffer).metadata();
   if (!watermarkMetadata.width || !watermarkMetadata.height) {
     throw new Error("Unable to read watermark dimensions.");
   }
@@ -193,44 +262,29 @@ const processPdfFile = async (
   for (const page of pdf.getPages()) {
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
-    const pageCacheKey = `${pageWidth}x${pageHeight}`;
-    const metrics = getWatermarkMetrics(
-      pageWidth,
-      pageHeight,
-      watermarkMetadata.width,
-      watermarkMetadata.height,
-      settings.scale,
-      settings.rotation
-    );
     const anchorCenter = getAnchorCenterPoint(
       settings.position,
       pageWidth,
       pageHeight
     );
+    const pageCacheKey = getWatermarkAssetCacheKey(pageWidth, pageHeight, settings.scale, settings.rotation);
     let cachedWatermark = pageWatermarkCache.get(pageCacheKey);
 
     if (!cachedWatermark) {
-      const rotatedWatermarkBuffer = await sharp(watermarkBuffer)
-        .resize({
-          width: Math.max(1, Math.round(metrics.base.width)),
-          height: Math.max(1, Math.round(metrics.base.height)),
-          fit: "contain"
-        })
-        .rotate(settings.rotation, {
-          background: {
-            r: 0,
-            g: 0,
-            b: 0,
-            alpha: 0
-          }
-        })
-        .png()
-        .toBuffer();
-      const rotatedMetadata = await sharp(rotatedWatermarkBuffer).metadata();
+      const asset = await getOrCreateWatermarkAsset(
+        watermarkAssetCache,
+        watermarkBuffer,
+        pageWidth,
+        pageHeight,
+        watermarkMetadata.width,
+        watermarkMetadata.height,
+        settings.scale,
+        settings.rotation
+      );
       cachedWatermark = {
-        watermarkImage: await pdf.embedPng(rotatedWatermarkBuffer),
-        rotatedWidth: rotatedMetadata.width ?? Math.max(1, Math.round(metrics.rotated.width)),
-        rotatedHeight: rotatedMetadata.height ?? Math.max(1, Math.round(metrics.rotated.height))
+        watermarkImage: await pdf.embedPng(asset.rotatedWatermarkBuffer),
+        rotatedWidth: asset.rotatedWidth,
+        rotatedHeight: asset.rotatedHeight
       };
       pageWatermarkCache.set(pageCacheKey, cachedWatermark);
     }
@@ -354,6 +408,8 @@ app.whenReady().then(() => {
 
   ipcMain.handle("watermark:process", async (_event, request: ProcessRequest): Promise<ProcessResponse> => {
     const watermarkBuffer = await fs.readFile(request.watermarkPath);
+    const watermarkMetadata = await sharp(watermarkBuffer).metadata();
+    const watermarkAssetCache: WatermarkAssetCache = new Map();
     const results: ProcessResponse["results"] = [];
     const errors: string[] = [];
 
@@ -361,8 +417,8 @@ app.whenReady().then(() => {
       try {
         const outputPath =
           inputFile.kind === "pdf"
-            ? await processPdfFile(inputFile, watermarkBuffer, request)
-            : await processImageFile(inputFile, watermarkBuffer, request);
+            ? await processPdfFile(inputFile, watermarkBuffer, request, watermarkMetadata, watermarkAssetCache)
+            : await processImageFile(inputFile, watermarkBuffer, request, watermarkMetadata, watermarkAssetCache);
         results.push({
           sourcePath: inputFile.path,
           outputPath
