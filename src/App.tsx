@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type SyntheticEvent } from "react";
-import * as pdfjsLib from "pdfjs-dist";
-import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.mjs?url";
 import { InputFilesPanel } from "./components/InputFilesPanel";
 import { OutputPanel } from "./components/OutputPanel";
 import { PreviewPane } from "./components/PreviewPane";
 import { WatermarkPanel } from "./components/WatermarkPanel";
+import type { PDFDocumentProxy } from "pdfjs-dist";
 import type {
   InputFile,
   PreviewPayload,
@@ -12,8 +11,6 @@ import type {
   WatermarkSettings
 } from "./shared/types";
 import { getAnchorCenterPoint, getWatermarkMetrics } from "./shared/watermarkGeometry";
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 const INITIAL_SETTINGS: WatermarkSettings = {
   opacity: 7,
@@ -44,6 +41,25 @@ const createObjectUrlFromPreview = (previewPayload: PreviewPayload) => {
   return URL.createObjectURL(blob);
 };
 
+type PdfJsModule = typeof import("pdfjs-dist");
+
+let pdfJsLoader: Promise<PdfJsModule> | null = null;
+
+const loadPdfJs = async () => {
+  if (!pdfJsLoader) {
+    pdfJsLoader = (async () => {
+      const [pdfjsLib, pdfWorkerModule] = await Promise.all([
+        import("pdfjs-dist"),
+        import("pdfjs-dist/build/pdf.worker.mjs?url")
+      ]);
+      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerModule.default;
+      return pdfjsLib;
+    })();
+  }
+
+  return pdfJsLoader;
+};
+
 function App() {
   const [inputFiles, setInputFiles] = useState<InputFile[]>([]);
   const [watermarkFile, setWatermarkFile] = useState<InputFile | null>(null);
@@ -60,7 +76,7 @@ function App() {
   const [previewDisplaySize, setPreviewDisplaySize] = useState({ width: 0, height: 0 });
   const [pdfPageCount, setPdfPageCount] = useState(0);
   const [pdfPreviewPage, setPdfPreviewPage] = useState(1);
-  const [pdfDocument, setPdfDocument] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
+  const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
   const previewImageRef = useRef<HTMLImageElement | null>(null);
   const pdfRenderTokenRef = useRef(0);
   const selectedPreviewFile = useMemo(
@@ -253,6 +269,8 @@ function App() {
         }
         return;
       }
+
+      const pdfjsLib = await loadPdfJs();
       const loadingTask = pdfjsLib.getDocument({
         data: preview.data
       });
