@@ -106,8 +106,7 @@ const buildWatermarkAsset = async (
   sizeRatio: number,
   rotation: number
 ): Promise<WatermarkAsset> => {
-  const oversampleFactor = 2;
-  const paddingPx = oversampleFactor * 2;
+  const oversampleFactor = 1;
   const metrics = getWatermarkMetrics(
     watermarkWidth,
     watermarkHeight,
@@ -133,27 +132,11 @@ const buildWatermarkAsset = async (
     })
     .png()
     .toBuffer();
-  const paddedRotatedWatermarkBuffer = await sharp(rotatedWatermarkBuffer)
-    .extend({
-      top: paddingPx,
-      bottom: paddingPx,
-      left: paddingPx,
-      right: paddingPx,
-      background: {
-        r: 0,
-        g: 0,
-        b: 0,
-        alpha: 0
-      }
-    })
-    .png()
-    .toBuffer();
-  const logicalPadding = paddingPx / oversampleFactor;
 
   return {
-    rotatedWatermarkBuffer: paddedRotatedWatermarkBuffer,
-    drawWidth: metrics.rotated.width + logicalPadding * 2,
-    drawHeight: metrics.rotated.height + logicalPadding * 2
+    rotatedWatermarkBuffer,
+    drawWidth: metrics.rotated.width,
+    drawHeight: metrics.rotated.height
   };
 };
 
@@ -184,6 +167,81 @@ const getOrCreateWatermarkAsset = async (
   );
   cache.set(cacheKey, asset);
   return asset;
+};
+
+const applyOpacityToWatermarkAsset = async (
+  watermarkBuffer: Buffer,
+  opacity: number
+) => {
+  const alphaMultiplier = Math.max(0, Math.min(1, opacity));
+  if (alphaMultiplier === 1) {
+    return watermarkBuffer;
+  }
+
+  return sharp(watermarkBuffer)
+    .ensureAlpha()
+    .linear([1, 1, 1, alphaMultiplier], [0, 0, 0, 0])
+    .png()
+    .toBuffer();
+};
+
+const buildPositionedWatermarkLayer = async (
+  watermarkBuffer: Buffer,
+  canvasWidth: number,
+  canvasHeight: number,
+  left: number,
+  top: number
+) => {
+  const metadata = await sharp(watermarkBuffer).metadata();
+  const watermarkWidth = metadata.width ?? 0;
+  const watermarkHeight = metadata.height ?? 0;
+  if (!watermarkWidth || !watermarkHeight || !canvasWidth || !canvasHeight) {
+    return Buffer.alloc(0);
+  }
+
+  const clippedLeft = Math.max(0, left);
+  const clippedTop = Math.max(0, top);
+  const extractLeft = Math.max(0, -left);
+  const extractTop = Math.max(0, -top);
+  const clippedWidth = Math.min(watermarkWidth - extractLeft, canvasWidth - clippedLeft);
+  const clippedHeight = Math.min(watermarkHeight - extractTop, canvasHeight - clippedTop);
+
+  if (clippedWidth <= 0 || clippedHeight <= 0) {
+    return Buffer.alloc(0);
+  }
+
+  const clippedWatermark = await sharp(watermarkBuffer)
+    .extract({
+      left: extractLeft,
+      top: extractTop,
+      width: clippedWidth,
+      height: clippedHeight
+    })
+    .png()
+    .toBuffer();
+
+  return sharp({
+    create: {
+      width: canvasWidth,
+      height: canvasHeight,
+      channels: 4,
+      background: {
+        r: 0,
+        g: 0,
+        b: 0,
+        alpha: 0
+      }
+    }
+  })
+    .composite([
+      {
+        input: clippedWatermark,
+        left: clippedLeft,
+        top: clippedTop
+      }
+    ])
+    .png()
+    .toBuffer();
 };
 
 const processImageFile = async (
@@ -227,17 +285,25 @@ const processImageFile = async (
     settings.sizeRatio,
     settings.rotation
   );
-  const watermarkDataUrl = `data:image/png;base64,${rotatedWatermarkBuffer.toString("base64")}`;
-  const topLeftX = anchorCenter.x - drawWidth / 2;
-  const topLeftY = anchorCenter.y - drawHeight / 2;
-  const watermarkLayer = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${metadata.width}" height="${metadata.height}"><image href="${watermarkDataUrl}" x="${topLeftX}" y="${topLeftY}" width="${drawWidth}" height="${drawHeight}" opacity="${
-      settings.opacity / 100
-    }"/></svg>`
+  const watermarkBufferWithOpacity = await applyOpacityToWatermarkAsset(
+    rotatedWatermarkBuffer,
+    settings.opacity / 100
+  );
+  const topLeftX = Math.round(anchorCenter.x - drawWidth / 2);
+  const topLeftY = Math.round(anchorCenter.y - drawHeight / 2);
+  const watermarkLayer = await buildPositionedWatermarkLayer(
+    watermarkBufferWithOpacity,
+    metadata.width,
+    metadata.height,
+    topLeftX,
+    topLeftY
   );
 
   const density = metadata.density;
-  const composite = sharp(inputFile.path, { density, failOn: "none" }).composite([{ input: watermarkLayer, blend: "over" }]);
+  const composite =
+    watermarkLayer.length > 0
+      ? sharp(inputFile.path, { density, failOn: "none" }).composite([{ input: watermarkLayer, blend: "over" }])
+      : sharp(inputFile.path, { density, failOn: "none" });
 
   const ext = path.extname(inputFile.path).toLowerCase();
   if (ext === ".png") {
