@@ -97,16 +97,42 @@ The notarization hook is already wired through [scripts/notarize.cjs](/Users/fd2
 
 - Windows packaging is configured through `electron-builder` with the `nsis` target.
 - Build the Windows installer on a Windows machine for the most reliable result.
-- Validate these items before release:
-  - app launch
-  - PDF preview
-  - image preview
-  - PDF export
-  - image export
-  - suffix output beside the source file
-  - output folder export
-  - overwrite warning
-  - preflight conflict confirmation
+
+### Build On Windows
+
+```bash
+npm install
+npm run dist
+```
+
+The default Windows target is `nsis`.
+
+### Validate Before Release
+
+- installer creation succeeds
+- installer launch succeeds
+- app launch succeeds after install
+- input file drag and drop works
+- watermark image drag and drop works
+- file picker and output folder picker work
+- PDF preview works
+- image preview works
+- PDF page navigation works
+- PDF export works
+- image export works
+- suffix output beside the source file works
+- selected output folder export works
+- overwrite warning appears when suffix is empty
+- preflight conflict confirmation appears when output paths collide
+- rotated watermark output matches preview
+- output files open normally after export
+
+### Windows Distribution Notes
+
+- Without Windows code signing, SmartScreen warnings are possible on another machine.
+- If you plan to distribute commercially, add Windows code signing before release.
+- Confirm that the generated installer uses the expected icon from `build/icon.ico`.
+- Test at least one clean machine or VM before shipping.
 
 ## Packaging Commands
 
