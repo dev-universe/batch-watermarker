@@ -11,6 +11,7 @@ interface PreviewPaneProps {
   overlayImageStyle?: CSSProperties;
   isWatermarkHovered: boolean;
   isWatermarkSelected: boolean;
+  isWatermarkDragging: boolean;
   previewImageRef: MutableRefObject<HTMLImageElement | null>;
   onPreviousPdfPage: () => void;
   onNextPdfPage: () => void;
@@ -32,6 +33,7 @@ export function PreviewPane({
   overlayImageStyle,
   isWatermarkHovered,
   isWatermarkSelected,
+  isWatermarkDragging,
   previewImageRef,
   onPreviousPdfPage,
   onNextPdfPage,
@@ -72,13 +74,19 @@ export function PreviewPane({
                 className="preview-image"
                 src={previewBaseUrl}
                 alt="Preview"
+                draggable={false}
                 onLoad={onPreviewImageLoad}
               />
               {watermarkPreviewUrl && overlayStyle && overlayImageStyle && (
                 <div
-                  className={`watermark-overlay ${isWatermarkHovered ? "hovered" : ""} ${isWatermarkSelected ? "selected" : ""}`}
+                  className={`watermark-overlay ${isWatermarkHovered ? "hovered" : ""} ${isWatermarkSelected ? "selected" : ""} ${isWatermarkDragging ? "dragging" : ""}`}
                   style={overlayStyle}
-                  onPointerDown={onWatermarkPointerDown}
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                    onWatermarkPointerDown(event);
+                  }}
+                  onDragStart={(event) => event.preventDefault()}
                   onPointerEnter={onWatermarkPointerEnter}
                   onPointerLeave={onWatermarkPointerLeave}
                 >
@@ -86,6 +94,7 @@ export function PreviewPane({
                     className="watermark-overlay-image"
                     src={watermarkPreviewUrl}
                     alt="Watermark preview"
+                    draggable={false}
                     style={overlayImageStyle}
                   />
                   <div className="watermark-selection-outline" />
