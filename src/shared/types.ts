@@ -20,12 +20,12 @@ export interface InputFile {
 
 export interface WatermarkSettings {
   opacity: number;
-  sizePx: number;
+  sizeRatio: number;
   rotation: number;
   placementMode: WatermarkPlacementMode;
   position: AnchorPosition | null;
-  freeCenterX: number | null;
-  freeCenterY: number | null;
+  freeCenterXRatio: number | null;
+  freeCenterYRatio: number | null;
   suffix: string;
   outputDirectory: string;
   overwriteOriginal: boolean;

@@ -1,5 +1,5 @@
 import type { AnchorPosition, WatermarkSettings } from "./types";
-import { getSizeFromLongestEdge } from "./watermarkSizing";
+import { getSizeFromLongestEdgeRatio } from "./watermarkSizing";
 
 const fitWithin = (
   targetWidth: number,
@@ -28,10 +28,18 @@ export const getRotatedBoundingBox = (width: number, height: number, rotationDeg
 export const getWatermarkMetrics = (
   watermarkWidth: number,
   watermarkHeight: number,
-  sizePx: number,
+  sizeRatio: number,
+  canvasWidth: number,
+  canvasHeight: number,
   rotationDegrees: number
 ) => {
-  const base = getSizeFromLongestEdge(watermarkWidth, watermarkHeight, sizePx);
+  const base = getSizeFromLongestEdgeRatio(
+    watermarkWidth,
+    watermarkHeight,
+    sizeRatio,
+    canvasWidth,
+    canvasHeight
+  );
   const rotated = getRotatedBoundingBox(base.width, base.height, rotationDegrees);
 
   return {
@@ -81,18 +89,18 @@ export const getAnchorCenterPoint = (
 };
 
 export const getWatermarkCenterPoint = (
-  settings: Pick<WatermarkSettings, "placementMode" | "position" | "freeCenterX" | "freeCenterY">,
+  settings: Pick<WatermarkSettings, "placementMode" | "position" | "freeCenterXRatio" | "freeCenterYRatio">,
   canvasWidth: number,
   canvasHeight: number
 ) => {
   if (
     settings.placementMode === "free" &&
-    settings.freeCenterX !== null &&
-    settings.freeCenterY !== null
+    settings.freeCenterXRatio !== null &&
+    settings.freeCenterYRatio !== null
   ) {
     return {
-      x: settings.freeCenterX,
-      y: settings.freeCenterY
+      x: settings.freeCenterXRatio * canvasWidth,
+      y: settings.freeCenterYRatio * canvasHeight
     };
   }
 

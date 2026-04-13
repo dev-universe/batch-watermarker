@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type SyntheticEvent } from "react";
+import { flushSync } from "react-dom";
 import { InputFilesPanel } from "./components/InputFilesPanel";
 import { OutputPanel } from "./components/OutputPanel";
 import { PreviewPane } from "./components/PreviewPane";
@@ -21,8 +22,12 @@ import {
 } from "./shared/history";
 import { collectPlannedOutputConflicts, collectPlannedOutputs } from "./shared/outputPaths";
 import {
+  getCanvasLongestEdge,
   getLongestEdge,
+  getLongestEdgePxFromRatio,
+  getLongestEdgeRatio,
   getSizeFromLongestEdge,
+  getSizeFromLongestEdgeRatio,
   resizeFromWidthPreservingAspectRatio
 } from "./shared/watermarkSizing";
 import { getWatermarkCenterPoint, getWatermarkMetrics } from "./shared/watermarkGeometry";
@@ -30,12 +35,12 @@ import { snapWatermarkCenterPoint } from "./shared/watermarkSnap";
 
 const INITIAL_SETTINGS: WatermarkSettings = {
   opacity: 50,
-  sizePx: 280,
+  sizeRatio: 280 / 842,
   rotation: 0,
   placementMode: "preset",
   position: "C",
-  freeCenterX: null,
-  freeCenterY: null,
+  freeCenterXRatio: null,
+  freeCenterYRatio: null,
   suffix: "_wm",
   outputDirectory: "",
   overwriteOriginal: false
@@ -122,13 +127,14 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState("입력 파일과 워터마크를 넣으면 바로 처리할 수 있습니다.");
   const [lastResult, setLastResult] = useState<ProcessResponse | null>(null);
-  const [previewNaturalSize, setPreviewNaturalSize] = useState({ width: 0, height: 0 });
+  const [previewCoordinateSize, setPreviewCoordinateSize] = useState({ width: 0, height: 0 });
   const [previewDisplaySize, setPreviewDisplaySize] = useState({ width: 0, height: 0 });
   const [pdfPageCount, setPdfPageCount] = useState(0);
   const [pdfPreviewPage, setPdfPreviewPage] = useState(1);
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
   const [isWatermarkHovered, setIsWatermarkHovered] = useState(false);
   const [isWatermarkSelected, setIsWatermarkSelected] = useState(false);
+  const [isWatermarkDragging, setIsWatermarkDragging] = useState(false);
   const previewImageRef = useRef<HTMLImageElement | null>(null);
   const pdfRenderTokenRef = useRef(0);
   const dragStateRef = useRef<{
@@ -235,7 +241,7 @@ function App() {
   useEffect(() => {
     if (!preview || preview.kind !== "image") {
       setPreviewImageUrl("");
-      setPreviewNaturalSize({ width: 0, height: 0 });
+      setPreviewCoordinateSize({ width: 0, height: 0 });
       return;
     }
 
@@ -368,19 +374,19 @@ function App() {
       if (
         !previewDisplaySize.width ||
         !previewDisplaySize.height ||
-        !previewNaturalSize.width ||
-        !previewNaturalSize.height
+        !previewCoordinateSize.width ||
+        !previewCoordinateSize.height
       ) {
         return;
       }
 
-      const scaleX = previewNaturalSize.width / previewDisplaySize.width;
-      const scaleY = previewNaturalSize.height / previewDisplaySize.height;
+      const scaleX = previewCoordinateSize.width / previewDisplaySize.width;
+      const scaleY = previewCoordinateSize.height / previewDisplaySize.height;
       const nextCenter = snapWatermarkCenterPoint(
         dragState.startCenterX + (event.clientX - dragState.startPointerX) * scaleX,
         dragState.startCenterY + (event.clientY - dragState.startPointerY) * scaleY,
-        previewNaturalSize.width,
-        previewNaturalSize.height,
+        previewCoordinateSize.width,
+        previewCoordinateSize.height,
         24
       );
 
@@ -388,15 +394,17 @@ function App() {
         ...currentSnapshotRef.current.settings,
         placementMode: "free",
         position: null,
-        freeCenterX: nextCenter.x,
-        freeCenterY: nextCenter.y
+        freeCenterXRatio: nextCenter.x / previewCoordinateSize.width,
+        freeCenterYRatio: nextCenter.y / previewCoordinateSize.height
       };
 
       currentSnapshotRef.current = {
         ...currentSnapshotRef.current,
         settings: nextSettings
       };
-      setSettings(nextSettings);
+      flushSync(() => {
+        setSettings(nextSettings);
+      });
     };
 
     const onPointerUp = (event: PointerEvent) => {
@@ -405,6 +413,7 @@ function App() {
       }
 
       dragStateRef.current = null;
+      setIsWatermarkDragging(false);
     };
 
     window.addEventListener("pointermove", onPointerMove);
@@ -416,7 +425,7 @@ function App() {
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerUp);
     };
-  }, [previewDisplaySize, previewNaturalSize]);
+  }, [previewCoordinateSize, previewDisplaySize]);
 
   const willOverwriteOriginal = settings.suffix.trim() === "";
   const outputSummary = willOverwriteOriginal
@@ -426,23 +435,34 @@ function App() {
       : "출력 폴더를 비워두면 원본 파일과 같은 폴더에 저장합니다.";
   const renderedWatermarkSize = useMemo(
     () =>
-      getSizeFromLongestEdge(
+      getSizeFromLongestEdgeRatio(
         watermarkNaturalSize.width,
         watermarkNaturalSize.height,
-        settings.sizePx
+        settings.sizeRatio,
+        previewCoordinateSize.width,
+        previewCoordinateSize.height
       ),
-    [settings.sizePx, watermarkNaturalSize]
+    [previewCoordinateSize, settings.sizeRatio, watermarkNaturalSize]
+  );
+  const displayedSizePx = useMemo(
+    () =>
+      getLongestEdgePxFromRatio(
+        settings.sizeRatio,
+        previewCoordinateSize.width,
+        previewCoordinateSize.height
+      ),
+    [previewCoordinateSize, settings.sizeRatio]
   );
   const sizeControlMax = useMemo(
     () =>
       Math.max(
         1000,
-        settings.sizePx,
-        previewNaturalSize.width,
-        previewNaturalSize.height,
+        displayedSizePx,
+        previewCoordinateSize.width,
+        previewCoordinateSize.height,
         getLongestEdge(watermarkNaturalSize.width, watermarkNaturalSize.height)
       ),
-    [previewNaturalSize, settings.sizePx, watermarkNaturalSize]
+    [displayedSizePx, previewCoordinateSize, watermarkNaturalSize]
   );
 
   const collectDroppedPaths = async (event: DragEvent<HTMLElement>) => {
@@ -502,7 +522,10 @@ function App() {
 
     try {
       const naturalSize = await readImageNaturalSize(objectUrl);
-      const sizePx = getLongestEdge(naturalSize.width, naturalSize.height);
+      const longestEdgePx = getLongestEdge(naturalSize.width, naturalSize.height);
+      const canvasLongestEdge =
+        getCanvasLongestEdge(previewCoordinateSize.width, previewCoordinateSize.height) || longestEdgePx;
+      const sizeRatio = getLongestEdgeRatio(longestEdgePx, canvasLongestEdge, canvasLongestEdge);
 
       commitSnapshot((current) => ({
         ...current,
@@ -510,11 +533,11 @@ function App() {
         settings: {
           ...current.settings,
           opacity: 50,
-          sizePx,
+          sizeRatio,
           placementMode: "preset",
           position: "C",
-          freeCenterX: null,
-          freeCenterY: null
+          freeCenterXRatio: null,
+          freeCenterYRatio: null
         }
       }));
     } finally {
@@ -539,15 +562,26 @@ function App() {
   const updateNumericSetting = (key: "opacity" | "sizePx" | "rotation", value: string) => {
     const max = key === "opacity" ? 100 : key === "rotation" ? 360 : sizeControlMax;
     const nextValue = clamp(Number(value), 0, max);
+    const nextSettingsPatch =
+      key === "sizePx"
+        ? {
+            sizeRatio: getLongestEdgeRatio(
+              nextValue,
+              previewCoordinateSize.width,
+              previewCoordinateSize.height
+            )
+          }
+        : { [key]: nextValue };
+
     if (pendingContinuousEditRef.current) {
       currentSnapshotRef.current = {
         ...currentSnapshotRef.current,
-      settings: {
-        ...currentSnapshotRef.current.settings,
-        [key]: nextValue
+        settings: {
+          ...currentSnapshotRef.current.settings,
+          ...nextSettingsPatch
         }
       };
-      setSettings((current) => ({ ...current, [key]: nextValue }));
+      setSettings((current) => ({ ...current, ...nextSettingsPatch }));
       return;
     }
 
@@ -555,7 +589,7 @@ function App() {
       ...current,
       settings: {
         ...current.settings,
-        [key]: nextValue
+        ...nextSettingsPatch
       }
     }));
   };
@@ -588,7 +622,11 @@ function App() {
       ...current,
       settings: {
         ...current.settings,
-        sizePx: nextSizing.sizePx
+        sizeRatio: getLongestEdgeRatio(
+          nextSizing.sizePx,
+          previewCoordinateSize.width,
+          previewCoordinateSize.height
+        )
       }
     }));
   };
@@ -625,10 +663,11 @@ function App() {
   };
 
   const onPreviewImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
-    setPreviewNaturalSize({
+    const nextSize = {
       width: event.currentTarget.naturalWidth,
       height: event.currentTarget.naturalHeight
-    });
+    };
+    setPreviewCoordinateSize(nextSize);
     setPreviewDisplaySize({
       width: event.currentTarget.clientWidth,
       height: event.currentTarget.clientHeight
@@ -645,7 +684,7 @@ function App() {
           setPdfDocument(null);
           setPdfPreviewUrl("");
           setPdfPageCount(0);
-          setPreviewNaturalSize({ width: 0, height: 0 });
+          setPreviewCoordinateSize({ width: 0, height: 0 });
         }
         return;
       }
@@ -687,6 +726,7 @@ function App() {
       const renderToken = ++pdfRenderTokenRef.current;
       const safePage = Math.min(Math.max(pdfPreviewPage, 1), pdfDocument.numPages);
       const page = await pdfDocument.getPage(safePage);
+      const coordinateViewport = page.getViewport({ scale: 1 });
       const viewport = page.getViewport({ scale: 1.4 });
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
@@ -703,9 +743,9 @@ function App() {
       }
 
       setPdfPreviewUrl(canvas.toDataURL("image/png"));
-      setPreviewNaturalSize({
-        width: canvas.width,
-        height: canvas.height
+      setPreviewCoordinateSize({
+        width: coordinateViewport.width,
+        height: coordinateViewport.height
       });
     })();
 
@@ -811,8 +851,8 @@ function App() {
     if (
       !previewDisplaySize.width ||
       !previewDisplaySize.height ||
-      !previewNaturalSize.width ||
-      !previewNaturalSize.height ||
+      !previewCoordinateSize.width ||
+      !previewCoordinateSize.height ||
       !watermarkNaturalSize.width ||
       !watermarkNaturalSize.height
     ) {
@@ -822,16 +862,18 @@ function App() {
     const metrics = getWatermarkMetrics(
       watermarkNaturalSize.width,
       watermarkNaturalSize.height,
-      settings.sizePx,
+      settings.sizeRatio,
+      previewCoordinateSize.width,
+      previewCoordinateSize.height,
       settings.rotation
     );
     const anchorCenter = getWatermarkCenterPoint(
       settings,
-      previewNaturalSize.width,
-      previewNaturalSize.height
+      previewCoordinateSize.width,
+      previewCoordinateSize.height
     );
-    const displayScaleX = previewDisplaySize.width / previewNaturalSize.width;
-    const displayScaleY = previewDisplaySize.height / previewNaturalSize.height;
+    const displayScaleX = previewDisplaySize.width / previewCoordinateSize.width;
+    const displayScaleY = previewDisplaySize.height / previewCoordinateSize.height;
 
     return {
       width: `${metrics.rotated.width * displayScaleX}px`,
@@ -840,14 +882,25 @@ function App() {
       top: `${(anchorCenter.y - metrics.rotated.height / 2) * displayScaleY}px`,
       opacity: settings.opacity / 100
     };
-  }, [previewDisplaySize, previewNaturalSize, settings.opacity, settings.position, settings.rotation, settings.sizePx, watermarkNaturalSize]);
+  }, [
+    previewDisplaySize,
+    previewCoordinateSize,
+    settings.opacity,
+    settings.placementMode,
+    settings.position,
+    settings.freeCenterXRatio,
+    settings.freeCenterYRatio,
+    settings.rotation,
+    settings.sizeRatio,
+    watermarkNaturalSize
+  ]);
 
   const overlayImageStyle = useMemo(() => {
     if (
       !previewDisplaySize.width ||
       !previewDisplaySize.height ||
-      !previewNaturalSize.width ||
-      !previewNaturalSize.height ||
+      !previewCoordinateSize.width ||
+      !previewCoordinateSize.height ||
       !watermarkNaturalSize.width ||
       !watermarkNaturalSize.height
     ) {
@@ -857,11 +910,13 @@ function App() {
     const metrics = getWatermarkMetrics(
       watermarkNaturalSize.width,
       watermarkNaturalSize.height,
-      settings.sizePx,
+      settings.sizeRatio,
+      previewCoordinateSize.width,
+      previewCoordinateSize.height,
       settings.rotation
     );
-    const displayScaleX = previewDisplaySize.width / previewNaturalSize.width;
-    const displayScaleY = previewDisplaySize.height / previewNaturalSize.height;
+    const displayScaleX = previewDisplaySize.width / previewCoordinateSize.width;
+    const displayScaleY = previewDisplaySize.height / previewCoordinateSize.height;
 
     return {
       width: `${metrics.base.width * displayScaleX}px`,
@@ -871,7 +926,7 @@ function App() {
       left: "50%",
       top: "50%"
     } as const;
-  }, [previewDisplaySize, previewNaturalSize, settings.rotation, settings.sizePx, watermarkNaturalSize]);
+  }, [previewCoordinateSize, previewDisplaySize, settings.rotation, settings.sizeRatio, watermarkNaturalSize]);
 
   return (
     <div className="shell">
@@ -901,6 +956,7 @@ function App() {
           settings={settings}
           watermarkFile={watermarkFile}
           sizeControlMax={sizeControlMax}
+          displayedSizePx={displayedSizePx}
           renderedWidthPx={renderedWatermarkSize.width}
           renderedHeightPx={renderedWatermarkSize.height}
           onOpenWatermarkPicker={openWatermarkPicker}
@@ -914,7 +970,9 @@ function App() {
               settings: {
                 ...current.settings,
                 placementMode: "preset",
-                position
+                position,
+                freeCenterXRatio: null,
+                freeCenterYRatio: null
               }
             }))
           }
@@ -945,6 +1003,7 @@ function App() {
         overlayImageStyle={overlayImageStyle}
         isWatermarkHovered={isWatermarkHovered}
         isWatermarkSelected={isWatermarkSelected}
+        isWatermarkDragging={isWatermarkDragging}
         previewImageRef={previewImageRef}
         onPreviousPdfPage={() => setPdfPreviewPage((current) => Math.max(1, current - 1))}
         onNextPdfPage={() => setPdfPreviewPage((current) => Math.min(pdfPageCount, current + 1))}
@@ -959,8 +1018,8 @@ function App() {
         onWatermarkPointerDown={(event) => {
           event.stopPropagation();
           if (
-            !previewNaturalSize.width ||
-            !previewNaturalSize.height ||
+            !previewCoordinateSize.width ||
+            !previewCoordinateSize.height ||
             !watermarkNaturalSize.width ||
             !watermarkNaturalSize.height
           ) {
@@ -968,11 +1027,12 @@ function App() {
           }
 
           setIsWatermarkSelected(true);
+          setIsWatermarkDragging(true);
           beginContinuousEdit();
           const currentCenter = getWatermarkCenterPoint(
             currentSnapshotRef.current.settings,
-            previewNaturalSize.width,
-            previewNaturalSize.height
+            previewCoordinateSize.width,
+            previewCoordinateSize.height
           );
 
           currentSnapshotRef.current = {
@@ -981,8 +1041,8 @@ function App() {
               ...currentSnapshotRef.current.settings,
               placementMode: "free",
               position: null,
-              freeCenterX: currentCenter.x,
-              freeCenterY: currentCenter.y
+              freeCenterXRatio: currentCenter.x / previewCoordinateSize.width,
+              freeCenterYRatio: currentCenter.y / previewCoordinateSize.height
             }
           };
           setSettings(currentSnapshotRef.current.settings);

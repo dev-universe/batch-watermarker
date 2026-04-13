@@ -17,12 +17,12 @@ const createSnapshot = (
   watermarkFile: null,
   settings: {
     opacity: 7,
-    sizePx: 280,
+    sizeRatio: 280 / 842,
     rotation: 0,
     placementMode: "preset",
     position: "C",
-    freeCenterX: null,
-    freeCenterY: null,
+    freeCenterXRatio: null,
+    freeCenterYRatio: null,
     suffix: "_wm",
     outputDirectory: "",
     overwriteOriginal: false
@@ -68,7 +68,7 @@ describe("history helpers", () => {
     const after = createSnapshot({
       settings: {
         ...before.settings,
-        sizePx: 700
+        sizeRatio: 700 / 842
       }
     });
 
