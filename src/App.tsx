@@ -50,8 +50,8 @@ interface EditableStateSnapshot {
 }
 
 const cloneSnapshot = (snapshot: EditableStateSnapshot): EditableStateSnapshot => ({
-  inputFiles: snapshot.inputFiles.map((inputFile) => ({ ...inputFile })),
-  watermarkFile: snapshot.watermarkFile ? { ...snapshot.watermarkFile } : null,
+  inputFiles: [...snapshot.inputFiles],
+  watermarkFile: snapshot.watermarkFile,
   settings: { ...snapshot.settings },
   selectedPreviewPath: snapshot.selectedPreviewPath
 });
@@ -140,6 +140,7 @@ function App() {
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
   const previewImageRef = useRef<HTMLImageElement | null>(null);
   const pdfRenderTokenRef = useRef(0);
+  const pendingContinuousEditRef = useRef<EditableStateSnapshot | null>(null);
   const historyRef = useRef<{
     past: EditableStateSnapshot[];
     future: EditableStateSnapshot[];
@@ -202,6 +203,30 @@ function App() {
     historyRef.current.past.push(cloneSnapshot(currentSnapshotRef.current));
     currentSnapshotRef.current = cloneSnapshot(next);
     applySnapshot(next);
+  };
+
+  const beginContinuousEdit = () => {
+    if (!pendingContinuousEditRef.current) {
+      pendingContinuousEditRef.current = cloneSnapshot(currentSnapshotRef.current);
+    }
+  };
+
+  const endContinuousEdit = () => {
+    const pendingSnapshot = pendingContinuousEditRef.current;
+    if (!pendingSnapshot) {
+      return;
+    }
+
+    pendingContinuousEditRef.current = null;
+    if (areSnapshotsEqual(pendingSnapshot, currentSnapshotRef.current)) {
+      return;
+    }
+
+    historyRef.current.past.push(cloneSnapshot(pendingSnapshot));
+    if (historyRef.current.past.length > 100) {
+      historyRef.current.past.shift();
+    }
+    historyRef.current.future = [];
   };
 
   useEffect(() => {
@@ -323,6 +348,35 @@ function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  useEffect(() => {
+    const onPointerEnd = () => {
+      endContinuousEdit();
+    };
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (
+        event.key.startsWith("Arrow") ||
+        event.key === "Home" ||
+        event.key === "End" ||
+        event.key === "PageUp" ||
+        event.key === "PageDown"
+      ) {
+        endContinuousEdit();
+      }
+    };
+
+    window.addEventListener("pointerup", onPointerEnd);
+    window.addEventListener("pointercancel", onPointerEnd);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onPointerEnd);
+
+    return () => {
+      window.removeEventListener("pointerup", onPointerEnd);
+      window.removeEventListener("pointercancel", onPointerEnd);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onPointerEnd);
+    };
+  }, []);
+
   const willOverwriteOriginal = settings.suffix.trim() === "";
   const outputSummary = willOverwriteOriginal
     ? "접미사가 비어 있으면 원본 파일에 직접 덮어씁니다."
@@ -400,6 +454,18 @@ function App() {
   const updateNumericSetting = (key: "opacity" | "scale" | "rotation", value: string) => {
     const max = key === "opacity" ? 100 : key === "rotation" ? 360 : 1000;
     const nextValue = clamp(Number(value), 0, max);
+    if (pendingContinuousEditRef.current) {
+      currentSnapshotRef.current = {
+        ...currentSnapshotRef.current,
+        settings: {
+          ...currentSnapshotRef.current.settings,
+          [key]: nextValue
+        }
+      };
+      setSettings((current) => ({ ...current, [key]: nextValue }));
+      return;
+    }
+
     commitSnapshot((current) => ({
       ...current,
       settings: {
@@ -738,6 +804,7 @@ function App() {
           watermarkFile={watermarkFile}
           onOpenWatermarkPicker={openWatermarkPicker}
           onDropWatermarkFile={onDropWatermarkFile}
+          onBeginContinuousNumericEdit={beginContinuousEdit}
           onUpdateNumericSetting={updateNumericSetting}
           onSelectPosition={(position) =>
             commitSnapshot((current) => ({

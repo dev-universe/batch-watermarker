@@ -8,6 +8,7 @@ interface WatermarkPanelProps {
   watermarkFile: InputFile | null;
   onOpenWatermarkPicker: () => void;
   onDropWatermarkFile: (event: DragEvent<HTMLElement>) => Promise<void>;
+  onBeginContinuousNumericEdit: () => void;
   onUpdateNumericSetting: (key: "opacity" | "scale" | "rotation", value: string) => void;
   onSelectPosition: (position: AnchorPosition) => void;
 }
@@ -17,9 +18,22 @@ export function WatermarkPanel({
   watermarkFile,
   onOpenWatermarkPicker,
   onDropWatermarkFile,
+  onBeginContinuousNumericEdit,
   onUpdateNumericSetting,
   onSelectPosition
 }: WatermarkPanelProps) {
+  const onRangeKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      event.key.startsWith("Arrow") ||
+      event.key === "Home" ||
+      event.key === "End" ||
+      event.key === "PageUp" ||
+      event.key === "PageDown"
+    ) {
+      onBeginContinuousNumericEdit();
+    }
+  };
+
   return (
     <section className="panel">
       <div className="panel-head">
@@ -43,6 +57,8 @@ export function WatermarkPanel({
               min="0"
               max="100"
               value={settings.opacity}
+              onPointerDown={onBeginContinuousNumericEdit}
+              onKeyDown={onRangeKeyDown}
               onChange={(event) => onUpdateNumericSetting("opacity", event.target.value)}
             />
             <input
@@ -64,6 +80,8 @@ export function WatermarkPanel({
               min="0"
               max="1000"
               value={settings.scale}
+              onPointerDown={onBeginContinuousNumericEdit}
+              onKeyDown={onRangeKeyDown}
               onChange={(event) => onUpdateNumericSetting("scale", event.target.value)}
             />
             <input
@@ -85,6 +103,8 @@ export function WatermarkPanel({
               min="0"
               max="360"
               value={settings.rotation}
+              onPointerDown={onBeginContinuousNumericEdit}
+              onKeyDown={onRangeKeyDown}
               onChange={(event) => onUpdateNumericSetting("rotation", event.target.value)}
             />
             <input
