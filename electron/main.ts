@@ -3,7 +3,7 @@ import path from "node:path";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import { pathToFileURL } from "node:url";
-import { PDFDocument } from "pdf-lib";
+import { degrees, PDFDocument } from "pdf-lib";
 import sharp from "sharp";
 import type {
   InputFile,
@@ -68,6 +68,28 @@ interface WatermarkAsset {
 
 type WatermarkAssetCache = Map<string, WatermarkAsset>;
 
+const getPdfWatermarkEmbedSource = async (watermarkPath: string, watermarkBuffer: Buffer) => {
+  const ext = path.extname(watermarkPath).toLowerCase();
+  if (ext === ".jpg" || ext === ".jpeg") {
+    return {
+      kind: "jpg" as const,
+      bytes: watermarkBuffer
+    };
+  }
+
+  if (ext === ".png") {
+    return {
+      kind: "png" as const,
+      bytes: watermarkBuffer
+    };
+  }
+
+  return {
+    kind: "png" as const,
+    bytes: await sharp(watermarkBuffer).png().toBuffer()
+  };
+};
+
 const getWatermarkAssetCacheKey = (
   canvasWidth: number,
   canvasHeight: number,
@@ -85,6 +107,7 @@ const buildWatermarkAsset = async (
   rotation: number
 ): Promise<WatermarkAsset> => {
   const oversampleFactor = 2;
+  const paddingPx = oversampleFactor * 2;
   const metrics = getWatermarkMetrics(
     watermarkWidth,
     watermarkHeight,
@@ -110,11 +133,27 @@ const buildWatermarkAsset = async (
     })
     .png()
     .toBuffer();
+  const paddedRotatedWatermarkBuffer = await sharp(rotatedWatermarkBuffer)
+    .extend({
+      top: paddingPx,
+      bottom: paddingPx,
+      left: paddingPx,
+      right: paddingPx,
+      background: {
+        r: 0,
+        g: 0,
+        b: 0,
+        alpha: 0
+      }
+    })
+    .png()
+    .toBuffer();
+  const logicalPadding = paddingPx / oversampleFactor;
 
   return {
-    rotatedWatermarkBuffer,
-    drawWidth: metrics.rotated.width,
-    drawHeight: metrics.rotated.height
+    rotatedWatermarkBuffer: paddedRotatedWatermarkBuffer,
+    drawWidth: metrics.rotated.width + logicalPadding * 2,
+    drawHeight: metrics.rotated.height + logicalPadding * 2
   };
 };
 
@@ -223,8 +262,7 @@ const processPdfFile = async (
   inputFile: InputFile,
   watermarkBuffer: Buffer,
   request: ProcessRequest,
-  watermarkMetadata: sharp.Metadata,
-  watermarkAssetCache: WatermarkAssetCache
+  watermarkMetadata: sharp.Metadata
 ) => {
   const { settings } = request;
   const outputPath = resolveOutputPath(
@@ -238,14 +276,11 @@ const processPdfFile = async (
   if (!watermarkMetadata.width || !watermarkMetadata.height) {
     throw new Error("Unable to read watermark dimensions.");
   }
-  const pageWatermarkCache = new Map<
-    string,
-    {
-      watermarkImage: Awaited<ReturnType<typeof pdf.embedPng>>;
-      drawWidth: number;
-      drawHeight: number;
-    }
-  >();
+  const embedSource = await getPdfWatermarkEmbedSource(request.watermarkPath, watermarkBuffer);
+  const watermarkImage =
+    embedSource.kind === "jpg"
+      ? await pdf.embedJpg(embedSource.bytes)
+      : await pdf.embedPng(embedSource.bytes);
 
   for (const page of pdf.getPages()) {
     const pageWidth = page.getWidth();
@@ -255,37 +290,29 @@ const processPdfFile = async (
       pageWidth,
       pageHeight
     );
-    const pageCacheKey = getWatermarkAssetCacheKey(pageWidth, pageHeight, settings.sizeRatio, settings.rotation);
-    let cachedWatermark = pageWatermarkCache.get(pageCacheKey);
-
-    if (!cachedWatermark) {
-      const asset = await getOrCreateWatermarkAsset(
-        watermarkAssetCache,
-        watermarkBuffer,
-        pageWidth,
-        pageHeight,
-        watermarkMetadata.width,
-        watermarkMetadata.height,
-        settings.sizeRatio,
-        settings.rotation
-      );
-      cachedWatermark = {
-        watermarkImage: await pdf.embedPng(asset.rotatedWatermarkBuffer),
-        drawWidth: asset.drawWidth,
-        drawHeight: asset.drawHeight
-      };
-      pageWatermarkCache.set(pageCacheKey, cachedWatermark);
-    }
-
-    const { watermarkImage, drawWidth, drawHeight } = cachedWatermark;
-    const topLeftX = anchorCenter.x - drawWidth / 2;
-    const topLeftY = anchorCenter.y - drawHeight / 2;
+    const metrics = getWatermarkMetrics(
+      watermarkMetadata.width,
+      watermarkMetadata.height,
+      settings.sizeRatio,
+      pageWidth,
+      pageHeight,
+      settings.rotation
+    );
+    const centerX = anchorCenter.x;
+    const centerY = pageHeight - anchorCenter.y;
+    const pdfRotation = -settings.rotation;
+    const radians = (pdfRotation * Math.PI) / 180;
+    const offsetX = (metrics.base.width / 2) * Math.cos(radians) - (metrics.base.height / 2) * Math.sin(radians);
+    const offsetY = (metrics.base.width / 2) * Math.sin(radians) + (metrics.base.height / 2) * Math.cos(radians);
+    const originX = centerX - offsetX;
+    const originY = centerY - offsetY;
 
     page.drawImage(watermarkImage, {
-      x: topLeftX,
-      y: pageHeight - topLeftY - drawHeight,
-      width: drawWidth,
-      height: drawHeight,
+      x: originX,
+      y: originY,
+      width: metrics.base.width,
+      height: metrics.base.height,
+      rotate: degrees(pdfRotation),
       opacity: settings.opacity / 100
     });
   }
@@ -421,7 +448,7 @@ app.whenReady().then(() => {
       try {
         const outputPath =
           inputFile.kind === "pdf"
-            ? await processPdfFile(inputFile, watermarkBuffer, request, watermarkMetadata, watermarkAssetCache)
+            ? await processPdfFile(inputFile, watermarkBuffer, request, watermarkMetadata)
             : await processImageFile(inputFile, watermarkBuffer, request, watermarkMetadata, watermarkAssetCache);
         results.push({
           sourcePath: inputFile.path,
