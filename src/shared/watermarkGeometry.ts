@@ -1,4 +1,4 @@
-import type { AnchorPosition } from "./types";
+import type { AnchorPosition, WatermarkSettings } from "./types";
 import { getSizeFromLongestEdge } from "./watermarkSizing";
 
 const fitWithin = (
@@ -78,4 +78,23 @@ export const getAnchorCenterPoint = (
     case "SE":
       return { x: east, y: south };
   }
+};
+
+export const getWatermarkCenterPoint = (
+  settings: Pick<WatermarkSettings, "placementMode" | "position" | "freeCenterX" | "freeCenterY">,
+  canvasWidth: number,
+  canvasHeight: number
+) => {
+  if (
+    settings.placementMode === "free" &&
+    settings.freeCenterX !== null &&
+    settings.freeCenterY !== null
+  ) {
+    return {
+      x: settings.freeCenterX,
+      y: settings.freeCenterY
+    };
+  }
+
+  return getAnchorCenterPoint(settings.position ?? "C", canvasWidth, canvasHeight);
 };

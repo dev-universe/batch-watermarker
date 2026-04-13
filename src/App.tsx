@@ -25,13 +25,16 @@ import {
   getSizeFromLongestEdge,
   resizeFromWidthPreservingAspectRatio
 } from "./shared/watermarkSizing";
-import { getAnchorCenterPoint, getWatermarkMetrics } from "./shared/watermarkGeometry";
+import { getWatermarkCenterPoint, getWatermarkMetrics } from "./shared/watermarkGeometry";
 
 const INITIAL_SETTINGS: WatermarkSettings = {
   opacity: 50,
   sizePx: 280,
   rotation: 0,
+  placementMode: "preset",
   position: "C",
+  freeCenterX: null,
+  freeCenterY: null,
   suffix: "_wm",
   outputDirectory: "",
   overwriteOriginal: false
@@ -123,6 +126,8 @@ function App() {
   const [pdfPageCount, setPdfPageCount] = useState(0);
   const [pdfPreviewPage, setPdfPreviewPage] = useState(1);
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
+  const [isWatermarkHovered, setIsWatermarkHovered] = useState(false);
+  const [isWatermarkSelected, setIsWatermarkSelected] = useState(false);
   const previewImageRef = useRef<HTMLImageElement | null>(null);
   const pdfRenderTokenRef = useRef(0);
   const pendingContinuousEditRef = useRef<EditableStateSnapshot | null>(null);
@@ -438,7 +443,11 @@ function App() {
         settings: {
           ...current.settings,
           opacity: 50,
-          sizePx
+          sizePx,
+          placementMode: "preset",
+          position: "C",
+          freeCenterX: null,
+          freeCenterY: null
         }
       }));
     } finally {
@@ -749,8 +758,8 @@ function App() {
       settings.sizePx,
       settings.rotation
     );
-    const anchorCenter = getAnchorCenterPoint(
-      settings.position,
+    const anchorCenter = getWatermarkCenterPoint(
+      settings,
       previewNaturalSize.width,
       previewNaturalSize.height
     );
@@ -837,6 +846,7 @@ function App() {
               ...current,
               settings: {
                 ...current.settings,
+                placementMode: "preset",
                 position
               }
             }))
@@ -866,10 +876,16 @@ function App() {
         watermarkPreviewUrl={watermarkPreviewUrl}
         overlayStyle={overlayStyle}
         overlayImageStyle={overlayImageStyle}
+        isWatermarkHovered={isWatermarkHovered}
+        isWatermarkSelected={isWatermarkSelected}
         previewImageRef={previewImageRef}
         onPreviousPdfPage={() => setPdfPreviewPage((current) => Math.max(1, current - 1))}
         onNextPdfPage={() => setPdfPreviewPage((current) => Math.min(pdfPageCount, current + 1))}
         onPreviewImageLoad={onPreviewImageLoad}
+        onClearWatermarkSelection={() => setIsWatermarkSelected(false)}
+        onWatermarkPointerEnter={() => setIsWatermarkHovered(true)}
+        onWatermarkPointerLeave={() => setIsWatermarkHovered(false)}
+        onWatermarkSelect={() => setIsWatermarkSelected(true)}
       />
     </div>
   );

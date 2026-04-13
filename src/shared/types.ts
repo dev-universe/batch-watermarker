@@ -10,6 +10,7 @@ export type AnchorPosition =
   | "SE";
 
 export type SupportedKind = "pdf" | "image";
+export type WatermarkPlacementMode = "preset" | "free";
 
 export interface InputFile {
   path: string;
@@ -21,7 +22,10 @@ export interface WatermarkSettings {
   opacity: number;
   sizePx: number;
   rotation: number;
-  position: AnchorPosition;
+  placementMode: WatermarkPlacementMode;
+  position: AnchorPosition | null;
+  freeCenterX: number | null;
+  freeCenterY: number | null;
   suffix: string;
   outputDirectory: string;
   overwriteOriginal: boolean;
