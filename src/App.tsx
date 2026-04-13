@@ -26,6 +26,7 @@ import {
   resizeFromWidthPreservingAspectRatio
 } from "./shared/watermarkSizing";
 import { getWatermarkCenterPoint, getWatermarkMetrics } from "./shared/watermarkGeometry";
+import { snapWatermarkCenterPoint } from "./shared/watermarkSnap";
 
 const INITIAL_SETTINGS: WatermarkSettings = {
   opacity: 50,
@@ -130,6 +131,13 @@ function App() {
   const [isWatermarkSelected, setIsWatermarkSelected] = useState(false);
   const previewImageRef = useRef<HTMLImageElement | null>(null);
   const pdfRenderTokenRef = useRef(0);
+  const dragStateRef = useRef<{
+    pointerId: number;
+    startPointerX: number;
+    startPointerY: number;
+    startCenterX: number;
+    startCenterY: number;
+  } | null>(null);
   const pendingContinuousEditRef = useRef<EditableStateSnapshot | null>(null);
   const historyRef = useRef(createEmptyHistoryState());
   const currentSnapshotRef = useRef<EditableStateSnapshot>({
@@ -350,6 +358,65 @@ function App() {
       window.removeEventListener("blur", onPointerEnd);
     };
   }, []);
+
+  useEffect(() => {
+    const onPointerMove = (event: PointerEvent) => {
+      const dragState = dragStateRef.current;
+      if (!dragState || dragState.pointerId !== event.pointerId) {
+        return;
+      }
+      if (
+        !previewDisplaySize.width ||
+        !previewDisplaySize.height ||
+        !previewNaturalSize.width ||
+        !previewNaturalSize.height
+      ) {
+        return;
+      }
+
+      const scaleX = previewNaturalSize.width / previewDisplaySize.width;
+      const scaleY = previewNaturalSize.height / previewDisplaySize.height;
+      const nextCenter = snapWatermarkCenterPoint(
+        dragState.startCenterX + (event.clientX - dragState.startPointerX) * scaleX,
+        dragState.startCenterY + (event.clientY - dragState.startPointerY) * scaleY,
+        previewNaturalSize.width,
+        previewNaturalSize.height,
+        24
+      );
+
+      const nextSettings: WatermarkSettings = {
+        ...currentSnapshotRef.current.settings,
+        placementMode: "free",
+        position: null,
+        freeCenterX: nextCenter.x,
+        freeCenterY: nextCenter.y
+      };
+
+      currentSnapshotRef.current = {
+        ...currentSnapshotRef.current,
+        settings: nextSettings
+      };
+      setSettings(nextSettings);
+    };
+
+    const onPointerUp = (event: PointerEvent) => {
+      if (!dragStateRef.current || dragStateRef.current.pointerId !== event.pointerId) {
+        return;
+      }
+
+      dragStateRef.current = null;
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+    };
+  }, [previewDisplaySize, previewNaturalSize]);
 
   const willOverwriteOriginal = settings.suffix.trim() === "";
   const outputSummary = willOverwriteOriginal
@@ -882,10 +949,51 @@ function App() {
         onPreviousPdfPage={() => setPdfPreviewPage((current) => Math.max(1, current - 1))}
         onNextPdfPage={() => setPdfPreviewPage((current) => Math.min(pdfPageCount, current + 1))}
         onPreviewImageLoad={onPreviewImageLoad}
-        onClearWatermarkSelection={() => setIsWatermarkSelected(false)}
+        onClearWatermarkSelection={() => {
+          if (!dragStateRef.current) {
+            setIsWatermarkSelected(false);
+          }
+        }}
         onWatermarkPointerEnter={() => setIsWatermarkHovered(true)}
         onWatermarkPointerLeave={() => setIsWatermarkHovered(false)}
-        onWatermarkSelect={() => setIsWatermarkSelected(true)}
+        onWatermarkPointerDown={(event) => {
+          event.stopPropagation();
+          if (
+            !previewNaturalSize.width ||
+            !previewNaturalSize.height ||
+            !watermarkNaturalSize.width ||
+            !watermarkNaturalSize.height
+          ) {
+            return;
+          }
+
+          setIsWatermarkSelected(true);
+          beginContinuousEdit();
+          const currentCenter = getWatermarkCenterPoint(
+            currentSnapshotRef.current.settings,
+            previewNaturalSize.width,
+            previewNaturalSize.height
+          );
+
+          currentSnapshotRef.current = {
+            ...currentSnapshotRef.current,
+            settings: {
+              ...currentSnapshotRef.current.settings,
+              placementMode: "free",
+              position: null,
+              freeCenterX: currentCenter.x,
+              freeCenterY: currentCenter.y
+            }
+          };
+          setSettings(currentSnapshotRef.current.settings);
+          dragStateRef.current = {
+            pointerId: event.pointerId,
+            startPointerX: event.clientX,
+            startPointerY: event.clientY,
+            startCenterX: currentCenter.x,
+            startCenterY: currentCenter.y
+          };
+        }}
       />
     </div>
   );

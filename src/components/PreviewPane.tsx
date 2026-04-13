@@ -18,7 +18,7 @@ interface PreviewPaneProps {
   onClearWatermarkSelection: () => void;
   onWatermarkPointerEnter: () => void;
   onWatermarkPointerLeave: () => void;
-  onWatermarkSelect: () => void;
+  onWatermarkPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
 }
 
 export function PreviewPane({
@@ -39,7 +39,7 @@ export function PreviewPane({
   onClearWatermarkSelection,
   onWatermarkPointerEnter,
   onWatermarkPointerLeave,
-  onWatermarkSelect
+  onWatermarkPointerDown
 }: PreviewPaneProps) {
   return (
     <main className="preview-pane">
@@ -78,10 +78,7 @@ export function PreviewPane({
                 <div
                   className={`watermark-overlay ${isWatermarkHovered ? "hovered" : ""} ${isWatermarkSelected ? "selected" : ""}`}
                   style={overlayStyle}
-                  onPointerDown={(event) => {
-                    event.stopPropagation();
-                    onWatermarkSelect();
-                  }}
+                  onPointerDown={onWatermarkPointerDown}
                   onPointerEnter={onWatermarkPointerEnter}
                   onPointerLeave={onWatermarkPointerLeave}
                 >
