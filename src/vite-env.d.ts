@@ -11,6 +11,7 @@ declare global {
       normalizeDroppedFiles: (paths: string[]) => Promise<InputFile[]>;
       process: (request: ProcessRequest) => Promise<ProcessResponse>;
       readPreview: (filePath: string) => Promise<PreviewPayload>;
+      findExistingPaths: (paths: string[]) => Promise<string[]>;
       toFileUrl: (filePath: string) => Promise<string>;
       getPathForFile: (file: File) => string;
     };
