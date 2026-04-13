@@ -385,7 +385,6 @@ label {
 .watermark-overlay-image {
   position: absolute;
   display: block;
-  object-fit: contain;
 }
 
 .empty-preview {

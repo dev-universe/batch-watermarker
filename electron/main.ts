@@ -10,7 +10,8 @@ import type {
   PreviewPayload,
   ProcessRequest,
   ProcessResponse,
-  SupportedKind
+  SupportedKind,
+  WatermarkSettings
 } from "../src/shared/types";
 import { resolveOutputPath } from "../src/shared/outputPaths";
 import { getWatermarkCenterPoint, getWatermarkMetrics } from "../src/shared/watermarkGeometry";
@@ -93,9 +94,10 @@ const getPdfWatermarkEmbedSource = async (watermarkPath: string, watermarkBuffer
 const getWatermarkAssetCacheKey = (
   canvasWidth: number,
   canvasHeight: number,
-  sizeRatio: number,
+  settings: Pick<WatermarkSettings, "placementMode" | "freeWidthRatio" | "freeHeightRatio" | "sizeRatio">,
   rotation: number
-) => `${canvasWidth}x${canvasHeight}:${sizeRatio}:${rotation}`;
+) =>
+  `${canvasWidth}x${canvasHeight}:${settings.placementMode}:${settings.sizeRatio}:${settings.freeWidthRatio ?? "null"}:${settings.freeHeightRatio ?? "null"}:${rotation}`;
 
 const buildWatermarkAsset = async (
   watermarkBuffer: Buffer,
@@ -103,19 +105,14 @@ const buildWatermarkAsset = async (
   canvasHeight: number,
   watermarkWidth: number,
   watermarkHeight: number,
-  sizeRatio: number,
+  settings: Pick<WatermarkSettings, "placementMode" | "freeWidthRatio" | "freeHeightRatio" | "sizeRatio">,
   rotation: number
 ): Promise<WatermarkAsset> => {
   const oversampleFactor = 1;
   const metrics = getWatermarkMetrics(
     watermarkWidth,
     watermarkHeight,
-    {
-      placementMode: "preset",
-      freeWidthRatio: null,
-      freeHeightRatio: null,
-      sizeRatio
-    },
+    settings,
     canvasWidth,
     canvasHeight,
     rotation
@@ -124,7 +121,7 @@ const buildWatermarkAsset = async (
     .resize({
       width: Math.max(1, Math.round(metrics.base.width * oversampleFactor)),
       height: Math.max(1, Math.round(metrics.base.height * oversampleFactor)),
-      fit: "contain",
+      fit: "fill",
       kernel: sharp.kernel.lanczos3
     })
     .rotate(rotation, {
@@ -152,10 +149,10 @@ const getOrCreateWatermarkAsset = async (
   canvasHeight: number,
   watermarkWidth: number,
   watermarkHeight: number,
-  sizeRatio: number,
+  settings: Pick<WatermarkSettings, "placementMode" | "freeWidthRatio" | "freeHeightRatio" | "sizeRatio">,
   rotation: number
 ) => {
-  const cacheKey = getWatermarkAssetCacheKey(canvasWidth, canvasHeight, sizeRatio, rotation);
+  const cacheKey = getWatermarkAssetCacheKey(canvasWidth, canvasHeight, settings, rotation);
   const cachedAsset = cache.get(cacheKey);
   if (cachedAsset) {
     return cachedAsset;
@@ -167,7 +164,7 @@ const getOrCreateWatermarkAsset = async (
     canvasHeight,
     watermarkWidth,
     watermarkHeight,
-    sizeRatio,
+    settings,
     rotation
   );
   cache.set(cacheKey, asset);
@@ -287,7 +284,7 @@ const processImageFile = async (
     metadata.height,
     watermarkMetadata.width,
     watermarkMetadata.height,
-    settings.sizeRatio,
+    settings,
     settings.rotation
   );
   const watermarkBufferWithOpacity = await applyOpacityToWatermarkAsset(

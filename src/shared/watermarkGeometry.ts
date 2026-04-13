@@ -52,6 +52,45 @@ export const getWatermarkBaseSize = (
   );
 };
 
+export type ResizeHandle = "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw";
+
+export const resizeWatermarkBoxFromHandle = (
+  handle: ResizeHandle,
+  startCenterX: number,
+  startCenterY: number,
+  startWidth: number,
+  startHeight: number,
+  deltaX: number,
+  deltaY: number,
+  minWidth: number,
+  minHeight: number
+) => {
+  let left = startCenterX - startWidth / 2;
+  let right = startCenterX + startWidth / 2;
+  let top = startCenterY - startHeight / 2;
+  let bottom = startCenterY + startHeight / 2;
+
+  if (handle.includes("w")) {
+    left = Math.min(left + deltaX, right - minWidth);
+  }
+  if (handle.includes("e")) {
+    right = Math.max(right + deltaX, left + minWidth);
+  }
+  if (handle.includes("n")) {
+    top = Math.min(top + deltaY, bottom - minHeight);
+  }
+  if (handle.includes("s")) {
+    bottom = Math.max(bottom + deltaY, top + minHeight);
+  }
+
+  return {
+    centerX: (left + right) / 2,
+    centerY: (top + bottom) / 2,
+    width: right - left,
+    height: bottom - top
+  };
+};
+
 export const getWatermarkMetrics = (
   watermarkWidth: number,
   watermarkHeight: number,

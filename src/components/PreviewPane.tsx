@@ -1,4 +1,5 @@
 import type { CSSProperties, MutableRefObject } from "react";
+import type { ResizeHandle } from "../shared/watermarkGeometry";
 
 const RESIZE_HANDLES = ["n", "ne", "e", "se", "s", "sw", "w", "nw"] as const;
 
@@ -21,6 +22,10 @@ interface PreviewPaneProps {
   onClearWatermarkSelection: () => void;
   onWatermarkPointerEnter: () => void;
   onWatermarkPointerLeave: () => void;
+  onResizeHandlePointerDown: (
+    handle: ResizeHandle,
+    event: React.PointerEvent<HTMLDivElement>
+  ) => void;
   onWatermarkPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
 }
 
@@ -43,6 +48,7 @@ export function PreviewPane({
   onClearWatermarkSelection,
   onWatermarkPointerEnter,
   onWatermarkPointerLeave,
+  onResizeHandlePointerDown,
   onWatermarkPointerDown
 }: PreviewPaneProps) {
   return (
@@ -106,6 +112,12 @@ export function PreviewPane({
                         key={handle}
                         className={`watermark-resize-handle ${handle}`}
                         data-handle={handle}
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          event.currentTarget.setPointerCapture(event.pointerId);
+                          onResizeHandlePointerDown(handle, event);
+                        }}
                       />
                     ))}
                 </div>
