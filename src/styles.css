@@ -284,11 +284,19 @@ label {
   position: absolute;
   pointer-events: auto;
   overflow: visible;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-drag: none;
+  touch-action: none;
 }
 
 .watermark-overlay.hovered .watermark-selection-outline,
 .watermark-overlay.selected .watermark-selection-outline {
   opacity: 1;
+}
+
+.watermark-overlay.dragging {
+  cursor: grabbing;
 }
 
 .watermark-selection-outline {
@@ -300,6 +308,11 @@ label {
   transition: opacity 120ms ease;
   pointer-events: none;
   box-shadow: 0 0 0 1px rgba(255, 250, 245, 0.5) inset;
+}
+
+.watermark-overlay-image {
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .watermark-overlay-image {
