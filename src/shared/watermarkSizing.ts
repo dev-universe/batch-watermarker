@@ -1,3 +1,6 @@
+export const getCanvasLongestEdge = (canvasWidth: number, canvasHeight: number) =>
+  Math.max(canvasWidth, canvasHeight);
+
 export const getSizeFromLongestEdge = (
   sourceWidth: number,
   sourceHeight: number,
@@ -23,6 +26,45 @@ export const getSizeFromLongestEdge = (
 };
 
 export const getLongestEdge = (width: number, height: number) => Math.max(width, height);
+
+export const getLongestEdgeRatio = (
+  longestEdgePx: number,
+  canvasWidth: number,
+  canvasHeight: number
+) => {
+  const canvasLongestEdge = getCanvasLongestEdge(canvasWidth, canvasHeight);
+  if (longestEdgePx <= 0 || canvasLongestEdge <= 0) {
+    return 0;
+  }
+
+  return longestEdgePx / canvasLongestEdge;
+};
+
+export const getLongestEdgePxFromRatio = (
+  longestEdgeRatio: number,
+  canvasWidth: number,
+  canvasHeight: number
+) => {
+  const canvasLongestEdge = getCanvasLongestEdge(canvasWidth, canvasHeight);
+  if (longestEdgeRatio <= 0 || canvasLongestEdge <= 0) {
+    return 0;
+  }
+
+  return longestEdgeRatio * canvasLongestEdge;
+};
+
+export const getSizeFromLongestEdgeRatio = (
+  sourceWidth: number,
+  sourceHeight: number,
+  longestEdgeRatio: number,
+  canvasWidth: number,
+  canvasHeight: number
+) =>
+  getSizeFromLongestEdge(
+    sourceWidth,
+    sourceHeight,
+    getLongestEdgePxFromRatio(longestEdgeRatio, canvasWidth, canvasHeight)
+  );
 
 export const resizeFromWidthPreservingAspectRatio = (
   sourceWidth: number,

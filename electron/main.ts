@@ -71,9 +71,9 @@ type WatermarkAssetCache = Map<string, WatermarkAsset>;
 const getWatermarkAssetCacheKey = (
   canvasWidth: number,
   canvasHeight: number,
-  sizePx: number,
+  sizeRatio: number,
   rotation: number
-) => `${canvasWidth}x${canvasHeight}:${sizePx}:${rotation}`;
+) => `${canvasWidth}x${canvasHeight}:${sizeRatio}:${rotation}`;
 
 const buildWatermarkAsset = async (
   watermarkBuffer: Buffer,
@@ -81,13 +81,15 @@ const buildWatermarkAsset = async (
   canvasHeight: number,
   watermarkWidth: number,
   watermarkHeight: number,
-  sizePx: number,
+  sizeRatio: number,
   rotation: number
 ): Promise<WatermarkAsset> => {
   const metrics = getWatermarkMetrics(
     watermarkWidth,
     watermarkHeight,
-    sizePx,
+    sizeRatio,
+    canvasWidth,
+    canvasHeight,
     rotation
   );
   const rotatedWatermarkBuffer = await sharp(watermarkBuffer)
@@ -122,10 +124,10 @@ const getOrCreateWatermarkAsset = async (
   canvasHeight: number,
   watermarkWidth: number,
   watermarkHeight: number,
-  sizePx: number,
+  sizeRatio: number,
   rotation: number
 ) => {
-  const cacheKey = getWatermarkAssetCacheKey(canvasWidth, canvasHeight, sizePx, rotation);
+  const cacheKey = getWatermarkAssetCacheKey(canvasWidth, canvasHeight, sizeRatio, rotation);
   const cachedAsset = cache.get(cacheKey);
   if (cachedAsset) {
     return cachedAsset;
@@ -137,7 +139,7 @@ const getOrCreateWatermarkAsset = async (
     canvasHeight,
     watermarkWidth,
     watermarkHeight,
-    sizePx,
+    sizeRatio,
     rotation
   );
   cache.set(cacheKey, asset);
@@ -182,7 +184,7 @@ const processImageFile = async (
     metadata.height,
     watermarkMetadata.width,
     watermarkMetadata.height,
-    settings.sizePx,
+    settings.sizeRatio,
     settings.rotation
   );
   const watermarkDataUrl = `data:image/png;base64,${rotatedWatermarkBuffer.toString("base64")}`;
@@ -252,7 +254,7 @@ const processPdfFile = async (
       pageWidth,
       pageHeight
     );
-    const pageCacheKey = getWatermarkAssetCacheKey(pageWidth, pageHeight, settings.sizePx, settings.rotation);
+    const pageCacheKey = getWatermarkAssetCacheKey(pageWidth, pageHeight, settings.sizeRatio, settings.rotation);
     let cachedWatermark = pageWatermarkCache.get(pageCacheKey);
 
     if (!cachedWatermark) {
@@ -263,7 +265,7 @@ const processPdfFile = async (
         pageHeight,
         watermarkMetadata.width,
         watermarkMetadata.height,
-        settings.sizePx,
+        settings.sizeRatio,
         settings.rotation
       );
       cachedWatermark = {

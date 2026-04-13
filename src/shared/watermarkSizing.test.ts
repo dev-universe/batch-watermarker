@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  getCanvasLongestEdge,
   getLongestEdge,
+  getLongestEdgePxFromRatio,
+  getLongestEdgeRatio,
   getSizeFromLongestEdge,
+  getSizeFromLongestEdgeRatio,
   resizeFromWidthPreservingAspectRatio
 } from "./watermarkSizing";
 
@@ -32,6 +36,24 @@ describe("getLongestEdge", () => {
   it("returns the larger of width and height", () => {
     expect(getLongestEdge(320, 180)).toBe(320);
     expect(getLongestEdge(180, 320)).toBe(320);
+  });
+});
+
+describe("canvas-relative sizing helpers", () => {
+  it("returns the canvas longest edge", () => {
+    expect(getCanvasLongestEdge(596, 842)).toBe(842);
+  });
+
+  it("converts between longest-edge pixels and ratios", () => {
+    expect(getLongestEdgeRatio(280, 596, 842)).toBeCloseTo(280 / 842);
+    expect(getLongestEdgePxFromRatio(280 / 842, 2520, 3564)).toBeCloseTo((280 / 842) * 3564);
+  });
+
+  it("computes rendered size from a longest-edge ratio", () => {
+    expect(getSizeFromLongestEdgeRatio(1200, 600, 280 / 842, 596, 842)).toEqual({
+      width: 280,
+      height: 140
+    });
   });
 });
 

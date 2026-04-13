@@ -7,6 +7,7 @@ interface WatermarkPanelProps {
   settings: WatermarkSettings;
   watermarkFile: InputFile | null;
   sizeControlMax: number;
+  displayedSizePx: number;
   renderedWidthPx: number;
   renderedHeightPx: number;
   onOpenWatermarkPicker: () => void;
@@ -21,6 +22,7 @@ export function WatermarkPanel({
   settings,
   watermarkFile,
   sizeControlMax,
+  displayedSizePx,
   renderedWidthPx,
   renderedHeightPx,
   onOpenWatermarkPicker,
@@ -87,7 +89,7 @@ export function WatermarkPanel({
               type="range"
               min="0"
               max={sizeControlMax}
-              value={settings.sizePx}
+              value={displayedSizePx}
               onPointerDown={onBeginContinuousNumericEdit}
               onKeyDown={onRangeKeyDown}
               onChange={(event) => onUpdateNumericSetting("sizePx", event.target.value)}
@@ -97,7 +99,7 @@ export function WatermarkPanel({
               type="number"
               min="0"
               max={sizeControlMax}
-              value={settings.sizePx}
+              value={Math.round(displayedSizePx)}
               onChange={(event) => onUpdateNumericSetting("sizePx", event.target.value)}
             />
           </div>
