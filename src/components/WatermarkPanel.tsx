@@ -9,7 +9,7 @@ interface WatermarkPanelProps {
   onOpenWatermarkPicker: () => void;
   onDropWatermarkFile: (event: DragEvent<HTMLElement>) => Promise<void>;
   onBeginContinuousNumericEdit: () => void;
-  onUpdateNumericSetting: (key: "opacity" | "scale" | "rotation", value: string) => void;
+  onUpdateNumericSetting: (key: "opacity" | "sizePx" | "rotation", value: string) => void;
   onSelectPosition: (position: AnchorPosition) => void;
 }
 
@@ -73,24 +73,24 @@ export function WatermarkPanel({
         </label>
 
         <label>
-          <span>크기 (0~1000%)</span>
+          <span>크기 (px)</span>
           <div className="control-row">
             <input
               type="range"
               min="0"
               max="1000"
-              value={settings.scale}
+              value={settings.sizePx}
               onPointerDown={onBeginContinuousNumericEdit}
               onKeyDown={onRangeKeyDown}
-              onChange={(event) => onUpdateNumericSetting("scale", event.target.value)}
+              onChange={(event) => onUpdateNumericSetting("sizePx", event.target.value)}
             />
             <input
               className="number"
               type="number"
               min="0"
               max="1000"
-              value={settings.scale}
-              onChange={(event) => onUpdateNumericSetting("scale", event.target.value)}
+              value={settings.sizePx}
+              onChange={(event) => onUpdateNumericSetting("sizePx", event.target.value)}
             />
           </div>
         </label>
