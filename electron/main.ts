@@ -62,7 +62,8 @@ const getOutputPath = (
   }
 
   const parsed = path.parse(sourcePath);
-  return path.join(outputDirectory, `${parsed.name}${suffix}${parsed.ext}`);
+  const targetDirectory = outputDirectory || parsed.dir;
+  return path.join(targetDirectory, `${parsed.name}${suffix}${parsed.ext}`);
 };
 
 const getTemporaryOutputPath = (targetPath: string) => {

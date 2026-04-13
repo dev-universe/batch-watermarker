@@ -167,7 +167,7 @@ function App() {
     ? "접미사가 비어 있으면 원본 파일에 직접 덮어씁니다."
     : settings.outputDirectory
       ? settings.outputDirectory
-      : "접미사를 유지하려면 출력 폴더를 지정해야 합니다.";
+      : "출력 폴더를 비워두면 원본 파일과 같은 폴더에 저장합니다.";
 
   const collectDroppedPaths = async (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
@@ -352,11 +352,6 @@ function App() {
       if (!confirmed) {
         return;
       }
-    }
-
-    if (!overwriteOriginal && !settings.outputDirectory) {
-      window.alert("출력 폴더를 지정하세요.");
-      return;
     }
 
     setIsProcessing(true);
