@@ -186,6 +186,22 @@ const getOrCreateWatermarkAsset = async (
   return asset;
 };
 
+const applyOpacityToWatermarkAsset = async (
+  watermarkBuffer: Buffer,
+  opacity: number
+) => {
+  const alphaMultiplier = Math.max(0, Math.min(1, opacity));
+  if (alphaMultiplier === 1) {
+    return watermarkBuffer;
+  }
+
+  return sharp(watermarkBuffer)
+    .ensureAlpha()
+    .linear([1, 1, 1, alphaMultiplier], [0, 0, 0, 0])
+    .png()
+    .toBuffer();
+};
+
 const processImageFile = async (
   inputFile: InputFile,
   watermarkBuffer: Buffer,
@@ -227,13 +243,15 @@ const processImageFile = async (
     settings.sizeRatio,
     settings.rotation
   );
-  const watermarkDataUrl = `data:image/png;base64,${rotatedWatermarkBuffer.toString("base64")}`;
+  const watermarkBufferWithOpacity = await applyOpacityToWatermarkAsset(
+    rotatedWatermarkBuffer,
+    settings.opacity / 100
+  );
+  const watermarkDataUrl = `data:image/png;base64,${watermarkBufferWithOpacity.toString("base64")}`;
   const topLeftX = anchorCenter.x - drawWidth / 2;
   const topLeftY = anchorCenter.y - drawHeight / 2;
   const watermarkLayer = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${metadata.width}" height="${metadata.height}"><image href="${watermarkDataUrl}" x="${topLeftX}" y="${topLeftY}" width="${drawWidth}" height="${drawHeight}" opacity="${
-      settings.opacity / 100
-    }"/></svg>`
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${metadata.width}" height="${metadata.height}"><image href="${watermarkDataUrl}" x="${topLeftX}" y="${topLeftY}" width="${drawWidth}" height="${drawHeight}" opacity="1"/></svg>`
   );
 
   const density = metadata.density;
