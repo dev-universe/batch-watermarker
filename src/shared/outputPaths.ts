@@ -5,6 +5,11 @@ export interface PlannedOutput {
   outputPath: string;
 }
 
+export interface PlannedOutputConflictOptions {
+  existingPaths?: string[];
+  inputPaths?: string[];
+}
+
 const splitFilePath = (filePath: string) => {
   const separatorIndex = Math.max(filePath.lastIndexOf("/"), filePath.lastIndexOf("\\"));
   const directory = separatorIndex >= 0 ? filePath.slice(0, separatorIndex) : "";
@@ -63,3 +68,29 @@ export const collectPlannedOutputs = (
       settings.overwriteOriginal
     )
   }));
+
+export const collectPlannedOutputConflicts = (
+  plannedOutputs: PlannedOutput[],
+  options: PlannedOutputConflictOptions = {}
+) => {
+  const duplicateOutputPaths = new Set<string>();
+  const outputPathCounts = new Map<string, number>();
+
+  for (const plannedOutput of plannedOutputs) {
+    const currentCount = outputPathCounts.get(plannedOutput.outputPath) ?? 0;
+    outputPathCounts.set(plannedOutput.outputPath, currentCount + 1);
+    if (currentCount >= 1) {
+      duplicateOutputPaths.add(plannedOutput.outputPath);
+    }
+  }
+
+  const inputPathSet = new Set(options.inputPaths ?? []);
+  const conflictingInputPaths = plannedOutputs
+    .filter(
+      (plannedOutput) =>
+        plannedOutput.outputPath !== plannedOutput.sourcePath && inputPathSet.has(plannedOutput.outputPath)
+    )
+    .map((plannedOutput) => plannedOutput.outputPath);
+
+  return [...new Set([...duplicateOutputPaths, ...conflictingInputPaths, ...(options.existingPaths ?? [])])];
+};
