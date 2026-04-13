@@ -110,7 +110,12 @@ const buildWatermarkAsset = async (
   const metrics = getWatermarkMetrics(
     watermarkWidth,
     watermarkHeight,
-    sizeRatio,
+    {
+      placementMode: "preset",
+      freeWidthRatio: null,
+      freeHeightRatio: null,
+      sizeRatio
+    },
     canvasWidth,
     canvasHeight,
     rotation
@@ -359,7 +364,7 @@ const processPdfFile = async (
     const metrics = getWatermarkMetrics(
       watermarkMetadata.width,
       watermarkMetadata.height,
-      settings.sizeRatio,
+      settings,
       pageWidth,
       pageHeight,
       settings.rotation
