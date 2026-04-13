@@ -24,7 +24,7 @@ import { getAnchorCenterPoint, getWatermarkMetrics } from "./shared/watermarkGeo
 
 const INITIAL_SETTINGS: WatermarkSettings = {
   opacity: 7,
-  scale: 100,
+  sizePx: 280,
   rotation: 0,
   position: "C",
   suffix: "_wm",
@@ -403,15 +403,15 @@ function App() {
     }
   };
 
-  const updateNumericSetting = (key: "opacity" | "scale" | "rotation", value: string) => {
+  const updateNumericSetting = (key: "opacity" | "sizePx" | "rotation", value: string) => {
     const max = key === "opacity" ? 100 : key === "rotation" ? 360 : 1000;
     const nextValue = clamp(Number(value), 0, max);
     if (pendingContinuousEditRef.current) {
       currentSnapshotRef.current = {
         ...currentSnapshotRef.current,
-        settings: {
-          ...currentSnapshotRef.current.settings,
-          [key]: nextValue
+      settings: {
+        ...currentSnapshotRef.current.settings,
+        [key]: nextValue
         }
       };
       setSettings((current) => ({ ...current, [key]: nextValue }));
@@ -670,11 +670,9 @@ function App() {
     }
 
     const metrics = getWatermarkMetrics(
-      previewNaturalSize.width,
-      previewNaturalSize.height,
       watermarkNaturalSize.width,
       watermarkNaturalSize.height,
-      settings.scale,
+      settings.sizePx,
       settings.rotation
     );
     const anchorCenter = getAnchorCenterPoint(
@@ -692,7 +690,7 @@ function App() {
       top: `${(anchorCenter.y - metrics.rotated.height / 2) * displayScaleY}px`,
       opacity: settings.opacity / 100
     };
-  }, [previewDisplaySize, previewNaturalSize, settings.opacity, settings.position, settings.rotation, settings.scale, watermarkNaturalSize]);
+  }, [previewDisplaySize, previewNaturalSize, settings.opacity, settings.position, settings.rotation, settings.sizePx, watermarkNaturalSize]);
 
   const overlayImageStyle = useMemo(() => {
     if (
@@ -707,11 +705,9 @@ function App() {
     }
 
     const metrics = getWatermarkMetrics(
-      previewNaturalSize.width,
-      previewNaturalSize.height,
       watermarkNaturalSize.width,
       watermarkNaturalSize.height,
-      settings.scale,
+      settings.sizePx,
       settings.rotation
     );
     const displayScaleX = previewDisplaySize.width / previewNaturalSize.width;
@@ -725,7 +721,7 @@ function App() {
       left: "50%",
       top: "50%"
     } as const;
-  }, [previewDisplaySize, previewNaturalSize, settings.rotation, settings.scale, watermarkNaturalSize]);
+  }, [previewDisplaySize, previewNaturalSize, settings.rotation, settings.sizePx, watermarkNaturalSize]);
 
   return (
     <div className="shell">

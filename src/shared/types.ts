@@ -19,7 +19,7 @@ export interface InputFile {
 
 export interface WatermarkSettings {
   opacity: number;
-  scale: number;
+  sizePx: number;
   rotation: number;
   position: AnchorPosition;
   suffix: string;

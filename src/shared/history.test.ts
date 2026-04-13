@@ -17,7 +17,7 @@ const createSnapshot = (
   watermarkFile: null,
   settings: {
     opacity: 7,
-    scale: 100,
+    sizePx: 280,
     rotation: 0,
     position: "C",
     suffix: "_wm",
@@ -65,7 +65,7 @@ describe("history helpers", () => {
     const after = createSnapshot({
       settings: {
         ...before.settings,
-        scale: 700
+        sizePx: 700
       }
     });
 
