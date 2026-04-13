@@ -9,7 +9,6 @@ interface WatermarkPanelProps {
   onOpenWatermarkPicker: () => void;
   onDropWatermarkFile: (event: DragEvent<HTMLElement>) => Promise<void>;
   onBeginContinuousNumericEdit: () => void;
-  onEndContinuousNumericEdit: () => void;
   onUpdateNumericSetting: (key: "opacity" | "scale" | "rotation", value: string) => void;
   onSelectPosition: (position: AnchorPosition) => void;
 }
@@ -20,7 +19,6 @@ export function WatermarkPanel({
   onOpenWatermarkPicker,
   onDropWatermarkFile,
   onBeginContinuousNumericEdit,
-  onEndContinuousNumericEdit,
   onUpdateNumericSetting,
   onSelectPosition
 }: WatermarkPanelProps) {
@@ -33,18 +31,6 @@ export function WatermarkPanel({
       event.key === "PageDown"
     ) {
       onBeginContinuousNumericEdit();
-    }
-  };
-
-  const onRangeKeyUp = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (
-      event.key.startsWith("Arrow") ||
-      event.key === "Home" ||
-      event.key === "End" ||
-      event.key === "PageUp" ||
-      event.key === "PageDown"
-    ) {
-      onEndContinuousNumericEdit();
     }
   };
 
@@ -72,11 +58,7 @@ export function WatermarkPanel({
               max="100"
               value={settings.opacity}
               onPointerDown={onBeginContinuousNumericEdit}
-              onPointerUp={onEndContinuousNumericEdit}
-              onPointerCancel={onEndContinuousNumericEdit}
               onKeyDown={onRangeKeyDown}
-              onKeyUp={onRangeKeyUp}
-              onBlur={onEndContinuousNumericEdit}
               onChange={(event) => onUpdateNumericSetting("opacity", event.target.value)}
             />
             <input
@@ -99,11 +81,7 @@ export function WatermarkPanel({
               max="1000"
               value={settings.scale}
               onPointerDown={onBeginContinuousNumericEdit}
-              onPointerUp={onEndContinuousNumericEdit}
-              onPointerCancel={onEndContinuousNumericEdit}
               onKeyDown={onRangeKeyDown}
-              onKeyUp={onRangeKeyUp}
-              onBlur={onEndContinuousNumericEdit}
               onChange={(event) => onUpdateNumericSetting("scale", event.target.value)}
             />
             <input
@@ -126,11 +104,7 @@ export function WatermarkPanel({
               max="360"
               value={settings.rotation}
               onPointerDown={onBeginContinuousNumericEdit}
-              onPointerUp={onEndContinuousNumericEdit}
-              onPointerCancel={onEndContinuousNumericEdit}
               onKeyDown={onRangeKeyDown}
-              onKeyUp={onRangeKeyUp}
-              onBlur={onEndContinuousNumericEdit}
               onChange={(event) => onUpdateNumericSetting("rotation", event.target.value)}
             />
             <input

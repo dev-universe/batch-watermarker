@@ -348,6 +348,35 @@ function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  useEffect(() => {
+    const onPointerEnd = () => {
+      endContinuousEdit();
+    };
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (
+        event.key.startsWith("Arrow") ||
+        event.key === "Home" ||
+        event.key === "End" ||
+        event.key === "PageUp" ||
+        event.key === "PageDown"
+      ) {
+        endContinuousEdit();
+      }
+    };
+
+    window.addEventListener("pointerup", onPointerEnd);
+    window.addEventListener("pointercancel", onPointerEnd);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onPointerEnd);
+
+    return () => {
+      window.removeEventListener("pointerup", onPointerEnd);
+      window.removeEventListener("pointercancel", onPointerEnd);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onPointerEnd);
+    };
+  }, []);
+
   const willOverwriteOriginal = settings.suffix.trim() === "";
   const outputSummary = willOverwriteOriginal
     ? "접미사가 비어 있으면 원본 파일에 직접 덮어씁니다."
@@ -776,7 +805,6 @@ function App() {
           onOpenWatermarkPicker={openWatermarkPicker}
           onDropWatermarkFile={onDropWatermarkFile}
           onBeginContinuousNumericEdit={beginContinuousEdit}
-          onEndContinuousNumericEdit={endContinuousEdit}
           onUpdateNumericSetting={updateNumericSetting}
           onSelectPosition={(position) =>
             commitSnapshot((current) => ({
