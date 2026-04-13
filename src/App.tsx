@@ -50,8 +50,8 @@ interface EditableStateSnapshot {
 }
 
 const cloneSnapshot = (snapshot: EditableStateSnapshot): EditableStateSnapshot => ({
-  inputFiles: snapshot.inputFiles.map((inputFile) => ({ ...inputFile })),
-  watermarkFile: snapshot.watermarkFile ? { ...snapshot.watermarkFile } : null,
+  inputFiles: [...snapshot.inputFiles],
+  watermarkFile: snapshot.watermarkFile,
   settings: { ...snapshot.settings },
   selectedPreviewPath: snapshot.selectedPreviewPath
 });
