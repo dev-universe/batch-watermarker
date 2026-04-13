@@ -10,7 +10,7 @@ import type {
   ProcessResponse,
   WatermarkSettings
 } from "./shared/types";
-import { collectPlannedOutputs } from "./shared/outputPaths";
+import { collectPlannedOutputConflicts, collectPlannedOutputs } from "./shared/outputPaths";
 import { getAnchorCenterPoint, getWatermarkMetrics } from "./shared/watermarkGeometry";
 
 const INITIAL_SETTINGS: WatermarkSettings = {
@@ -379,28 +379,13 @@ function App() {
       outputDirectory: settings.outputDirectory,
       overwriteOriginal
     });
-    const duplicateOutputPaths = new Set<string>();
-    const outputPathCounts = new Map<string, number>();
-
-    for (const plannedOutput of plannedOutputs) {
-      const currentCount = outputPathCounts.get(plannedOutput.outputPath) ?? 0;
-      outputPathCounts.set(plannedOutput.outputPath, currentCount + 1);
-      if (currentCount >= 1) {
-        duplicateOutputPaths.add(plannedOutput.outputPath);
-      }
-    }
-
-    const inputPathSet = new Set(inputFiles.map((inputFile) => inputFile.path));
-    const conflictingInputPaths = plannedOutputs
-      .filter(
-        (plannedOutput) =>
-          plannedOutput.outputPath !== plannedOutput.sourcePath && inputPathSet.has(plannedOutput.outputPath)
-      )
-      .map((plannedOutput) => plannedOutput.outputPath);
     const existingOutputPaths = overwriteOriginal
       ? []
       : await window.watermarkApi.findExistingPaths(plannedOutputs.map((plannedOutput) => plannedOutput.outputPath));
-    const pathConflicts = [...new Set([...duplicateOutputPaths, ...conflictingInputPaths, ...existingOutputPaths])];
+    const pathConflicts = collectPlannedOutputConflicts(plannedOutputs, {
+      existingPaths: existingOutputPaths,
+      inputPaths: inputFiles.map((inputFile) => inputFile.path)
+    });
 
     if (pathConflicts.length > 0) {
       const confirmed = window.confirm(formatConflictConfirmMessage(pathConflicts));
