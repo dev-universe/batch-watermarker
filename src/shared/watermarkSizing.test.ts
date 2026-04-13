@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getLongestEdge, getSizeFromLongestEdge } from "./watermarkSizing";
+import {
+  getLongestEdge,
+  getSizeFromLongestEdge,
+  resizeFromWidthPreservingAspectRatio
+} from "./watermarkSizing";
 
 describe("getSizeFromLongestEdge", () => {
   it("uses the width as the longest edge for landscape images", () => {
@@ -28,5 +32,15 @@ describe("getLongestEdge", () => {
   it("returns the larger of width and height", () => {
     expect(getLongestEdge(320, 180)).toBe(320);
     expect(getLongestEdge(180, 320)).toBe(320);
+  });
+});
+
+describe("resizeFromWidthPreservingAspectRatio", () => {
+  it("updates height and sizePx from a target width", () => {
+    expect(resizeFromWidthPreservingAspectRatio(1200, 600, 300)).toEqual({
+      width: 300,
+      height: 150,
+      sizePx: 300
+    });
   });
 });

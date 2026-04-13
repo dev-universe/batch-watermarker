@@ -20,10 +20,15 @@ import {
   type EditableStateSnapshot
 } from "./shared/history";
 import { collectPlannedOutputConflicts, collectPlannedOutputs } from "./shared/outputPaths";
+import {
+  getLongestEdge,
+  getSizeFromLongestEdge,
+  resizeFromWidthPreservingAspectRatio
+} from "./shared/watermarkSizing";
 import { getAnchorCenterPoint, getWatermarkMetrics } from "./shared/watermarkGeometry";
 
 const INITIAL_SETTINGS: WatermarkSettings = {
-  opacity: 7,
+  opacity: 50,
   sizePx: 280,
   rotation: 0,
   position: "C",
@@ -50,6 +55,18 @@ const createObjectUrlFromPreview = (previewPayload: PreviewPayload) => {
   const blob = new Blob([bytes], { type: previewPayload.mimeType });
   return URL.createObjectURL(blob);
 };
+
+const readImageNaturalSize = (objectUrl: string) =>
+  new Promise<{ width: number; height: number }>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () =>
+      resolve({
+        width: image.naturalWidth,
+        height: image.naturalHeight
+      });
+    image.onerror = () => reject(new Error("Unable to read watermark dimensions."));
+    image.src = objectUrl;
+  });
 
 const formatConflictConfirmMessage = (conflicts: string[]) => {
   const previewLines = conflicts.slice(0, 6).map((conflict) => `- ${conflict}`);
@@ -335,6 +352,26 @@ function App() {
     : settings.outputDirectory
       ? settings.outputDirectory
       : "출력 폴더를 비워두면 원본 파일과 같은 폴더에 저장합니다.";
+  const renderedWatermarkSize = useMemo(
+    () =>
+      getSizeFromLongestEdge(
+        watermarkNaturalSize.width,
+        watermarkNaturalSize.height,
+        settings.sizePx
+      ),
+    [settings.sizePx, watermarkNaturalSize]
+  );
+  const sizeControlMax = useMemo(
+    () =>
+      Math.max(
+        1000,
+        settings.sizePx,
+        previewNaturalSize.width,
+        previewNaturalSize.height,
+        getLongestEdge(watermarkNaturalSize.width, watermarkNaturalSize.height)
+      ),
+    [previewNaturalSize, settings.sizePx, watermarkNaturalSize]
+  );
 
   const collectDroppedPaths = async (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
@@ -368,10 +405,11 @@ function App() {
     const paths = await collectDroppedPaths(event);
     const normalized = await window.watermarkApi.normalizeDroppedFiles(paths);
     const imageFile = normalized.find((file) => file.kind === "image") ?? null;
-    commitSnapshot((current) => ({
-      ...current,
-      watermarkFile: imageFile
-    }));
+    if (!imageFile) {
+      return;
+    }
+
+    await selectWatermarkFile(imageFile);
   };
 
   const openInputPicker = async () => {
@@ -382,10 +420,29 @@ function App() {
   const openWatermarkPicker = async () => {
     const file = await window.watermarkApi.pickWatermarkFile();
     if (file?.kind === "image") {
+      await selectWatermarkFile(file);
+    }
+  };
+
+  const selectWatermarkFile = async (file: InputFile) => {
+    const previewPayload = await window.watermarkApi.readPreview(file.path);
+    const objectUrl = createObjectUrlFromPreview(previewPayload);
+
+    try {
+      const naturalSize = await readImageNaturalSize(objectUrl);
+      const sizePx = getLongestEdge(naturalSize.width, naturalSize.height);
+
       commitSnapshot((current) => ({
         ...current,
-        watermarkFile: file
+        watermarkFile: file,
+        settings: {
+          ...current.settings,
+          opacity: 50,
+          sizePx
+        }
       }));
+    } finally {
+      URL.revokeObjectURL(objectUrl);
     }
   };
 
@@ -404,7 +461,7 @@ function App() {
   };
 
   const updateNumericSetting = (key: "opacity" | "sizePx" | "rotation", value: string) => {
-    const max = key === "opacity" ? 100 : key === "rotation" ? 360 : 1000;
+    const max = key === "opacity" ? 100 : key === "rotation" ? 360 : sizeControlMax;
     const nextValue = clamp(Number(value), 0, max);
     if (pendingContinuousEditRef.current) {
       currentSnapshotRef.current = {
@@ -441,6 +498,23 @@ function App() {
         selectedPreviewPath: nextSelectedPreviewPath
       };
     });
+  };
+
+  const onWidthPxChange = (value: string) => {
+    const nextWidth = clamp(Number(value), 0, sizeControlMax);
+    const nextSizing = resizeFromWidthPreservingAspectRatio(
+      watermarkNaturalSize.width,
+      watermarkNaturalSize.height,
+      nextWidth
+    );
+
+    commitSnapshot((current) => ({
+      ...current,
+      settings: {
+        ...current.settings,
+        sizePx: nextSizing.sizePx
+      }
+    }));
   };
 
   const clearOutputDirectory = () => {
@@ -750,10 +824,14 @@ function App() {
         <WatermarkPanel
           settings={settings}
           watermarkFile={watermarkFile}
+          sizeControlMax={sizeControlMax}
+          renderedWidthPx={renderedWatermarkSize.width}
+          renderedHeightPx={renderedWatermarkSize.height}
           onOpenWatermarkPicker={openWatermarkPicker}
           onDropWatermarkFile={onDropWatermarkFile}
           onBeginContinuousNumericEdit={beginContinuousEdit}
           onUpdateNumericSetting={updateNumericSetting}
+          onWidthPxChange={onWidthPxChange}
           onSelectPosition={(position) =>
             commitSnapshot((current) => ({
               ...current,

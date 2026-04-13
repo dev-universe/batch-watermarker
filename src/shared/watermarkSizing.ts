@@ -23,3 +23,27 @@ export const getSizeFromLongestEdge = (
 };
 
 export const getLongestEdge = (width: number, height: number) => Math.max(width, height);
+
+export const resizeFromWidthPreservingAspectRatio = (
+  sourceWidth: number,
+  sourceHeight: number,
+  targetWidth: number
+) => {
+  if (sourceWidth <= 0 || sourceHeight <= 0 || targetWidth <= 0) {
+    return {
+      width: 0,
+      height: 0,
+      sizePx: 0
+    };
+  }
+
+  const ratio = targetWidth / sourceWidth;
+  const width = targetWidth;
+  const height = sourceHeight * ratio;
+
+  return {
+    width,
+    height,
+    sizePx: getLongestEdge(width, height)
+  };
+};

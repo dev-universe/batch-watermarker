@@ -6,20 +6,28 @@ const POSITIONS: AnchorPosition[] = ["NW", "N", "NE", "W", "C", "E", "SW", "S", 
 interface WatermarkPanelProps {
   settings: WatermarkSettings;
   watermarkFile: InputFile | null;
+  sizeControlMax: number;
+  renderedWidthPx: number;
+  renderedHeightPx: number;
   onOpenWatermarkPicker: () => void;
   onDropWatermarkFile: (event: DragEvent<HTMLElement>) => Promise<void>;
   onBeginContinuousNumericEdit: () => void;
   onUpdateNumericSetting: (key: "opacity" | "sizePx" | "rotation", value: string) => void;
+  onWidthPxChange: (value: string) => void;
   onSelectPosition: (position: AnchorPosition) => void;
 }
 
 export function WatermarkPanel({
   settings,
   watermarkFile,
+  sizeControlMax,
+  renderedWidthPx,
+  renderedHeightPx,
   onOpenWatermarkPicker,
   onDropWatermarkFile,
   onBeginContinuousNumericEdit,
   onUpdateNumericSetting,
+  onWidthPxChange,
   onSelectPosition
 }: WatermarkPanelProps) {
   const onRangeKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -78,7 +86,7 @@ export function WatermarkPanel({
             <input
               type="range"
               min="0"
-              max="1000"
+              max={sizeControlMax}
               value={settings.sizePx}
               onPointerDown={onBeginContinuousNumericEdit}
               onKeyDown={onRangeKeyDown}
@@ -88,10 +96,23 @@ export function WatermarkPanel({
               className="number"
               type="number"
               min="0"
-              max="1000"
+              max={sizeControlMax}
               value={settings.sizePx}
               onChange={(event) => onUpdateNumericSetting("sizePx", event.target.value)}
             />
+          </div>
+        </label>
+
+        <label>
+          <span>가로 (px)</span>
+          <div className="control-row">
+            <input
+              type="number"
+              min="0"
+              value={Math.round(renderedWidthPx)}
+              onChange={(event) => onWidthPxChange(event.target.value)}
+            />
+            <input className="number" type="number" value={Math.round(renderedHeightPx)} readOnly />
           </div>
         </label>
 
