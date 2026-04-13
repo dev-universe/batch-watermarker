@@ -140,6 +140,7 @@ function App() {
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
   const previewImageRef = useRef<HTMLImageElement | null>(null);
   const pdfRenderTokenRef = useRef(0);
+  const pendingContinuousEditRef = useRef<EditableStateSnapshot | null>(null);
   const historyRef = useRef<{
     past: EditableStateSnapshot[];
     future: EditableStateSnapshot[];
@@ -202,6 +203,30 @@ function App() {
     historyRef.current.past.push(cloneSnapshot(currentSnapshotRef.current));
     currentSnapshotRef.current = cloneSnapshot(next);
     applySnapshot(next);
+  };
+
+  const beginContinuousEdit = () => {
+    if (!pendingContinuousEditRef.current) {
+      pendingContinuousEditRef.current = cloneSnapshot(currentSnapshotRef.current);
+    }
+  };
+
+  const endContinuousEdit = () => {
+    const pendingSnapshot = pendingContinuousEditRef.current;
+    if (!pendingSnapshot) {
+      return;
+    }
+
+    pendingContinuousEditRef.current = null;
+    if (areSnapshotsEqual(pendingSnapshot, currentSnapshotRef.current)) {
+      return;
+    }
+
+    historyRef.current.past.push(cloneSnapshot(pendingSnapshot));
+    if (historyRef.current.past.length > 100) {
+      historyRef.current.past.shift();
+    }
+    historyRef.current.future = [];
   };
 
   useEffect(() => {
@@ -400,6 +425,18 @@ function App() {
   const updateNumericSetting = (key: "opacity" | "scale" | "rotation", value: string) => {
     const max = key === "opacity" ? 100 : key === "rotation" ? 360 : 1000;
     const nextValue = clamp(Number(value), 0, max);
+    if (pendingContinuousEditRef.current) {
+      currentSnapshotRef.current = {
+        ...currentSnapshotRef.current,
+        settings: {
+          ...currentSnapshotRef.current.settings,
+          [key]: nextValue
+        }
+      };
+      setSettings((current) => ({ ...current, [key]: nextValue }));
+      return;
+    }
+
     commitSnapshot((current) => ({
       ...current,
       settings: {
@@ -738,6 +775,8 @@ function App() {
           watermarkFile={watermarkFile}
           onOpenWatermarkPicker={openWatermarkPicker}
           onDropWatermarkFile={onDropWatermarkFile}
+          onBeginContinuousNumericEdit={beginContinuousEdit}
+          onEndContinuousNumericEdit={endContinuousEdit}
           onUpdateNumericSetting={updateNumericSetting}
           onSelectPosition={(position) =>
             commitSnapshot((current) => ({
