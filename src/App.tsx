@@ -26,11 +26,15 @@ import {
   getLongestEdge,
   getLongestEdgePxFromRatio,
   getLongestEdgeRatio,
-  getSizeFromLongestEdge,
-  getSizeFromLongestEdgeRatio,
   resizeFromWidthPreservingAspectRatio
 } from "./shared/watermarkSizing";
-import { getWatermarkCenterPoint, getWatermarkMetrics } from "./shared/watermarkGeometry";
+import {
+  getWatermarkBaseSize,
+  getWatermarkCenterPoint,
+  getWatermarkMetrics,
+  resizeWatermarkBoxFromHandle,
+  type ResizeHandle
+} from "./shared/watermarkGeometry";
 import { snapWatermarkCenterPoint } from "./shared/watermarkSnap";
 
 const INITIAL_SETTINGS: WatermarkSettings = {
@@ -145,6 +149,16 @@ function App() {
     startPointerY: number;
     startCenterX: number;
     startCenterY: number;
+  } | null>(null);
+  const resizeStateRef = useRef<{
+    pointerId: number;
+    handle: ResizeHandle;
+    startPointerX: number;
+    startPointerY: number;
+    startCenterX: number;
+    startCenterY: number;
+    startWidth: number;
+    startHeight: number;
   } | null>(null);
   const pendingContinuousEditRef = useRef<EditableStateSnapshot | null>(null);
   const historyRef = useRef(createEmptyHistoryState());
@@ -370,9 +384,6 @@ function App() {
   useEffect(() => {
     const onPointerMove = (event: PointerEvent) => {
       const dragState = dragStateRef.current;
-      if (!dragState || dragState.pointerId !== event.pointerId) {
-        return;
-      }
       if (
         !previewDisplaySize.width ||
         !previewDisplaySize.height ||
@@ -384,6 +395,42 @@ function App() {
 
       const scaleX = previewCoordinateSize.width / previewDisplaySize.width;
       const scaleY = previewCoordinateSize.height / previewDisplaySize.height;
+      const resizeState = resizeStateRef.current;
+      if (resizeState && resizeState.pointerId === event.pointerId) {
+        const nextBox = resizeWatermarkBoxFromHandle(
+          resizeState.handle,
+          resizeState.startCenterX,
+          resizeState.startCenterY,
+          resizeState.startWidth,
+          resizeState.startHeight,
+          (event.clientX - resizeState.startPointerX) * scaleX,
+          (event.clientY - resizeState.startPointerY) * scaleY,
+          24,
+          24
+        );
+        const nextSettings: WatermarkSettings = {
+          ...currentSnapshotRef.current.settings,
+          placementMode: "free",
+          position: null,
+          freeCenterXRatio: nextBox.centerX / previewCoordinateSize.width,
+          freeCenterYRatio: nextBox.centerY / previewCoordinateSize.height,
+          freeWidthRatio: nextBox.width / previewCoordinateSize.width,
+          freeHeightRatio: nextBox.height / previewCoordinateSize.height
+        };
+
+        currentSnapshotRef.current = {
+          ...currentSnapshotRef.current,
+          settings: nextSettings
+        };
+        flushSync(() => {
+          setSettings(nextSettings);
+        });
+        return;
+      }
+      if (!dragState || dragState.pointerId !== event.pointerId) {
+        return;
+      }
+
       const nextCenter = snapWatermarkCenterPoint(
         dragState.startCenterX + (event.clientX - dragState.startPointerX) * scaleX,
         dragState.startCenterY + (event.clientY - dragState.startPointerY) * scaleY,
@@ -410,6 +457,11 @@ function App() {
     };
 
     const onPointerUp = (event: PointerEvent) => {
+      if (resizeStateRef.current && resizeStateRef.current.pointerId === event.pointerId) {
+        resizeStateRef.current = null;
+        setIsWatermarkDragging(false);
+        return;
+      }
       if (!dragStateRef.current || dragStateRef.current.pointerId !== event.pointerId) {
         return;
       }
@@ -437,23 +489,18 @@ function App() {
       : "출력 폴더를 비워두면 원본 파일과 같은 폴더에 저장합니다.";
   const renderedWatermarkSize = useMemo(
     () =>
-      getSizeFromLongestEdgeRatio(
+      getWatermarkBaseSize(
+        settings,
         watermarkNaturalSize.width,
         watermarkNaturalSize.height,
-        settings.sizeRatio,
         previewCoordinateSize.width,
         previewCoordinateSize.height
       ),
-    [previewCoordinateSize, settings.sizeRatio, watermarkNaturalSize]
+    [previewCoordinateSize, settings, watermarkNaturalSize]
   );
   const displayedSizePx = useMemo(
-    () =>
-      getLongestEdgePxFromRatio(
-        settings.sizeRatio,
-        previewCoordinateSize.width,
-        previewCoordinateSize.height
-      ),
-    [previewCoordinateSize, settings.sizeRatio]
+    () => getLongestEdge(renderedWatermarkSize.width, renderedWatermarkSize.height),
+    [renderedWatermarkSize]
   );
   const sizeControlMax = useMemo(
     () =>
@@ -573,7 +620,9 @@ function App() {
               nextValue,
               previewCoordinateSize.width,
               previewCoordinateSize.height
-            )
+            ),
+            freeWidthRatio: null,
+            freeHeightRatio: null
           }
         : { [key]: nextValue };
 
@@ -630,7 +679,9 @@ function App() {
           nextSizing.sizePx,
           previewCoordinateSize.width,
           previewCoordinateSize.height
-        )
+        ),
+        freeWidthRatio: null,
+        freeHeightRatio: null
       }
     }));
   };
@@ -894,6 +945,8 @@ function App() {
     settings.position,
     settings.freeCenterXRatio,
     settings.freeCenterYRatio,
+    settings.freeWidthRatio,
+    settings.freeHeightRatio,
     settings.rotation,
     settings.sizeRatio,
     watermarkNaturalSize
@@ -930,7 +983,15 @@ function App() {
       left: "50%",
       top: "50%"
     } as const;
-  }, [previewCoordinateSize, previewDisplaySize, settings.rotation, settings.sizeRatio, watermarkNaturalSize]);
+  }, [
+    previewCoordinateSize,
+    previewDisplaySize,
+    settings.rotation,
+    settings.sizeRatio,
+    settings.freeWidthRatio,
+    settings.freeHeightRatio,
+    watermarkNaturalSize
+  ]);
 
   return (
     <div className="shell">
@@ -1015,12 +1076,63 @@ function App() {
         onNextPdfPage={() => setPdfPreviewPage((current) => Math.min(pdfPageCount, current + 1))}
         onPreviewImageLoad={onPreviewImageLoad}
         onClearWatermarkSelection={() => {
-          if (!dragStateRef.current) {
+          if (!dragStateRef.current && !resizeStateRef.current) {
             setIsWatermarkSelected(false);
           }
         }}
         onWatermarkPointerEnter={() => setIsWatermarkHovered(true)}
         onWatermarkPointerLeave={() => setIsWatermarkHovered(false)}
+        onResizeHandlePointerDown={(handle, event) => {
+          event.stopPropagation();
+          if (
+            !previewCoordinateSize.width ||
+            !previewCoordinateSize.height ||
+            !watermarkNaturalSize.width ||
+            !watermarkNaturalSize.height
+          ) {
+            return;
+          }
+
+          setIsWatermarkSelected(true);
+          setIsWatermarkDragging(true);
+          beginContinuousEdit();
+          const currentCenter = getWatermarkCenterPoint(
+            currentSnapshotRef.current.settings,
+            previewCoordinateSize.width,
+            previewCoordinateSize.height
+          );
+          const currentBaseSize = getWatermarkBaseSize(
+            currentSnapshotRef.current.settings,
+            watermarkNaturalSize.width,
+            watermarkNaturalSize.height,
+            previewCoordinateSize.width,
+            previewCoordinateSize.height
+          );
+
+          currentSnapshotRef.current = {
+            ...currentSnapshotRef.current,
+            settings: {
+              ...currentSnapshotRef.current.settings,
+              placementMode: "free",
+              position: null,
+              freeCenterXRatio: currentCenter.x / previewCoordinateSize.width,
+              freeCenterYRatio: currentCenter.y / previewCoordinateSize.height,
+              freeWidthRatio: currentBaseSize.width / previewCoordinateSize.width,
+              freeHeightRatio: currentBaseSize.height / previewCoordinateSize.height
+            }
+          };
+          setSettings(currentSnapshotRef.current.settings);
+          resizeStateRef.current = {
+            pointerId: event.pointerId,
+            handle,
+            startPointerX: event.clientX,
+            startPointerY: event.clientY,
+            startCenterX: currentCenter.x,
+            startCenterY: currentCenter.y,
+            startWidth: currentBaseSize.width,
+            startHeight: currentBaseSize.height
+          };
+        }}
         onWatermarkPointerDown={(event) => {
           event.stopPropagation();
           if (
