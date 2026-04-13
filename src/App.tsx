@@ -10,6 +10,7 @@ import type {
   ProcessResponse,
   WatermarkSettings
 } from "./shared/types";
+import { collectPlannedOutputs } from "./shared/outputPaths";
 import { getAnchorCenterPoint, getWatermarkMetrics } from "./shared/watermarkGeometry";
 
 const INITIAL_SETTINGS: WatermarkSettings = {
@@ -39,6 +40,25 @@ const createObjectUrlFromPreview = (previewPayload: PreviewPayload) => {
   const bytes = Uint8Array.from(previewPayload.data);
   const blob = new Blob([bytes], { type: previewPayload.mimeType });
   return URL.createObjectURL(blob);
+};
+
+const formatConflictConfirmMessage = (conflicts: string[]) => {
+  const previewLines = conflicts.slice(0, 6).map((conflict) => `- ${conflict}`);
+  const remainingCount = conflicts.length - previewLines.length;
+  const suffix =
+    remainingCount > 0 ? `\n외 ${remainingCount}건이 더 있습니다.` : "";
+
+  return [
+    `출력 경로 충돌이 ${conflicts.length}건 발견되었습니다.`,
+    "",
+    ...previewLines,
+    suffix,
+    "",
+    "기존 파일을 덮어쓰거나 다른 입력 파일과 경로가 충돌할 수 있습니다.",
+    "계속 진행하시겠습니까?"
+  ]
+    .filter(Boolean)
+    .join("\n");
 };
 
 type PdfJsModule = typeof import("pdfjs-dist");
@@ -349,6 +369,41 @@ function App() {
       const confirmed = window.confirm(
         "접미사가 비어 있어서 원본 파일에 그대로 덮어쓰게 됩니다. 계속하시겠습니까?"
       );
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    const plannedOutputs = collectPlannedOutputs(inputFiles, {
+      suffix: settings.suffix,
+      outputDirectory: settings.outputDirectory,
+      overwriteOriginal
+    });
+    const duplicateOutputPaths = new Set<string>();
+    const outputPathCounts = new Map<string, number>();
+
+    for (const plannedOutput of plannedOutputs) {
+      const currentCount = outputPathCounts.get(plannedOutput.outputPath) ?? 0;
+      outputPathCounts.set(plannedOutput.outputPath, currentCount + 1);
+      if (currentCount >= 1) {
+        duplicateOutputPaths.add(plannedOutput.outputPath);
+      }
+    }
+
+    const inputPathSet = new Set(inputFiles.map((inputFile) => inputFile.path));
+    const conflictingInputPaths = plannedOutputs
+      .filter(
+        (plannedOutput) =>
+          plannedOutput.outputPath !== plannedOutput.sourcePath && inputPathSet.has(plannedOutput.outputPath)
+      )
+      .map((plannedOutput) => plannedOutput.outputPath);
+    const existingOutputPaths = overwriteOriginal
+      ? []
+      : await window.watermarkApi.findExistingPaths(plannedOutputs.map((plannedOutput) => plannedOutput.outputPath));
+    const pathConflicts = [...new Set([...duplicateOutputPaths, ...conflictingInputPaths, ...existingOutputPaths])];
+
+    if (pathConflicts.length > 0) {
+      const confirmed = window.confirm(formatConflictConfirmMessage(pathConflicts));
       if (!confirmed) {
         return;
       }

@@ -12,6 +12,7 @@ import type {
   ProcessResponse,
   SupportedKind
 } from "../src/shared/types";
+import { resolveOutputPath } from "../src/shared/outputPaths";
 import { getAnchorCenterPoint, getWatermarkMetrics } from "../src/shared/watermarkGeometry";
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
@@ -49,21 +50,6 @@ const toInputFile = (filePath: string): InputFile | null => {
     name: path.basename(filePath),
     kind
   };
-};
-
-const getOutputPath = (
-  sourcePath: string,
-  suffix: string,
-  outputDirectory: string,
-  overwriteOriginal: boolean
-) => {
-  if (overwriteOriginal) {
-    return sourcePath;
-  }
-
-  const parsed = path.parse(sourcePath);
-  const targetDirectory = outputDirectory || parsed.dir;
-  return path.join(targetDirectory, `${parsed.name}${suffix}${parsed.ext}`);
 };
 
 const getTemporaryOutputPath = (targetPath: string) => {
@@ -168,7 +154,7 @@ const processImageFile = async (
   watermarkAssetCache: WatermarkAssetCache
 ) => {
   const { settings } = request;
-  const finalOutputPath = getOutputPath(
+  const finalOutputPath = resolveOutputPath(
     inputFile.path,
     settings.suffix,
     settings.outputDirectory,
@@ -240,7 +226,7 @@ const processPdfFile = async (
   watermarkAssetCache: WatermarkAssetCache
 ) => {
   const { settings } = request;
-  const outputPath = getOutputPath(
+  const outputPath = resolveOutputPath(
     inputFile.path,
     settings.suffix,
     settings.outputDirectory,
@@ -406,6 +392,22 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("util:file-url", async (_event, filePath: string) => pathToFileURL(filePath).href);
+
+  ipcMain.handle("paths:existing", async (_event, incomingPaths: string[]) => {
+    const uniquePaths = [...new Set(incomingPaths)];
+    const existingPaths = await Promise.all(
+      uniquePaths.map(async (filePath) => {
+        try {
+          await fs.access(filePath);
+          return filePath;
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    return existingPaths.filter(Boolean);
+  });
 
   ipcMain.handle("watermark:process", async (_event, request: ProcessRequest): Promise<ProcessResponse> => {
     const watermarkBuffer = await fs.readFile(request.watermarkPath);

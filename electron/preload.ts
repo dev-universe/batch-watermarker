@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld("watermarkApi", {
     ipcRenderer.invoke("watermark:process", request) as Promise<ProcessResponse>,
   readPreview: (filePath: string) =>
     ipcRenderer.invoke("preview:read", filePath) as Promise<PreviewPayload>,
+  findExistingPaths: (paths: string[]) =>
+    ipcRenderer.invoke("paths:existing", paths) as Promise<string[]>,
   toFileUrl: (filePath: string) => ipcRenderer.invoke("util:file-url", filePath) as Promise<string>,
   getPathForFile: (file: File) => webUtils.getPathForFile(file)
 });
