@@ -41,6 +41,8 @@ const INITIAL_SETTINGS: WatermarkSettings = {
   position: "C",
   freeCenterXRatio: null,
   freeCenterYRatio: null,
+  freeWidthRatio: null,
+  freeHeightRatio: null,
   suffix: "_wm",
   outputDirectory: "",
   overwriteOriginal: false
@@ -537,7 +539,9 @@ function App() {
           placementMode: "preset",
           position: "C",
           freeCenterXRatio: null,
-          freeCenterYRatio: null
+          freeCenterYRatio: null,
+          freeWidthRatio: null,
+          freeHeightRatio: null
         }
       }));
     } finally {
@@ -862,7 +866,7 @@ function App() {
     const metrics = getWatermarkMetrics(
       watermarkNaturalSize.width,
       watermarkNaturalSize.height,
-      settings.sizeRatio,
+      settings,
       previewCoordinateSize.width,
       previewCoordinateSize.height,
       settings.rotation
@@ -910,7 +914,7 @@ function App() {
     const metrics = getWatermarkMetrics(
       watermarkNaturalSize.width,
       watermarkNaturalSize.height,
-      settings.sizeRatio,
+      settings,
       previewCoordinateSize.width,
       previewCoordinateSize.height,
       settings.rotation
@@ -972,7 +976,9 @@ function App() {
                 placementMode: "preset",
                 position,
                 freeCenterXRatio: null,
-                freeCenterYRatio: null
+                freeCenterYRatio: null,
+                freeWidthRatio: null,
+                freeHeightRatio: null
               }
             }))
           }

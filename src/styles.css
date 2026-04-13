@@ -310,6 +310,73 @@ label {
   box-shadow: 0 0 0 1px rgba(255, 250, 245, 0.5) inset;
 }
 
+.watermark-resize-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #8c5d35;
+  background: #fffaf5;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(71, 51, 36, 0.15);
+  pointer-events: auto;
+}
+
+.watermark-resize-handle.n {
+  top: 1px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  cursor: ns-resize;
+}
+
+.watermark-resize-handle.ne {
+  top: 1px;
+  right: 1px;
+  transform: translate(50%, -50%);
+  cursor: nesw-resize;
+}
+
+.watermark-resize-handle.e {
+  top: 50%;
+  right: 1px;
+  transform: translate(50%, -50%);
+  cursor: ew-resize;
+}
+
+.watermark-resize-handle.se {
+  right: 1px;
+  bottom: 1px;
+  transform: translate(50%, 50%);
+  cursor: nwse-resize;
+}
+
+.watermark-resize-handle.s {
+  bottom: 1px;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  cursor: ns-resize;
+}
+
+.watermark-resize-handle.sw {
+  bottom: 1px;
+  left: 1px;
+  transform: translate(-50%, 50%);
+  cursor: nesw-resize;
+}
+
+.watermark-resize-handle.w {
+  top: 50%;
+  left: 1px;
+  transform: translate(-50%, -50%);
+  cursor: ew-resize;
+}
+
+.watermark-resize-handle.nw {
+  top: 1px;
+  left: 1px;
+  transform: translate(-50%, -50%);
+  cursor: nwse-resize;
+}
+
 .watermark-overlay-image {
   -webkit-user-drag: none;
   user-select: none;
