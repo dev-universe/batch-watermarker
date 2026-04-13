@@ -42,6 +42,47 @@ const createObjectUrlFromPreview = (previewPayload: PreviewPayload) => {
   return URL.createObjectURL(blob);
 };
 
+interface EditableStateSnapshot {
+  inputFiles: InputFile[];
+  watermarkFile: InputFile | null;
+  settings: WatermarkSettings;
+  selectedPreviewPath: string;
+}
+
+const cloneSnapshot = (snapshot: EditableStateSnapshot): EditableStateSnapshot => ({
+  inputFiles: snapshot.inputFiles.map((inputFile) => ({ ...inputFile })),
+  watermarkFile: snapshot.watermarkFile ? { ...snapshot.watermarkFile } : null,
+  settings: { ...snapshot.settings },
+  selectedPreviewPath: snapshot.selectedPreviewPath
+});
+
+const areInputFilesEqual = (left: InputFile[], right: InputFile[]) =>
+  left.length === right.length &&
+  left.every(
+    (file, index) =>
+      file.path === right[index]?.path &&
+      file.name === right[index]?.name &&
+      file.kind === right[index]?.kind
+  );
+
+const areSettingsEqual = (left: WatermarkSettings, right: WatermarkSettings) =>
+  left.opacity === right.opacity &&
+  left.scale === right.scale &&
+  left.rotation === right.rotation &&
+  left.position === right.position &&
+  left.suffix === right.suffix &&
+  left.outputDirectory === right.outputDirectory &&
+  left.overwriteOriginal === right.overwriteOriginal;
+
+const areSnapshotsEqual = (left: EditableStateSnapshot, right: EditableStateSnapshot) =>
+  areInputFilesEqual(left.inputFiles, right.inputFiles) &&
+  ((left.watermarkFile === null && right.watermarkFile === null) ||
+    (left.watermarkFile?.path === right.watermarkFile?.path &&
+      left.watermarkFile?.name === right.watermarkFile?.name &&
+      left.watermarkFile?.kind === right.watermarkFile?.kind)) &&
+  areSettingsEqual(left.settings, right.settings) &&
+  left.selectedPreviewPath === right.selectedPreviewPath;
+
 const formatConflictConfirmMessage = (conflicts: string[]) => {
   const previewLines = conflicts.slice(0, 6).map((conflict) => `- ${conflict}`);
   const remainingCount = conflicts.length - previewLines.length;
@@ -99,10 +140,78 @@ function App() {
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
   const previewImageRef = useRef<HTMLImageElement | null>(null);
   const pdfRenderTokenRef = useRef(0);
+  const historyRef = useRef<{
+    past: EditableStateSnapshot[];
+    future: EditableStateSnapshot[];
+  }>({
+    past: [],
+    future: []
+  });
+  const currentSnapshotRef = useRef<EditableStateSnapshot>({
+    inputFiles: [],
+    watermarkFile: null,
+    settings: INITIAL_SETTINGS,
+    selectedPreviewPath: ""
+  });
   const selectedPreviewFile = useMemo(
     () => inputFiles.find((file) => file.path === selectedPreviewPath) ?? inputFiles[0] ?? null,
     [inputFiles, selectedPreviewPath]
   );
+
+  const applySnapshot = (snapshot: EditableStateSnapshot) => {
+    setInputFiles(snapshot.inputFiles);
+    setWatermarkFile(snapshot.watermarkFile);
+    setSettings(snapshot.settings);
+    setSelectedPreviewPath(snapshot.selectedPreviewPath);
+  };
+
+  const commitSnapshot = (updater: (current: EditableStateSnapshot) => EditableStateSnapshot) => {
+    const current = currentSnapshotRef.current;
+    const next = updater(current);
+
+    if (areSnapshotsEqual(current, next)) {
+      return;
+    }
+
+    historyRef.current.past.push(cloneSnapshot(current));
+    if (historyRef.current.past.length > 100) {
+      historyRef.current.past.shift();
+    }
+    historyRef.current.future = [];
+    currentSnapshotRef.current = cloneSnapshot(next);
+    applySnapshot(next);
+  };
+
+  const undo = () => {
+    const previous = historyRef.current.past.pop();
+    if (!previous) {
+      return;
+    }
+
+    historyRef.current.future.unshift(cloneSnapshot(currentSnapshotRef.current));
+    currentSnapshotRef.current = cloneSnapshot(previous);
+    applySnapshot(previous);
+  };
+
+  const redo = () => {
+    const next = historyRef.current.future.shift();
+    if (!next) {
+      return;
+    }
+
+    historyRef.current.past.push(cloneSnapshot(currentSnapshotRef.current));
+    currentSnapshotRef.current = cloneSnapshot(next);
+    applySnapshot(next);
+  };
+
+  useEffect(() => {
+    currentSnapshotRef.current = cloneSnapshot({
+      inputFiles,
+      watermarkFile,
+      settings,
+      selectedPreviewPath
+    });
+  }, [inputFiles, watermarkFile, settings, selectedPreviewPath]);
 
   useEffect(() => {
     void (async () => {
@@ -182,6 +291,38 @@ function App() {
     setPdfPreviewPage(1);
   }, [selectedPreviewPath]);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing || event.altKey) {
+        return;
+      }
+
+      const isMac = navigator.platform.toUpperCase().includes("MAC");
+      const hasModifier = isMac ? event.metaKey : event.ctrlKey;
+      if (!hasModifier) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      const wantsUndo = key === "z" && !event.shiftKey;
+      const wantsRedo = (key === "z" && event.shiftKey) || (!isMac && key === "y");
+      if (!wantsUndo && !wantsRedo) {
+        return;
+      }
+
+      event.preventDefault();
+      if (wantsUndo) {
+        undo();
+        return;
+      }
+
+      redo();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const willOverwriteOriginal = settings.suffix.trim() === "";
   const outputSummary = willOverwriteOriginal
     ? "접미사가 비어 있으면 원본 파일에 직접 덮어씁니다."
@@ -197,10 +338,18 @@ function App() {
   };
 
   const addInputFiles = async (incoming: InputFile[]) => {
-    setInputFiles((current) => uniqueByPath([...current, ...incoming]));
-    if (!selectedPreviewPath && incoming[0]) {
-      setSelectedPreviewPath(incoming[0].path);
+    if (!incoming.length) {
+      return;
     }
+
+    commitSnapshot((current) => {
+      const nextInputFiles = uniqueByPath([...current.inputFiles, ...incoming]);
+      return {
+        ...current,
+        inputFiles: nextInputFiles,
+        selectedPreviewPath: current.selectedPreviewPath || incoming[0]?.path || ""
+      };
+    });
   };
 
   const onDropInputFiles = async (event: DragEvent<HTMLElement>) => {
@@ -213,7 +362,10 @@ function App() {
     const paths = await collectDroppedPaths(event);
     const normalized = await window.watermarkApi.normalizeDroppedFiles(paths);
     const imageFile = normalized.find((file) => file.kind === "image") ?? null;
-    setWatermarkFile(imageFile);
+    commitSnapshot((current) => ({
+      ...current,
+      watermarkFile: imageFile
+    }));
   };
 
   const openInputPicker = async () => {
@@ -224,44 +376,84 @@ function App() {
   const openWatermarkPicker = async () => {
     const file = await window.watermarkApi.pickWatermarkFile();
     if (file?.kind === "image") {
-      setWatermarkFile(file);
+      commitSnapshot((current) => ({
+        ...current,
+        watermarkFile: file
+      }));
     }
   };
 
   const openOutputFolderPicker = async () => {
     const folder = await window.watermarkApi.pickOutputFolder();
     if (folder) {
-      setSettings((current) => ({ ...current, outputDirectory: folder, overwriteOriginal: false }));
+      commitSnapshot((current) => ({
+        ...current,
+        settings: {
+          ...current.settings,
+          outputDirectory: folder,
+          overwriteOriginal: false
+        }
+      }));
     }
   };
 
   const updateNumericSetting = (key: "opacity" | "scale" | "rotation", value: string) => {
     const max = key === "opacity" ? 100 : key === "rotation" ? 360 : 1000;
     const nextValue = clamp(Number(value), 0, max);
-    setSettings((current) => ({ ...current, [key]: nextValue }));
+    commitSnapshot((current) => ({
+      ...current,
+      settings: {
+        ...current.settings,
+        [key]: nextValue
+      }
+    }));
   };
 
   const removeInputFile = (pathToRemove: string) => {
-    setInputFiles((current) => current.filter((file) => file.path !== pathToRemove));
+    commitSnapshot((current) => {
+      const nextInputFiles = current.inputFiles.filter((file) => file.path !== pathToRemove);
+      const nextSelectedPreviewPath =
+        current.selectedPreviewPath === pathToRemove
+          ? nextInputFiles[0]?.path ?? ""
+          : current.selectedPreviewPath;
+
+      return {
+        ...current,
+        inputFiles: nextInputFiles,
+        selectedPreviewPath: nextSelectedPreviewPath
+      };
+    });
   };
 
   const clearOutputDirectory = () => {
-    setSettings((current) => ({
+    commitSnapshot((current) => ({
       ...current,
-      outputDirectory: ""
+      settings: {
+        ...current.settings,
+        outputDirectory: ""
+      }
     }));
   };
 
   const onOutputDirectoryChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSettings((current) => ({
+    commitSnapshot((current) => ({
       ...current,
-      outputDirectory: event.target.value,
-      overwriteOriginal: false
+      settings: {
+        ...current.settings,
+        outputDirectory: event.target.value,
+        overwriteOriginal: false
+      }
     }));
   };
 
   const onSuffixChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSettings((current) => ({ ...current, suffix: event.target.value }));
+    commitSnapshot((current) => ({
+      ...current,
+      settings: {
+        ...current.settings,
+        suffix: event.target.value
+      }
+    }));
   };
 
   const onPreviewImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
@@ -532,7 +724,12 @@ function App() {
           selectedPreviewPath={selectedPreviewFile?.path ?? ""}
           onOpenInputPicker={openInputPicker}
           onDropInputFiles={onDropInputFiles}
-          onSelectPreview={setSelectedPreviewPath}
+          onSelectPreview={(path) =>
+            commitSnapshot((current) => ({
+              ...current,
+              selectedPreviewPath: path
+            }))
+          }
           onRemoveInputFile={removeInputFile}
         />
 
@@ -542,7 +739,15 @@ function App() {
           onOpenWatermarkPicker={openWatermarkPicker}
           onDropWatermarkFile={onDropWatermarkFile}
           onUpdateNumericSetting={updateNumericSetting}
-          onSelectPosition={(position) => setSettings((current) => ({ ...current, position }))}
+          onSelectPosition={(position) =>
+            commitSnapshot((current) => ({
+              ...current,
+              settings: {
+                ...current.settings,
+                position
+              }
+            }))
+          }
         />
 
         <OutputPanel
