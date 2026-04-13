@@ -8,7 +8,7 @@ Desktop app for batch-applying image watermarks to PDF and image files on macOS 
 - Drag and drop a watermark image
 - Adjust watermark opacity, size, rotation, and 9-position placement
 - Preview image and PDF files before processing
-- Batch output to a selected folder or overwrite originals
+- Batch output to a selected folder, save beside the source files, or overwrite originals
 - Preserve image DPI metadata when exporting supported image formats
 
 ## Tech Stack
@@ -20,22 +20,109 @@ Desktop app for batch-applying image watermarks to PDF and image files on macOS 
 - `sharp`
 - `pdfjs-dist`
 
-## Development
+## Requirements
+
+- macOS or Windows
+- Node.js 20+
+
+## Install
 
 ```bash
 npm install
+```
+
+## Development
+
+```bash
 npm run dev
 ```
 
-## Build
+## Usage
+
+1. Add one or more PDF or image files.
+2. Add a watermark image.
+3. Adjust opacity, size, rotation, and position.
+4. Optionally choose an output folder.
+5. Set a suffix.
+6. Start processing.
+
+### Output Rules
+
+- If `suffix` is empty, the app warns before overwriting the original files.
+- If `suffix` is set and `output folder` is empty, the result is saved next to each source file.
+- If `suffix` is set and `output folder` is set, the result is saved in the selected output folder.
+- Before processing starts, the app checks for planned output path conflicts and asks for confirmation if conflicts are found.
+
+## Tests
+
+```bash
+npm test
+```
+
+## Build For macOS
+
+Create the app bundle without installer packaging:
 
 ```bash
 npm run dist -- --dir
 ```
 
-The packaged macOS app is created under `release/mac-arm64/`.
+The packaged macOS app is created here:
+
+- `release/mac-arm64/PDF Watermark.app`
+
+Create a zip file for sharing:
+
+```bash
+ditto -c -k --sequesterRsrc --keepParent "release/mac-arm64/PDF Watermark.app" "release/mac-arm64/PDF Watermark-mac.zip"
+```
+
+## macOS Distribution Notes
+
+- The current default build uses ad-hoc signing.
+- Without Apple code signing and notarization, Gatekeeper may block the app on another Mac.
+- In that case, the recipient may need to right-click the app and choose `Open`.
+
+### Notarization
+
+If you want a smoother end-user install experience, configure these environment variables before building:
+
+- `APPLE_ID`
+- `APPLE_APP_SPECIFIC_PASSWORD`
+- `APPLE_TEAM_ID`
+
+The notarization hook is already wired through [scripts/notarize.cjs](/Users/fd2/dev/pdf-watermark/scripts/notarize.cjs).
+
+## Windows Build Notes
+
+- Windows packaging is configured through `electron-builder` with the `nsis` target.
+- Build the Windows installer on a Windows machine for the most reliable result.
+- Validate these items before release:
+  - app launch
+  - PDF preview
+  - image preview
+  - PDF export
+  - image export
+  - suffix output beside the source file
+  - output folder export
+  - overwrite warning
+  - preflight conflict confirmation
+
+## Packaging Commands
+
+Build the default distributables:
+
+```bash
+npm run dist
+```
+
+Build the unpacked app only:
+
+```bash
+npm run dist -- --dir
+```
 
 ## Notes
 
-- If the suffix is left empty, the app warns before overwriting original files.
-- macOS packaging currently uses ad-hoc signing unless Apple signing credentials are configured.
+- Icons are generated from [assets/app-icon.svg](/Users/fd2/dev/pdf-watermark/assets/app-icon.svg) through [scripts/generate-icons.mjs](/Users/fd2/dev/pdf-watermark/scripts/generate-icons.mjs).
+- macOS entitlements are defined in [build/entitlements.mac.plist](/Users/fd2/dev/pdf-watermark/build/entitlements.mac.plist).
