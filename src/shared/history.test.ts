@@ -19,7 +19,10 @@ const createSnapshot = (
     opacity: 7,
     sizePx: 280,
     rotation: 0,
+    placementMode: "preset",
     position: "C",
+    freeCenterX: null,
+    freeCenterY: null,
     suffix: "_wm",
     outputDirectory: "",
     overwriteOriginal: false

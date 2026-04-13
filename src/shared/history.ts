@@ -25,7 +25,10 @@ const areSettingsEqual = (left: WatermarkSettings, right: WatermarkSettings) =>
   left.opacity === right.opacity &&
   left.sizePx === right.sizePx &&
   left.rotation === right.rotation &&
+  left.placementMode === right.placementMode &&
   left.position === right.position &&
+  left.freeCenterX === right.freeCenterX &&
+  left.freeCenterY === right.freeCenterY &&
   left.suffix === right.suffix &&
   left.outputDirectory === right.outputDirectory &&
   left.overwriteOriginal === right.overwriteOriginal;

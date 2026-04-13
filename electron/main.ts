@@ -13,7 +13,7 @@ import type {
   SupportedKind
 } from "../src/shared/types";
 import { resolveOutputPath } from "../src/shared/outputPaths";
-import { getAnchorCenterPoint, getWatermarkMetrics } from "../src/shared/watermarkGeometry";
+import { getWatermarkCenterPoint, getWatermarkMetrics } from "../src/shared/watermarkGeometry";
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
 const SUPPORTED_IMAGE_EXTENSIONS = new Set([
@@ -170,8 +170,8 @@ const processImageFile = async (
     throw new Error("Unable to read watermark dimensions.");
   }
 
-  const anchorCenter = getAnchorCenterPoint(
-    settings.position,
+  const anchorCenter = getWatermarkCenterPoint(
+    settings,
     metadata.width,
     metadata.height
   );
@@ -247,8 +247,8 @@ const processPdfFile = async (
   for (const page of pdf.getPages()) {
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
-    const anchorCenter = getAnchorCenterPoint(
-      settings.position,
+    const anchorCenter = getWatermarkCenterPoint(
+      settings,
       pageWidth,
       pageHeight
     );

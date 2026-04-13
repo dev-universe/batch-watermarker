@@ -282,8 +282,24 @@ label {
 
 .watermark-overlay {
   position: absolute;
-  pointer-events: none;
+  pointer-events: auto;
   overflow: visible;
+}
+
+.watermark-overlay.hovered .watermark-selection-outline,
+.watermark-overlay.selected .watermark-selection-outline {
+  opacity: 1;
+}
+
+.watermark-selection-outline {
+  position: absolute;
+  inset: 0;
+  border: 2px dashed rgba(140, 93, 53, 0.75);
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(255, 250, 245, 0.5) inset;
 }
 
 .watermark-overlay-image {

@@ -9,10 +9,16 @@ interface PreviewPaneProps {
   watermarkPreviewUrl: string;
   overlayStyle?: CSSProperties;
   overlayImageStyle?: CSSProperties;
+  isWatermarkHovered: boolean;
+  isWatermarkSelected: boolean;
   previewImageRef: MutableRefObject<HTMLImageElement | null>;
   onPreviousPdfPage: () => void;
   onNextPdfPage: () => void;
   onPreviewImageLoad: (event: React.SyntheticEvent<HTMLImageElement>) => void;
+  onClearWatermarkSelection: () => void;
+  onWatermarkPointerEnter: () => void;
+  onWatermarkPointerLeave: () => void;
+  onWatermarkSelect: () => void;
 }
 
 export function PreviewPane({
@@ -24,10 +30,16 @@ export function PreviewPane({
   watermarkPreviewUrl,
   overlayStyle,
   overlayImageStyle,
+  isWatermarkHovered,
+  isWatermarkSelected,
   previewImageRef,
   onPreviousPdfPage,
   onNextPdfPage,
-  onPreviewImageLoad
+  onPreviewImageLoad,
+  onClearWatermarkSelection,
+  onWatermarkPointerEnter,
+  onWatermarkPointerLeave,
+  onWatermarkSelect
 }: PreviewPaneProps) {
   return (
     <main className="preview-pane">
@@ -52,7 +64,7 @@ export function PreviewPane({
           )}
         </div>
 
-        <div className="preview-stage">
+        <div className="preview-stage" onPointerDown={onClearWatermarkSelection}>
           {previewBaseUrl ? (
             <div className="preview-artboard">
               <img
@@ -63,13 +75,23 @@ export function PreviewPane({
                 onLoad={onPreviewImageLoad}
               />
               {watermarkPreviewUrl && overlayStyle && overlayImageStyle && (
-                <div className="watermark-overlay" style={overlayStyle}>
+                <div
+                  className={`watermark-overlay ${isWatermarkHovered ? "hovered" : ""} ${isWatermarkSelected ? "selected" : ""}`}
+                  style={overlayStyle}
+                  onPointerDown={(event) => {
+                    event.stopPropagation();
+                    onWatermarkSelect();
+                  }}
+                  onPointerEnter={onWatermarkPointerEnter}
+                  onPointerLeave={onWatermarkPointerLeave}
+                >
                   <img
                     className="watermark-overlay-image"
                     src={watermarkPreviewUrl}
                     alt="Watermark preview"
                     style={overlayImageStyle}
                   />
+                  <div className="watermark-selection-outline" />
                 </div>
               )}
             </div>
