@@ -10,6 +10,15 @@ import type {
   ProcessResponse,
   WatermarkSettings
 } from "./shared/types";
+import {
+  applyRedo,
+  applyUndo,
+  areSnapshotsEqual,
+  cloneSnapshot,
+  commitContinuousEdit,
+  createEmptyHistoryState,
+  type EditableStateSnapshot
+} from "./shared/history";
 import { collectPlannedOutputConflicts, collectPlannedOutputs } from "./shared/outputPaths";
 import { getAnchorCenterPoint, getWatermarkMetrics } from "./shared/watermarkGeometry";
 
@@ -41,47 +50,6 @@ const createObjectUrlFromPreview = (previewPayload: PreviewPayload) => {
   const blob = new Blob([bytes], { type: previewPayload.mimeType });
   return URL.createObjectURL(blob);
 };
-
-interface EditableStateSnapshot {
-  inputFiles: InputFile[];
-  watermarkFile: InputFile | null;
-  settings: WatermarkSettings;
-  selectedPreviewPath: string;
-}
-
-const cloneSnapshot = (snapshot: EditableStateSnapshot): EditableStateSnapshot => ({
-  inputFiles: [...snapshot.inputFiles],
-  watermarkFile: snapshot.watermarkFile,
-  settings: { ...snapshot.settings },
-  selectedPreviewPath: snapshot.selectedPreviewPath
-});
-
-const areInputFilesEqual = (left: InputFile[], right: InputFile[]) =>
-  left.length === right.length &&
-  left.every(
-    (file, index) =>
-      file.path === right[index]?.path &&
-      file.name === right[index]?.name &&
-      file.kind === right[index]?.kind
-  );
-
-const areSettingsEqual = (left: WatermarkSettings, right: WatermarkSettings) =>
-  left.opacity === right.opacity &&
-  left.scale === right.scale &&
-  left.rotation === right.rotation &&
-  left.position === right.position &&
-  left.suffix === right.suffix &&
-  left.outputDirectory === right.outputDirectory &&
-  left.overwriteOriginal === right.overwriteOriginal;
-
-const areSnapshotsEqual = (left: EditableStateSnapshot, right: EditableStateSnapshot) =>
-  areInputFilesEqual(left.inputFiles, right.inputFiles) &&
-  ((left.watermarkFile === null && right.watermarkFile === null) ||
-    (left.watermarkFile?.path === right.watermarkFile?.path &&
-      left.watermarkFile?.name === right.watermarkFile?.name &&
-      left.watermarkFile?.kind === right.watermarkFile?.kind)) &&
-  areSettingsEqual(left.settings, right.settings) &&
-  left.selectedPreviewPath === right.selectedPreviewPath;
 
 const formatConflictConfirmMessage = (conflicts: string[]) => {
   const previewLines = conflicts.slice(0, 6).map((conflict) => `- ${conflict}`);
@@ -141,13 +109,7 @@ function App() {
   const previewImageRef = useRef<HTMLImageElement | null>(null);
   const pdfRenderTokenRef = useRef(0);
   const pendingContinuousEditRef = useRef<EditableStateSnapshot | null>(null);
-  const historyRef = useRef<{
-    past: EditableStateSnapshot[];
-    future: EditableStateSnapshot[];
-  }>({
-    past: [],
-    future: []
-  });
+  const historyRef = useRef(createEmptyHistoryState());
   const currentSnapshotRef = useRef<EditableStateSnapshot>({
     inputFiles: [],
     watermarkFile: null,
@@ -184,23 +146,21 @@ function App() {
   };
 
   const undo = () => {
-    const previous = historyRef.current.past.pop();
+    const previous = applyUndo(historyRef.current, currentSnapshotRef.current);
     if (!previous) {
       return;
     }
 
-    historyRef.current.future.unshift(cloneSnapshot(currentSnapshotRef.current));
     currentSnapshotRef.current = cloneSnapshot(previous);
     applySnapshot(previous);
   };
 
   const redo = () => {
-    const next = historyRef.current.future.shift();
+    const next = applyRedo(historyRef.current, currentSnapshotRef.current);
     if (!next) {
       return;
     }
 
-    historyRef.current.past.push(cloneSnapshot(currentSnapshotRef.current));
     currentSnapshotRef.current = cloneSnapshot(next);
     applySnapshot(next);
   };
@@ -218,15 +178,7 @@ function App() {
     }
 
     pendingContinuousEditRef.current = null;
-    if (areSnapshotsEqual(pendingSnapshot, currentSnapshotRef.current)) {
-      return;
-    }
-
-    historyRef.current.past.push(cloneSnapshot(pendingSnapshot));
-    if (historyRef.current.past.length > 100) {
-      historyRef.current.past.shift();
-    }
-    historyRef.current.future = [];
+    commitContinuousEdit(historyRef.current, pendingSnapshot, currentSnapshotRef.current);
   };
 
   useEffect(() => {
