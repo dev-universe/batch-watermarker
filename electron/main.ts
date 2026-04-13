@@ -62,8 +62,8 @@ const getTemporaryOutputPath = (targetPath: string) => {
 
 interface WatermarkAsset {
   rotatedWatermarkBuffer: Buffer;
-  rotatedWidth: number;
-  rotatedHeight: number;
+  drawWidth: number;
+  drawHeight: number;
 }
 
 type WatermarkAssetCache = Map<string, WatermarkAsset>;
@@ -84,6 +84,7 @@ const buildWatermarkAsset = async (
   sizeRatio: number,
   rotation: number
 ): Promise<WatermarkAsset> => {
+  const oversampleFactor = 2;
   const metrics = getWatermarkMetrics(
     watermarkWidth,
     watermarkHeight,
@@ -94,9 +95,10 @@ const buildWatermarkAsset = async (
   );
   const rotatedWatermarkBuffer = await sharp(watermarkBuffer)
     .resize({
-      width: Math.max(1, Math.round(metrics.base.width)),
-      height: Math.max(1, Math.round(metrics.base.height)),
-      fit: "contain"
+      width: Math.max(1, Math.round(metrics.base.width * oversampleFactor)),
+      height: Math.max(1, Math.round(metrics.base.height * oversampleFactor)),
+      fit: "contain",
+      kernel: sharp.kernel.lanczos3
     })
     .rotate(rotation, {
       background: {
@@ -108,12 +110,11 @@ const buildWatermarkAsset = async (
     })
     .png()
     .toBuffer();
-  const rotatedMetadata = await sharp(rotatedWatermarkBuffer).metadata();
 
   return {
     rotatedWatermarkBuffer,
-    rotatedWidth: rotatedMetadata.width ?? Math.max(1, Math.round(metrics.rotated.width)),
-    rotatedHeight: rotatedMetadata.height ?? Math.max(1, Math.round(metrics.rotated.height))
+    drawWidth: metrics.rotated.width,
+    drawHeight: metrics.rotated.height
   };
 };
 
@@ -177,7 +178,7 @@ const processImageFile = async (
     metadata.width,
     metadata.height
   );
-  const { rotatedWatermarkBuffer, rotatedWidth, rotatedHeight } = await getOrCreateWatermarkAsset(
+  const { rotatedWatermarkBuffer, drawWidth, drawHeight } = await getOrCreateWatermarkAsset(
     watermarkAssetCache,
     watermarkBuffer,
     metadata.width,
@@ -188,10 +189,10 @@ const processImageFile = async (
     settings.rotation
   );
   const watermarkDataUrl = `data:image/png;base64,${rotatedWatermarkBuffer.toString("base64")}`;
-  const topLeftX = anchorCenter.x - rotatedWidth / 2;
-  const topLeftY = anchorCenter.y - rotatedHeight / 2;
+  const topLeftX = anchorCenter.x - drawWidth / 2;
+  const topLeftY = anchorCenter.y - drawHeight / 2;
   const watermarkLayer = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${metadata.width}" height="${metadata.height}"><image href="${watermarkDataUrl}" x="${topLeftX}" y="${topLeftY}" width="${rotatedWidth}" height="${rotatedHeight}" opacity="${
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${metadata.width}" height="${metadata.height}"><image href="${watermarkDataUrl}" x="${topLeftX}" y="${topLeftY}" width="${drawWidth}" height="${drawHeight}" opacity="${
       settings.opacity / 100
     }"/></svg>`
   );
@@ -241,8 +242,8 @@ const processPdfFile = async (
     string,
     {
       watermarkImage: Awaited<ReturnType<typeof pdf.embedPng>>;
-      rotatedWidth: number;
-      rotatedHeight: number;
+      drawWidth: number;
+      drawHeight: number;
     }
   >();
 
@@ -270,21 +271,21 @@ const processPdfFile = async (
       );
       cachedWatermark = {
         watermarkImage: await pdf.embedPng(asset.rotatedWatermarkBuffer),
-        rotatedWidth: asset.rotatedWidth,
-        rotatedHeight: asset.rotatedHeight
+        drawWidth: asset.drawWidth,
+        drawHeight: asset.drawHeight
       };
       pageWatermarkCache.set(pageCacheKey, cachedWatermark);
     }
 
-    const { watermarkImage, rotatedWidth, rotatedHeight } = cachedWatermark;
-    const topLeftX = anchorCenter.x - rotatedWidth / 2;
-    const topLeftY = anchorCenter.y - rotatedHeight / 2;
+    const { watermarkImage, drawWidth, drawHeight } = cachedWatermark;
+    const topLeftX = anchorCenter.x - drawWidth / 2;
+    const topLeftY = anchorCenter.y - drawHeight / 2;
 
     page.drawImage(watermarkImage, {
       x: topLeftX,
-      y: pageHeight - topLeftY - rotatedHeight,
-      width: rotatedWidth,
-      height: rotatedHeight,
+      y: pageHeight - topLeftY - drawHeight,
+      width: drawWidth,
+      height: drawHeight,
       opacity: settings.opacity / 100
     });
   }
