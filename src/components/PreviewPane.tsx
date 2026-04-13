@@ -1,5 +1,7 @@
 import type { CSSProperties, MutableRefObject } from "react";
 
+const RESIZE_HANDLES = ["n", "ne", "e", "se", "s", "sw", "w", "nw"] as const;
+
 interface PreviewPaneProps {
   selectedFileName: string;
   previewKind: "pdf" | "image" | null;
@@ -98,6 +100,14 @@ export function PreviewPane({
                     style={overlayImageStyle}
                   />
                   <div className="watermark-selection-outline" />
+                  {isWatermarkSelected &&
+                    RESIZE_HANDLES.map((handle) => (
+                      <div
+                        key={handle}
+                        className={`watermark-resize-handle ${handle}`}
+                        data-handle={handle}
+                      />
+                    ))}
                 </div>
               )}
             </div>

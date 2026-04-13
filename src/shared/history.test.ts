@@ -23,6 +23,8 @@ const createSnapshot = (
     position: "C",
     freeCenterXRatio: null,
     freeCenterYRatio: null,
+    freeWidthRatio: null,
+    freeHeightRatio: null,
     suffix: "_wm",
     outputDirectory: "",
     overwriteOriginal: false

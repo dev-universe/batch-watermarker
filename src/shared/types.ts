@@ -26,6 +26,8 @@ export interface WatermarkSettings {
   position: AnchorPosition | null;
   freeCenterXRatio: number | null;
   freeCenterYRatio: number | null;
+  freeWidthRatio: number | null;
+  freeHeightRatio: number | null;
   suffix: string;
   outputDirectory: string;
   overwriteOriginal: boolean;

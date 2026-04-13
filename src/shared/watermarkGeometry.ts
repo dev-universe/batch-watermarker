@@ -25,18 +25,45 @@ export const getRotatedBoundingBox = (width: number, height: number, rotationDeg
   };
 };
 
+export const getWatermarkBaseSize = (
+  settings: Pick<WatermarkSettings, "placementMode" | "freeWidthRatio" | "freeHeightRatio" | "sizeRatio">,
+  watermarkWidth: number,
+  watermarkHeight: number,
+  canvasWidth: number,
+  canvasHeight: number
+) => {
+  if (
+    settings.placementMode === "free" &&
+    settings.freeWidthRatio !== null &&
+    settings.freeHeightRatio !== null
+  ) {
+    return {
+      width: settings.freeWidthRatio * canvasWidth,
+      height: settings.freeHeightRatio * canvasHeight
+    };
+  }
+
+  return getSizeFromLongestEdgeRatio(
+    watermarkWidth,
+    watermarkHeight,
+    settings.sizeRatio,
+    canvasWidth,
+    canvasHeight
+  );
+};
+
 export const getWatermarkMetrics = (
   watermarkWidth: number,
   watermarkHeight: number,
-  sizeRatio: number,
+  settings: Pick<WatermarkSettings, "placementMode" | "freeWidthRatio" | "freeHeightRatio" | "sizeRatio">,
   canvasWidth: number,
   canvasHeight: number,
   rotationDegrees: number
 ) => {
-  const base = getSizeFromLongestEdgeRatio(
+  const base = getWatermarkBaseSize(
+    settings,
     watermarkWidth,
     watermarkHeight,
-    sizeRatio,
     canvasWidth,
     canvasHeight
   );
