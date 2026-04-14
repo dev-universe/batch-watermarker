@@ -310,6 +310,10 @@ label {
   box-shadow: 0 0 0 1px rgba(255, 250, 245, 0.5) inset;
 }
 
+.watermark-transform-box {
+  position: absolute;
+}
+
 .watermark-resize-handle {
   position: absolute;
   width: 12px;
@@ -385,6 +389,9 @@ label {
 .watermark-overlay-image {
   position: absolute;
   display: block;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .empty-preview {
