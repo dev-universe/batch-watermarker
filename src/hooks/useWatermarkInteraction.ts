@@ -3,6 +3,10 @@ import { flushSync } from "react-dom";
 import type { EditableStateSnapshot } from "../shared/history";
 import type { WatermarkSettings } from "../shared/types";
 import {
+  canClearWatermarkSelection,
+  getKeyboardNudgeSnapshot
+} from "./watermarkInteractionHelpers";
+import {
   getAngleFromPoint,
   getWatermarkBaseSize,
   getWatermarkCenterPoint,
@@ -107,10 +111,11 @@ export function useWatermarkInteraction({
       const key = event.key.toLowerCase();
       if (
         key === "escape" &&
-        isWatermarkSelected &&
-        !dragStateRef.current &&
-        !resizeStateRef.current &&
-        !rotationStateRef.current
+        canClearWatermarkSelection(isWatermarkSelected, {
+          hasDrag: Boolean(dragStateRef.current),
+          hasResize: Boolean(resizeStateRef.current),
+          hasRotate: Boolean(rotationStateRef.current)
+        })
       ) {
         event.preventDefault();
         setIsWatermarkSelected(false);
@@ -136,37 +141,15 @@ export function useWatermarkInteraction({
         }
 
         event.preventDefault();
-        const step = event.shiftKey ? 10 : 1;
-        const currentCenter = getWatermarkCenterPoint(
-          currentSnapshotRef.current.settings,
-          previewCoordinateSize.width,
-          previewCoordinateSize.height
+        commitSnapshot((current) =>
+          getKeyboardNudgeSnapshot(
+            current,
+            previewCoordinateSize.width,
+            previewCoordinateSize.height,
+            key,
+            event.shiftKey
+          )
         );
-        const nextCenter = {
-          x:
-            key === "arrowleft"
-              ? Math.max(0, currentCenter.x - step)
-              : key === "arrowright"
-                ? Math.min(previewCoordinateSize.width, currentCenter.x + step)
-                : currentCenter.x,
-          y:
-            key === "arrowup"
-              ? Math.max(0, currentCenter.y - step)
-              : key === "arrowdown"
-                ? Math.min(previewCoordinateSize.height, currentCenter.y + step)
-                : currentCenter.y
-        };
-
-        commitSnapshot((current) => ({
-          ...current,
-          settings: {
-            ...current.settings,
-            placementMode: "free",
-            position: null,
-            freeCenterXRatio: nextCenter.x / previewCoordinateSize.width,
-            freeCenterYRatio: nextCenter.y / previewCoordinateSize.height
-          }
-        }));
         return;
       }
 
@@ -392,7 +375,13 @@ export function useWatermarkInteraction({
   ]);
 
   const clearWatermarkSelection = () => {
-    if (!dragStateRef.current && !resizeStateRef.current && !rotationStateRef.current) {
+    if (
+      canClearWatermarkSelection(isWatermarkSelected, {
+        hasDrag: Boolean(dragStateRef.current),
+        hasResize: Boolean(resizeStateRef.current),
+        hasRotate: Boolean(rotationStateRef.current)
+      })
+    ) {
       setIsWatermarkSelected(false);
     }
   };
