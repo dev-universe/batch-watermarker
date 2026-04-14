@@ -46,6 +46,22 @@ npm run dev
 5. Set a suffix.
 6. Start processing.
 
+### Direct Manipulation
+
+- Click the watermark in the preview to select it.
+- Drag the watermark to move it. The center snaps near the built-in 3x3 placement points.
+- Drag any edge handle to resize on a single axis.
+- Drag any corner handle to resize both axes.
+- Hold `Cmd` on macOS or `Ctrl` on Windows while dragging a corner handle to keep the current box aspect ratio.
+- Drag the top rotation handle to rotate the watermark directly.
+- Hold `Shift` while rotating to snap rotation to 15-degree steps.
+- Use the arrow keys to nudge the selected watermark by 1 document pixel.
+- Use `Shift + arrow keys` to nudge by 10 document pixels.
+- Press `Esc` to clear the current watermark selection.
+- Undo and redo are supported with:
+  - macOS: `Cmd + Z`, `Shift + Cmd + Z`
+  - Windows: `Ctrl + Z`, `Ctrl + Y`, `Shift + Ctrl + Z`
+
 ### Output Rules
 
 - If `suffix` is empty, the app warns before overwriting the original files.
