@@ -29,10 +29,12 @@ import {
   resizeFromWidthPreservingAspectRatio
 } from "./shared/watermarkSizing";
 import {
+  getAngleFromPoint,
   getWatermarkBaseSize,
   getWatermarkCenterPoint,
   getWatermarkMetrics,
-  resizeWatermarkBoxFromHandle,
+  normalizeRotationDegrees,
+  resizeRotatedWatermarkBoxFromHandle,
   type ResizeHandle
 } from "./shared/watermarkGeometry";
 import { snapWatermarkCenterPoint } from "./shared/watermarkSnap";
@@ -160,6 +162,13 @@ function App() {
     startWidth: number;
     startHeight: number;
   } | null>(null);
+  const rotationStateRef = useRef<{
+    pointerId: number;
+    startRotation: number;
+    startPointerAngle: number;
+    centerX: number;
+    centerY: number;
+  } | null>(null);
   const pendingContinuousEditRef = useRef<EditableStateSnapshot | null>(null);
   const historyRef = useRef(createEmptyHistoryState());
   const currentSnapshotRef = useRef<EditableStateSnapshot>({
@@ -231,6 +240,25 @@ function App() {
 
     pendingContinuousEditRef.current = null;
     commitContinuousEdit(historyRef.current, pendingSnapshot, currentSnapshotRef.current);
+  };
+
+  const getPreviewCoordinatePointFromClient = (clientX: number, clientY: number) => {
+    const previewNode = previewImageRef.current;
+    if (
+      !previewNode ||
+      !previewDisplaySize.width ||
+      !previewDisplaySize.height ||
+      !previewCoordinateSize.width ||
+      !previewCoordinateSize.height
+    ) {
+      return null;
+    }
+
+    const rect = previewNode.getBoundingClientRect();
+    return {
+      x: ((clientX - rect.left) / previewDisplaySize.width) * previewCoordinateSize.width,
+      y: ((clientY - rect.top) / previewDisplaySize.height) * previewCoordinateSize.height
+    };
   };
 
   useEffect(() => {
@@ -395,9 +423,38 @@ function App() {
 
       const scaleX = previewCoordinateSize.width / previewDisplaySize.width;
       const scaleY = previewCoordinateSize.height / previewDisplaySize.height;
+      const rotationState = rotationStateRef.current;
+      if (rotationState && rotationState.pointerId === event.pointerId) {
+        const pointerCoordinate = getPreviewCoordinatePointFromClient(event.clientX, event.clientY);
+        if (!pointerCoordinate) {
+          return;
+        }
+
+        const currentPointerAngle = getAngleFromPoint(
+          rotationState.centerX,
+          rotationState.centerY,
+          pointerCoordinate.x,
+          pointerCoordinate.y
+        );
+        const nextSettings: WatermarkSettings = {
+          ...currentSnapshotRef.current.settings,
+          rotation: normalizeRotationDegrees(
+            rotationState.startRotation + (currentPointerAngle - rotationState.startPointerAngle)
+          )
+        };
+
+        currentSnapshotRef.current = {
+          ...currentSnapshotRef.current,
+          settings: nextSettings
+        };
+        flushSync(() => {
+          setSettings(nextSettings);
+        });
+        return;
+      }
       const resizeState = resizeStateRef.current;
       if (resizeState && resizeState.pointerId === event.pointerId) {
-        const nextBox = resizeWatermarkBoxFromHandle(
+        const nextBox = resizeRotatedWatermarkBoxFromHandle(
           resizeState.handle,
           resizeState.startCenterX,
           resizeState.startCenterY,
@@ -405,6 +462,7 @@ function App() {
           resizeState.startHeight,
           (event.clientX - resizeState.startPointerX) * scaleX,
           (event.clientY - resizeState.startPointerY) * scaleY,
+          currentSnapshotRef.current.settings.rotation,
           24,
           24
         );
@@ -457,6 +515,11 @@ function App() {
     };
 
     const onPointerUp = (event: PointerEvent) => {
+      if (rotationStateRef.current && rotationStateRef.current.pointerId === event.pointerId) {
+        rotationStateRef.current = null;
+        setIsWatermarkDragging(false);
+        return;
+      }
       if (resizeStateRef.current && resizeStateRef.current.pointerId === event.pointerId) {
         resizeStateRef.current = null;
         setIsWatermarkDragging(false);
@@ -1076,7 +1139,7 @@ function App() {
         onNextPdfPage={() => setPdfPreviewPage((current) => Math.min(pdfPageCount, current + 1))}
         onPreviewImageLoad={onPreviewImageLoad}
         onClearWatermarkSelection={() => {
-          if (!dragStateRef.current && !resizeStateRef.current) {
+          if (!dragStateRef.current && !resizeStateRef.current && !rotationStateRef.current) {
             setIsWatermarkSelected(false);
           }
         }}
@@ -1131,6 +1194,43 @@ function App() {
             startCenterY: currentCenter.y,
             startWidth: currentBaseSize.width,
             startHeight: currentBaseSize.height
+          };
+        }}
+        onRotateHandlePointerDown={(event) => {
+          event.stopPropagation();
+          if (
+            !previewCoordinateSize.width ||
+            !previewCoordinateSize.height ||
+            !watermarkNaturalSize.width ||
+            !watermarkNaturalSize.height
+          ) {
+            return;
+          }
+
+          const currentCenter = getWatermarkCenterPoint(
+            currentSnapshotRef.current.settings,
+            previewCoordinateSize.width,
+            previewCoordinateSize.height
+          );
+          const pointerCoordinate = getPreviewCoordinatePointFromClient(event.clientX, event.clientY);
+          if (!pointerCoordinate) {
+            return;
+          }
+
+          setIsWatermarkSelected(true);
+          setIsWatermarkDragging(true);
+          beginContinuousEdit();
+          rotationStateRef.current = {
+            pointerId: event.pointerId,
+            startRotation: currentSnapshotRef.current.settings.rotation,
+            startPointerAngle: getAngleFromPoint(
+              currentCenter.x,
+              currentCenter.y,
+              pointerCoordinate.x,
+              pointerCoordinate.y
+            ),
+            centerX: currentCenter.x,
+            centerY: currentCenter.y
           };
         }}
         onWatermarkPointerDown={(event) => {

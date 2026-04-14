@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { getWatermarkBaseSize, resizeWatermarkBoxFromHandle } from "./watermarkGeometry";
+import {
+  getAngleFromPoint,
+  getWatermarkBaseSize,
+  normalizeRotationDegrees,
+  resizeRotatedWatermarkBoxFromHandle,
+  resizeWatermarkBoxFromHandle
+} from "./watermarkGeometry";
 
 describe("getWatermarkBaseSize", () => {
   it("uses free width and height ratios when available", () => {
@@ -40,5 +46,36 @@ describe("resizeWatermarkBoxFromHandle", () => {
       width: 140,
       height: 100
     });
+  });
+});
+
+describe("resizeRotatedWatermarkBoxFromHandle", () => {
+  it("keeps the opposite side fixed when resizing a rotated box from the west handle", () => {
+    const resized = resizeRotatedWatermarkBoxFromHandle("w", 200, 150, 100, 80, -40, 0, 45, 24, 24);
+
+    expect(resized.centerX).toBeCloseTo(190, 6);
+    expect(resized.centerY).toBeCloseTo(140, 6);
+    expect(resized.width).toBeCloseTo(128.2842712474619, 6);
+    expect(resized.height).toBeCloseTo(80, 6);
+  });
+});
+
+describe("getAngleFromPoint", () => {
+  it("returns 0 degrees on the positive x axis", () => {
+    expect(getAngleFromPoint(100, 100, 140, 100)).toBe(0);
+  });
+
+  it("returns 90 degrees on the positive y axis", () => {
+    expect(getAngleFromPoint(100, 100, 100, 140)).toBe(90);
+  });
+});
+
+describe("normalizeRotationDegrees", () => {
+  it("normalizes negative degrees into the 0-360 range", () => {
+    expect(normalizeRotationDegrees(-44)).toBe(316);
+  });
+
+  it("normalizes degrees larger than 360", () => {
+    expect(normalizeRotationDegrees(721)).toBe(1);
   });
 });
