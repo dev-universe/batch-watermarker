@@ -60,6 +60,9 @@ export function PreviewPane({
           <div>
             <p className="eyebrow">Preview</p>
             <h2>{selectedFileName}</h2>
+            <div className="preview-hint">
+              <p>워터마크를 클릭해 선택하고 드래그해 이동할 수 있습니다.</p>
+            </div>
           </div>
           {previewKind === "pdf" && pdfPageCount > 0 && (
             <div className="pdf-pager">
@@ -142,6 +145,13 @@ export function PreviewPane({
           ) : (
             <div className="empty-preview">미리볼 입력 파일을 선택하세요.</div>
           )}
+        </div>
+
+        <div className="preview-hint">
+          <p>Cmd/Ctrl + 코너 핸들: 현재 비율 유지</p>
+          <p>Shift + 회전 드래그: 15도 단위 스냅</p>
+          <p>방향키: 1px 이동 / Shift + 방향키: 10px 이동</p>
+          <p>Esc: 선택 해제</p>
         </div>
       </div>
     </main>

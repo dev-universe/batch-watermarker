@@ -198,6 +198,22 @@ label {
   margin-top: 0.75rem;
 }
 
+.field-label {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #3c2a1c;
+}
+
+.dimension-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.dimension-row label {
+  margin-top: 0;
+}
+
 .control-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 90px;
@@ -213,6 +229,27 @@ label {
   grid-template-columns: repeat(3, 1fr);
   gap: 0.55rem;
   margin-top: 1rem;
+}
+
+.panel-hint,
+.preview-hint {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.9rem;
+  color: #6f4f38;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.preview-hint {
+  padding: 0.85rem 0.2rem 0;
+}
+
+.subtle-action {
+  justify-self: start;
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(239, 226, 209, 0.75);
 }
 
 .position-grid button.selected,
