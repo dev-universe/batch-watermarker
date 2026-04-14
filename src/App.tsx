@@ -358,15 +358,57 @@ function App() {
       }
 
       const isMac = navigator.platform.toUpperCase().includes("MAC");
-      const hasModifier = isMac ? event.metaKey : event.ctrlKey;
-      if (!hasModifier) {
-        return;
-      }
-
       const key = event.key.toLowerCase();
+      const hasModifier = isMac ? event.metaKey : event.ctrlKey;
       const wantsUndo = key === "z" && !event.shiftKey;
       const wantsRedo = (key === "z" && event.shiftKey) || (!isMac && key === "y");
-      if (!wantsUndo && !wantsRedo) {
+      if ((!wantsUndo && !wantsRedo) || !hasModifier) {
+        const isArrowKey =
+          key === "arrowup" || key === "arrowdown" || key === "arrowleft" || key === "arrowright";
+        if (
+          !isArrowKey ||
+          !isWatermarkSelected ||
+          !previewCoordinateSize.width ||
+          !previewCoordinateSize.height ||
+          dragStateRef.current ||
+          resizeStateRef.current ||
+          rotationStateRef.current
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        const step = event.shiftKey ? 10 : 1;
+        const currentCenter = getWatermarkCenterPoint(
+          currentSnapshotRef.current.settings,
+          previewCoordinateSize.width,
+          previewCoordinateSize.height
+        );
+        const nextCenter = {
+          x:
+            key === "arrowleft"
+              ? Math.max(0, currentCenter.x - step)
+              : key === "arrowright"
+                ? Math.min(previewCoordinateSize.width, currentCenter.x + step)
+                : currentCenter.x,
+          y:
+            key === "arrowup"
+              ? Math.max(0, currentCenter.y - step)
+              : key === "arrowdown"
+                ? Math.min(previewCoordinateSize.height, currentCenter.y + step)
+                : currentCenter.y
+        };
+
+        commitSnapshot((current) => ({
+          ...current,
+          settings: {
+            ...current.settings,
+            placementMode: "free",
+            position: null,
+            freeCenterXRatio: nextCenter.x / previewCoordinateSize.width,
+            freeCenterYRatio: nextCenter.y / previewCoordinateSize.height
+          }
+        }));
         return;
       }
 
@@ -379,9 +421,9 @@ function App() {
       redo();
     };
 
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+    window.addEventListener("keydown", onKeyDown, { capture: true });
+    return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
+  }, [isWatermarkSelected, previewCoordinateSize]);
 
   useEffect(() => {
     const onPointerEnd = () => {
