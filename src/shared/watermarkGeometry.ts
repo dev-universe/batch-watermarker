@@ -25,6 +25,21 @@ export const getRotatedBoundingBox = (width: number, height: number, rotationDeg
   };
 };
 
+export const getAngleFromPoint = (
+  centerX: number,
+  centerY: number,
+  pointX: number,
+  pointY: number
+) => {
+  const radians = Math.atan2(pointY - centerY, pointX - centerX);
+  return (radians * 180) / Math.PI;
+};
+
+export const normalizeRotationDegrees = (rotationDegrees: number) => {
+  const normalized = rotationDegrees % 360;
+  return normalized < 0 ? normalized + 360 : normalized;
+};
+
 export const getWatermarkBaseSize = (
   settings: Pick<WatermarkSettings, "placementMode" | "freeWidthRatio" | "freeHeightRatio" | "sizeRatio">,
   watermarkWidth: number,
@@ -53,6 +68,17 @@ export const getWatermarkBaseSize = (
 };
 
 export type ResizeHandle = "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw";
+
+const rotateVector = (x: number, y: number, rotationDegrees: number) => {
+  const radians = (rotationDegrees * Math.PI) / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+
+  return {
+    x: x * cos - y * sin,
+    y: x * sin + y * cos
+  };
+};
 
 export const resizeWatermarkBoxFromHandle = (
   handle: ResizeHandle,
@@ -88,6 +114,44 @@ export const resizeWatermarkBoxFromHandle = (
     centerY: (top + bottom) / 2,
     width: right - left,
     height: bottom - top
+  };
+};
+
+export const resizeRotatedWatermarkBoxFromHandle = (
+  handle: ResizeHandle,
+  startCenterX: number,
+  startCenterY: number,
+  startWidth: number,
+  startHeight: number,
+  deltaX: number,
+  deltaY: number,
+  rotationDegrees: number,
+  minWidth: number,
+  minHeight: number
+) => {
+  const localDelta = rotateVector(deltaX, deltaY, -rotationDegrees);
+  const resizedLocalBox = resizeWatermarkBoxFromHandle(
+    handle,
+    0,
+    0,
+    startWidth,
+    startHeight,
+    localDelta.x,
+    localDelta.y,
+    minWidth,
+    minHeight
+  );
+  const centerOffset = rotateVector(
+    resizedLocalBox.centerX,
+    resizedLocalBox.centerY,
+    rotationDegrees
+  );
+
+  return {
+    centerX: startCenterX + centerOffset.x,
+    centerY: startCenterY + centerOffset.y,
+    width: resizedLocalBox.width,
+    height: resizedLocalBox.height
   };
 };
 

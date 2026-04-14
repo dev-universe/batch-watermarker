@@ -26,6 +26,7 @@ interface PreviewPaneProps {
     handle: ResizeHandle,
     event: React.PointerEvent<HTMLDivElement>
   ) => void;
+  onRotateHandlePointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
   onWatermarkPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
 }
 
@@ -49,6 +50,7 @@ export function PreviewPane({
   onWatermarkPointerEnter,
   onWatermarkPointerLeave,
   onResizeHandlePointerDown,
+  onRotateHandlePointerDown,
   onWatermarkPointerDown
 }: PreviewPaneProps) {
   return (
@@ -106,20 +108,33 @@ export function PreviewPane({
                       draggable={false}
                     />
                     <div className="watermark-selection-outline" />
-                    {isWatermarkSelected &&
-                      RESIZE_HANDLES.map((handle) => (
+                    {isWatermarkSelected && (
+                      <>
+                        <div className="watermark-rotate-stem" />
                         <div
-                          key={handle}
-                          className={`watermark-resize-handle ${handle}`}
-                          data-handle={handle}
+                          className="watermark-rotate-handle"
                           onPointerDown={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
                             event.currentTarget.setPointerCapture(event.pointerId);
-                            onResizeHandlePointerDown(handle, event);
+                            onRotateHandlePointerDown(event);
                           }}
                         />
-                      ))}
+                        {RESIZE_HANDLES.map((handle) => (
+                          <div
+                            key={handle}
+                            className={`watermark-resize-handle ${handle}`}
+                            data-handle={handle}
+                            onPointerDown={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              event.currentTarget.setPointerCapture(event.pointerId);
+                              onResizeHandlePointerDown(handle, event);
+                            }}
+                          />
+                        ))}
+                      </>
+                    )}
                   </div>
                 </div>
               )}
