@@ -35,6 +35,7 @@ import {
   getWatermarkMetrics,
   isCornerResizeHandle,
   normalizeRotationDegrees,
+  snapRotationDegrees,
   resizeRotatedWatermarkBoxFromHandle,
   type ResizeHandle
 } from "./shared/watermarkGeometry";
@@ -438,11 +439,12 @@ function App() {
           pointerCoordinate.x,
           pointerCoordinate.y
         );
+        const nextRotation = normalizeRotationDegrees(
+          rotationState.startRotation + (currentPointerAngle - rotationState.startPointerAngle)
+        );
         const nextSettings: WatermarkSettings = {
           ...currentSnapshotRef.current.settings,
-          rotation: normalizeRotationDegrees(
-            rotationState.startRotation + (currentPointerAngle - rotationState.startPointerAngle)
-          )
+          rotation: event.shiftKey ? snapRotationDegrees(nextRotation, 15) : nextRotation
         };
 
         currentSnapshotRef.current = {

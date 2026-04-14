@@ -4,6 +4,7 @@ import {
   getWatermarkBaseSize,
   isCornerResizeHandle,
   normalizeRotationDegrees,
+  snapRotationDegrees,
   resizeRotatedWatermarkBoxFromHandle,
   resizeWatermarkBoxFromHandle
 } from "./watermarkGeometry";
@@ -117,5 +118,16 @@ describe("normalizeRotationDegrees", () => {
 
   it("normalizes degrees larger than 360", () => {
     expect(normalizeRotationDegrees(721)).toBe(1);
+  });
+});
+
+describe("snapRotationDegrees", () => {
+  it("snaps to the nearest step", () => {
+    expect(snapRotationDegrees(22, 15)).toBe(15);
+    expect(snapRotationDegrees(23, 15)).toBe(30);
+  });
+
+  it("normalizes snapped values into the 0-360 range", () => {
+    expect(snapRotationDegrees(359, 15)).toBe(0);
   });
 });
