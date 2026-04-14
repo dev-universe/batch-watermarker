@@ -40,6 +40,14 @@ export const normalizeRotationDegrees = (rotationDegrees: number) => {
   return normalized < 0 ? normalized + 360 : normalized;
 };
 
+export const snapRotationDegrees = (rotationDegrees: number, stepDegrees: number) => {
+  if (!Number.isFinite(stepDegrees) || stepDegrees <= 0) {
+    return normalizeRotationDegrees(rotationDegrees);
+  }
+
+  return normalizeRotationDegrees(Math.round(rotationDegrees / stepDegrees) * stepDegrees);
+};
+
 export const getWatermarkBaseSize = (
   settings: Pick<WatermarkSettings, "placementMode" | "freeWidthRatio" | "freeHeightRatio" | "sizeRatio">,
   watermarkWidth: number,
