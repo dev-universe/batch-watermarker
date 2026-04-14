@@ -17,6 +17,7 @@ interface WatermarkPanelProps {
   onWidthPxChange: (value: string) => void;
   onHeightPxChange: (value: string) => void;
   onTogglePreserveAspectRatio: (checked: boolean) => void;
+  onResetOriginalAspectRatio: () => void;
   onSelectPosition: (position: AnchorPosition) => void;
 }
 
@@ -34,6 +35,7 @@ export function WatermarkPanel({
   onWidthPxChange,
   onHeightPxChange,
   onTogglePreserveAspectRatio,
+  onResetOriginalAspectRatio,
   onSelectPosition
 }: WatermarkPanelProps) {
   const onRangeKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -64,7 +66,7 @@ export function WatermarkPanel({
 
       <div className="field-grid">
         <label>
-          <span>투명도 (0~100%)</span>
+          <span className="field-label">투명도 (0~100%)</span>
           <div className="control-row">
             <input
               type="range"
@@ -87,7 +89,7 @@ export function WatermarkPanel({
         </label>
 
         <label>
-          <span>크기 (px)</span>
+          <span className="field-label">크기 (px)</span>
           <div className="control-row">
             <input
               type="range"
@@ -122,9 +124,22 @@ export function WatermarkPanel({
           </span>
         </label>
 
-        <label>
-          <span>가로 (px)</span>
-          <div className="control-row">
+        <div className="panel-hint">
+          <p>비율 유지 켜면 크기 슬라이더와 가로/세로 입력이 현재 비율을 유지</p>
+          <p>비율 유지 끄면 가로와 세로를 독립적으로 조절 가능</p>
+        </div>
+
+        <button
+          className="subtle-action"
+          disabled={!watermarkFile}
+          onClick={onResetOriginalAspectRatio}
+        >
+          원본 비율로 초기화
+        </button>
+
+        <div className="dimension-row">
+          <label>
+            <span>가로 (px)</span>
             <input
               className="number"
               type="number"
@@ -132,6 +147,9 @@ export function WatermarkPanel({
               value={Math.round(renderedWidthPx)}
               onChange={(event) => onWidthPxChange(event.target.value)}
             />
+          </label>
+          <label>
+            <span>세로 (px)</span>
             <input
               className="number"
               type="number"
@@ -139,11 +157,11 @@ export function WatermarkPanel({
               value={Math.round(renderedHeightPx)}
               onChange={(event) => onHeightPxChange(event.target.value)}
             />
-          </div>
-        </label>
+          </label>
+        </div>
 
         <label>
-          <span>회전 (0~360도)</span>
+          <span className="field-label">회전 (0~360도)</span>
           <div className="control-row">
             <input
               type="range"

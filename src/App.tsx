@@ -25,7 +25,8 @@ import {
   getCanvasLongestEdge,
   getLongestEdge,
   getLongestEdgePxFromRatio,
-  getLongestEdgeRatio
+  getLongestEdgeRatio,
+  resizeFromWidthPreservingAspectRatio
 } from "./shared/watermarkSizing";
 import { resizeBoxFromHeight, resizeBoxFromWidth } from "./shared/watermarkSizing";
 import {
@@ -996,6 +997,35 @@ function App() {
                 preserveAspectRatio: checked
               }
             }))
+          }
+          onResetOriginalAspectRatio={() =>
+            commitSnapshot((current) => {
+              const nextSizing = resizeFromWidthPreservingAspectRatio(
+                watermarkNaturalSize.width,
+                watermarkNaturalSize.height,
+                renderedWatermarkSize.width
+              );
+
+              return {
+                ...current,
+                settings: {
+                  ...current.settings,
+                  sizeRatio: getLongestEdgeRatio(
+                    nextSizing.sizePx,
+                    previewCoordinateSize.width,
+                    previewCoordinateSize.height
+                  ),
+                  freeWidthRatio:
+                    previewCoordinateSize.width > 0
+                      ? nextSizing.width / previewCoordinateSize.width
+                      : 0,
+                  freeHeightRatio:
+                    previewCoordinateSize.height > 0
+                      ? nextSizing.height / previewCoordinateSize.height
+                      : 0
+                }
+              };
+            })
           }
           onSelectPosition={(position) =>
             commitSnapshot((current) => ({
