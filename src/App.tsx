@@ -33,6 +33,7 @@ import {
   getWatermarkBaseSize,
   getWatermarkCenterPoint,
   getWatermarkMetrics,
+  isCornerResizeHandle,
   normalizeRotationDegrees,
   resizeRotatedWatermarkBoxFromHandle,
   type ResizeHandle
@@ -161,6 +162,7 @@ function App() {
     startCenterY: number;
     startWidth: number;
     startHeight: number;
+    aspectLockActive: boolean;
   } | null>(null);
   const rotationStateRef = useRef<{
     pointerId: number;
@@ -454,6 +456,37 @@ function App() {
       }
       const resizeState = resizeStateRef.current;
       if (resizeState && resizeState.pointerId === event.pointerId) {
+        const wantsAspectLock =
+          (event.metaKey || event.ctrlKey) &&
+          isCornerResizeHandle(resizeState.handle) &&
+          resizeState.startWidth > 0 &&
+          resizeState.startHeight > 0;
+        if (wantsAspectLock !== resizeState.aspectLockActive) {
+          const currentCenter = getWatermarkCenterPoint(
+            currentSnapshotRef.current.settings,
+            previewCoordinateSize.width,
+            previewCoordinateSize.height
+          );
+          const currentBaseSize = getWatermarkBaseSize(
+            currentSnapshotRef.current.settings,
+            watermarkNaturalSize.width,
+            watermarkNaturalSize.height,
+            previewCoordinateSize.width,
+            previewCoordinateSize.height
+          );
+
+          resizeStateRef.current = {
+            ...resizeState,
+            startPointerX: event.clientX,
+            startPointerY: event.clientY,
+            startCenterX: currentCenter.x,
+            startCenterY: currentCenter.y,
+            startWidth: currentBaseSize.width,
+            startHeight: currentBaseSize.height,
+            aspectLockActive: wantsAspectLock
+          };
+          return;
+        }
         const nextBox = resizeRotatedWatermarkBoxFromHandle(
           resizeState.handle,
           resizeState.startCenterX,
@@ -463,6 +496,8 @@ function App() {
           (event.clientX - resizeState.startPointerX) * scaleX,
           (event.clientY - resizeState.startPointerY) * scaleY,
           currentSnapshotRef.current.settings.rotation,
+          wantsAspectLock,
+          wantsAspectLock ? resizeState.startWidth / resizeState.startHeight : 1,
           24,
           24
         );
@@ -1193,7 +1228,9 @@ function App() {
             startCenterX: currentCenter.x,
             startCenterY: currentCenter.y,
             startWidth: currentBaseSize.width,
-            startHeight: currentBaseSize.height
+            startHeight: currentBaseSize.height,
+            aspectLockActive:
+              (event.metaKey || event.ctrlKey) && isCornerResizeHandle(handle)
           };
         }}
         onRotateHandlePointerDown={(event) => {
