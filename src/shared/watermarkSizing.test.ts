@@ -6,6 +6,8 @@ import {
   getLongestEdgeRatio,
   getSizeFromLongestEdge,
   getSizeFromLongestEdgeRatio,
+  resizeBoxFromHeight,
+  resizeBoxFromWidth,
   resizeFromHeightPreservingAspectRatio,
   resizeFromWidthPreservingAspectRatio
 } from "./watermarkSizing";
@@ -74,6 +76,38 @@ describe("resizeFromHeightPreservingAspectRatio", () => {
       width: 600,
       height: 300,
       sizePx: 600
+    });
+  });
+});
+
+describe("resizeBoxFromWidth", () => {
+  it("preserves the current box ratio when enabled", () => {
+    expect(resizeBoxFromWidth(153, 232, 200, true)).toEqual({
+      width: 200,
+      height: expect.closeTo(303.26797385620915, 10)
+    });
+  });
+
+  it("changes width only when aspect-ratio preservation is disabled", () => {
+    expect(resizeBoxFromWidth(153, 232, 200, false)).toEqual({
+      width: 200,
+      height: 232
+    });
+  });
+});
+
+describe("resizeBoxFromHeight", () => {
+  it("preserves the current box ratio when enabled", () => {
+    expect(resizeBoxFromHeight(153, 232, 300, true)).toEqual({
+      width: expect.closeTo(197.8448275862069, 10),
+      height: 300
+    });
+  });
+
+  it("changes height only when aspect-ratio preservation is disabled", () => {
+    expect(resizeBoxFromHeight(153, 232, 300, false)).toEqual({
+      width: 153,
+      height: 300
     });
   });
 });

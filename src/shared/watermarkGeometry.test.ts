@@ -29,6 +29,26 @@ describe("getWatermarkBaseSize", () => {
       height: 160
     });
   });
+
+  it("still uses free width and height ratios in preset placement mode", () => {
+    expect(
+      getWatermarkBaseSize(
+        {
+          placementMode: "preset",
+          freeWidthRatio: 0.3,
+          freeHeightRatio: 0.2,
+          sizeRatio: 0.4
+        },
+        1200,
+        600,
+        1000,
+        800
+      )
+    ).toEqual({
+      width: 300,
+      height: 160
+    });
+  });
 });
 
 describe("resizeWatermarkBoxFromHandle", () => {

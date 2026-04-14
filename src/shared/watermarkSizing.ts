@@ -113,3 +113,57 @@ export const resizeFromHeightPreservingAspectRatio = (
     sizePx: getLongestEdge(width, height)
   };
 };
+
+export const resizeBoxFromWidth = (
+  currentWidth: number,
+  currentHeight: number,
+  targetWidth: number,
+  preserveAspectRatio: boolean
+) => {
+  if (currentWidth <= 0 || currentHeight <= 0 || targetWidth <= 0) {
+    return {
+      width: 0,
+      height: 0
+    };
+  }
+
+  if (!preserveAspectRatio) {
+    return {
+      width: targetWidth,
+      height: currentHeight
+    };
+  }
+
+  const aspectRatio = currentWidth / currentHeight;
+  return {
+    width: targetWidth,
+    height: targetWidth / aspectRatio
+  };
+};
+
+export const resizeBoxFromHeight = (
+  currentWidth: number,
+  currentHeight: number,
+  targetHeight: number,
+  preserveAspectRatio: boolean
+) => {
+  if (currentWidth <= 0 || currentHeight <= 0 || targetHeight <= 0) {
+    return {
+      width: 0,
+      height: 0
+    };
+  }
+
+  if (!preserveAspectRatio) {
+    return {
+      width: currentWidth,
+      height: targetHeight
+    };
+  }
+
+  const aspectRatio = currentWidth / currentHeight;
+  return {
+    width: targetHeight * aspectRatio,
+    height: targetHeight
+  };
+};
