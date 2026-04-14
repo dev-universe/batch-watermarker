@@ -89,3 +89,27 @@ export const resizeFromWidthPreservingAspectRatio = (
     sizePx: getLongestEdge(width, height)
   };
 };
+
+export const resizeFromHeightPreservingAspectRatio = (
+  sourceWidth: number,
+  sourceHeight: number,
+  targetHeight: number
+) => {
+  if (sourceWidth <= 0 || sourceHeight <= 0 || targetHeight <= 0) {
+    return {
+      width: 0,
+      height: 0,
+      sizePx: 0
+    };
+  }
+
+  const ratio = targetHeight / sourceHeight;
+  const width = sourceWidth * ratio;
+  const height = targetHeight;
+
+  return {
+    width,
+    height,
+    sizePx: getLongestEdge(width, height)
+  };
+};
