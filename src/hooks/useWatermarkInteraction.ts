@@ -105,6 +105,18 @@ export function useWatermarkInteraction({
 
       const isMac = navigator.platform.toUpperCase().includes("MAC");
       const key = event.key.toLowerCase();
+      if (
+        key === "escape" &&
+        isWatermarkSelected &&
+        !dragStateRef.current &&
+        !resizeStateRef.current &&
+        !rotationStateRef.current
+      ) {
+        event.preventDefault();
+        setIsWatermarkSelected(false);
+        return;
+      }
+
       const hasModifier = isMac ? event.metaKey : event.ctrlKey;
       const wantsUndo = key === "z" && !event.shiftKey;
       const wantsRedo = (key === "z" && event.shiftKey) || (!isMac && key === "y");
