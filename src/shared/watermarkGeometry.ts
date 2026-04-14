@@ -117,6 +117,91 @@ export const resizeWatermarkBoxFromHandle = (
   };
 };
 
+export const isCornerResizeHandle = (handle: ResizeHandle) =>
+  handle === "nw" || handle === "ne" || handle === "se" || handle === "sw";
+
+const getCornerAspectLockedBox = (
+  handle: ResizeHandle,
+  startWidth: number,
+  startHeight: number,
+  deltaX: number,
+  deltaY: number,
+  aspectRatio: number,
+  minWidth: number,
+  minHeight: number
+) => {
+  if (!Number.isFinite(aspectRatio) || aspectRatio <= 0) {
+    return resizeWatermarkBoxFromHandle(
+      handle,
+      0,
+      0,
+      startWidth,
+      startHeight,
+      deltaX,
+      deltaY,
+      minWidth,
+      minHeight
+    );
+  }
+
+  const startLeft = -startWidth / 2;
+  const startRight = startWidth / 2;
+  const startTop = -startHeight / 2;
+  const startBottom = startHeight / 2;
+
+  const movingStartCorner =
+    handle === "nw"
+      ? { x: startLeft, y: startTop }
+      : handle === "ne"
+        ? { x: startRight, y: startTop }
+        : handle === "sw"
+          ? { x: startLeft, y: startBottom }
+          : { x: startRight, y: startBottom };
+  const fixedCorner =
+    handle === "nw"
+      ? { x: startRight, y: startBottom }
+      : handle === "ne"
+        ? { x: startLeft, y: startBottom }
+        : handle === "sw"
+          ? { x: startRight, y: startTop }
+          : { x: startLeft, y: startTop };
+
+  const rawMovingCorner = {
+    x: movingStartCorner.x + deltaX,
+    y: movingStartCorner.y + deltaY
+  };
+  const direction =
+    handle === "nw"
+      ? { x: -aspectRatio, y: -1 }
+      : handle === "ne"
+        ? { x: aspectRatio, y: -1 }
+        : handle === "sw"
+          ? { x: -aspectRatio, y: 1 }
+          : { x: aspectRatio, y: 1 };
+  const vectorFromFixed = {
+    x: rawMovingCorner.x - fixedCorner.x,
+    y: rawMovingCorner.y - fixedCorner.y
+  };
+  const directionMagnitudeSquared = direction.x * direction.x + direction.y * direction.y;
+  let scale =
+    (vectorFromFixed.x * direction.x + vectorFromFixed.y * direction.y) /
+    directionMagnitudeSquared;
+  const minScale = Math.max(minWidth / Math.abs(direction.x), minHeight / Math.abs(direction.y));
+  scale = Math.max(minScale, scale);
+
+  const movingCorner = {
+    x: fixedCorner.x + direction.x * scale,
+    y: fixedCorner.y + direction.y * scale
+  };
+
+  return {
+    centerX: (fixedCorner.x + movingCorner.x) / 2,
+    centerY: (fixedCorner.y + movingCorner.y) / 2,
+    width: Math.abs(movingCorner.x - fixedCorner.x),
+    height: Math.abs(movingCorner.y - fixedCorner.y)
+  };
+};
+
 export const resizeRotatedWatermarkBoxFromHandle = (
   handle: ResizeHandle,
   startCenterX: number,
@@ -126,6 +211,8 @@ export const resizeRotatedWatermarkBoxFromHandle = (
   deltaX: number,
   deltaY: number,
   rotationDegrees: number,
+  lockAspectRatio: boolean,
+  aspectRatio: number,
   minWidth: number,
   minHeight: number
 ) => {
@@ -141,17 +228,30 @@ export const resizeRotatedWatermarkBoxFromHandle = (
     minWidth,
     minHeight
   );
+  const adjustedLocalBox =
+    lockAspectRatio && isCornerResizeHandle(handle)
+      ? getCornerAspectLockedBox(
+          handle,
+          startWidth,
+          startHeight,
+          localDelta.x,
+          localDelta.y,
+          aspectRatio,
+          minWidth,
+          minHeight
+        )
+      : resizedLocalBox;
   const centerOffset = rotateVector(
-    resizedLocalBox.centerX,
-    resizedLocalBox.centerY,
+    adjustedLocalBox.centerX,
+    adjustedLocalBox.centerY,
     rotationDegrees
   );
 
   return {
     centerX: startCenterX + centerOffset.x,
     centerY: startCenterY + centerOffset.y,
-    width: resizedLocalBox.width,
-    height: resizedLocalBox.height
+    width: adjustedLocalBox.width,
+    height: adjustedLocalBox.height
   };
 };
 

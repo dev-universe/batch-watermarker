@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getAngleFromPoint,
   getWatermarkBaseSize,
+  isCornerResizeHandle,
   normalizeRotationDegrees,
   resizeRotatedWatermarkBoxFromHandle,
   resizeWatermarkBoxFromHandle
@@ -51,12 +52,51 @@ describe("resizeWatermarkBoxFromHandle", () => {
 
 describe("resizeRotatedWatermarkBoxFromHandle", () => {
   it("keeps the opposite side fixed when resizing a rotated box from the west handle", () => {
-    const resized = resizeRotatedWatermarkBoxFromHandle("w", 200, 150, 100, 80, -40, 0, 45, 24, 24);
+    const resized = resizeRotatedWatermarkBoxFromHandle(
+      "w",
+      200,
+      150,
+      100,
+      80,
+      -40,
+      0,
+      45,
+      false,
+      2,
+      24,
+      24
+    );
 
     expect(resized.centerX).toBeCloseTo(190, 6);
     expect(resized.centerY).toBeCloseTo(140, 6);
     expect(resized.width).toBeCloseTo(128.2842712474619, 6);
     expect(resized.height).toBeCloseTo(80, 6);
+  });
+
+  it("keeps the original aspect ratio for corner resize when locked", () => {
+    const resized = resizeRotatedWatermarkBoxFromHandle(
+      "ne",
+      200,
+      150,
+      100,
+      50,
+      40,
+      -10,
+      0,
+      true,
+      2,
+      24,
+      24
+    );
+
+    expect(resized.width / resized.height).toBeCloseTo(2, 6);
+  });
+});
+
+describe("isCornerResizeHandle", () => {
+  it("identifies corner handles only", () => {
+    expect(isCornerResizeHandle("nw")).toBe(true);
+    expect(isCornerResizeHandle("e")).toBe(false);
   });
 });
 
