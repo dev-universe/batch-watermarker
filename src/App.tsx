@@ -27,6 +27,7 @@ import {
   getLongestEdgePxFromRatio,
   getLongestEdgeRatio
 } from "./shared/watermarkSizing";
+import { resizeBoxFromHeight, resizeBoxFromWidth } from "./shared/watermarkSizing";
 import {
   getWatermarkBaseSize,
   getWatermarkCenterPoint,
@@ -569,13 +570,12 @@ function App() {
     const nextWidth = clamp(Number(value), 0, sizeControlMax);
     const currentWidth = renderedWatermarkSize.width;
     const currentHeight = renderedWatermarkSize.height;
-    const currentAspectRatio =
-      currentWidth > 0 && currentHeight > 0 ? currentWidth / currentHeight : 0;
-    const nextHeight = settings.preserveAspectRatio
-      ? currentAspectRatio > 0
-        ? nextWidth / currentAspectRatio
-        : 0
-      : currentHeight;
+    const resized = resizeBoxFromWidth(
+      currentWidth,
+      currentHeight,
+      nextWidth,
+      settings.preserveAspectRatio
+    );
     const currentCenter = getWatermarkCenterPoint(
       settings,
       previewCoordinateSize.width,
@@ -587,7 +587,7 @@ function App() {
       settings: {
         ...current.settings,
         sizeRatio: getLongestEdgeRatio(
-          getLongestEdge(nextWidth, nextHeight),
+          getLongestEdge(resized.width, resized.height),
           previewCoordinateSize.width,
           previewCoordinateSize.height
         ),
@@ -597,9 +597,10 @@ function App() {
           previewCoordinateSize.width > 0 ? currentCenter.x / previewCoordinateSize.width : 0,
         freeCenterYRatio:
           previewCoordinateSize.height > 0 ? currentCenter.y / previewCoordinateSize.height : 0,
-        freeWidthRatio: previewCoordinateSize.width > 0 ? nextWidth / previewCoordinateSize.width : 0,
+        freeWidthRatio:
+          previewCoordinateSize.width > 0 ? resized.width / previewCoordinateSize.width : 0,
         freeHeightRatio:
-          previewCoordinateSize.height > 0 ? nextHeight / previewCoordinateSize.height : 0
+          previewCoordinateSize.height > 0 ? resized.height / previewCoordinateSize.height : 0
       }
     }));
   };
@@ -608,13 +609,12 @@ function App() {
     const nextHeight = clamp(Number(value), 0, sizeControlMax);
     const currentWidth = renderedWatermarkSize.width;
     const currentHeight = renderedWatermarkSize.height;
-    const currentAspectRatio =
-      currentWidth > 0 && currentHeight > 0 ? currentWidth / currentHeight : 0;
-    const nextWidth = settings.preserveAspectRatio
-      ? currentAspectRatio > 0
-        ? nextHeight * currentAspectRatio
-        : 0
-      : currentWidth;
+    const resized = resizeBoxFromHeight(
+      currentWidth,
+      currentHeight,
+      nextHeight,
+      settings.preserveAspectRatio
+    );
     const currentCenter = getWatermarkCenterPoint(
       settings,
       previewCoordinateSize.width,
@@ -626,7 +626,7 @@ function App() {
       settings: {
         ...current.settings,
         sizeRatio: getLongestEdgeRatio(
-          getLongestEdge(nextWidth, nextHeight),
+          getLongestEdge(resized.width, resized.height),
           previewCoordinateSize.width,
           previewCoordinateSize.height
         ),
@@ -636,9 +636,10 @@ function App() {
           previewCoordinateSize.width > 0 ? currentCenter.x / previewCoordinateSize.width : 0,
         freeCenterYRatio:
           previewCoordinateSize.height > 0 ? currentCenter.y / previewCoordinateSize.height : 0,
-        freeWidthRatio: previewCoordinateSize.width > 0 ? nextWidth / previewCoordinateSize.width : 0,
+        freeWidthRatio:
+          previewCoordinateSize.width > 0 ? resized.width / previewCoordinateSize.width : 0,
         freeHeightRatio:
-          previewCoordinateSize.height > 0 ? nextHeight / previewCoordinateSize.height : 0
+          previewCoordinateSize.height > 0 ? resized.height / previewCoordinateSize.height : 0
       }
     }));
   };
