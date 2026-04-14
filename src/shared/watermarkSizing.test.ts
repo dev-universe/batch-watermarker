@@ -6,6 +6,7 @@ import {
   getLongestEdgeRatio,
   getSizeFromLongestEdge,
   getSizeFromLongestEdgeRatio,
+  resizeFromHeightPreservingAspectRatio,
   resizeFromWidthPreservingAspectRatio
 } from "./watermarkSizing";
 
@@ -63,6 +64,16 @@ describe("resizeFromWidthPreservingAspectRatio", () => {
       width: 300,
       height: 150,
       sizePx: 300
+    });
+  });
+});
+
+describe("resizeFromHeightPreservingAspectRatio", () => {
+  it("updates width and sizePx from a target height", () => {
+    expect(resizeFromHeightPreservingAspectRatio(1200, 600, 300)).toEqual({
+      width: 600,
+      height: 300,
+      sizePx: 600
     });
   });
 });

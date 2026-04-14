@@ -21,6 +21,7 @@ export interface InputFile {
 export interface WatermarkSettings {
   opacity: number;
   sizeRatio: number;
+  preserveAspectRatio: boolean;
   rotation: number;
   placementMode: WatermarkPlacementMode;
   position: AnchorPosition | null;

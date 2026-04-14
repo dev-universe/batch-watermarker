@@ -55,11 +55,7 @@ export const getWatermarkBaseSize = (
   canvasWidth: number,
   canvasHeight: number
 ) => {
-  if (
-    settings.placementMode === "free" &&
-    settings.freeWidthRatio !== null &&
-    settings.freeHeightRatio !== null
-  ) {
+  if (settings.freeWidthRatio !== null && settings.freeHeightRatio !== null) {
     return {
       width: settings.freeWidthRatio * canvasWidth,
       height: settings.freeHeightRatio * canvasHeight

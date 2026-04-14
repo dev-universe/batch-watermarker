@@ -15,6 +15,8 @@ interface WatermarkPanelProps {
   onBeginContinuousNumericEdit: () => void;
   onUpdateNumericSetting: (key: "opacity" | "sizePx" | "rotation", value: string) => void;
   onWidthPxChange: (value: string) => void;
+  onHeightPxChange: (value: string) => void;
+  onTogglePreserveAspectRatio: (checked: boolean) => void;
   onSelectPosition: (position: AnchorPosition) => void;
 }
 
@@ -30,6 +32,8 @@ export function WatermarkPanel({
   onBeginContinuousNumericEdit,
   onUpdateNumericSetting,
   onWidthPxChange,
+  onHeightPxChange,
+  onTogglePreserveAspectRatio,
   onSelectPosition
 }: WatermarkPanelProps) {
   const onRangeKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -90,6 +94,7 @@ export function WatermarkPanel({
               min="0"
               max={sizeControlMax}
               value={displayedSizePx}
+              disabled={!settings.preserveAspectRatio}
               onPointerDown={onBeginContinuousNumericEdit}
               onKeyDown={onRangeKeyDown}
               onChange={(event) => onUpdateNumericSetting("sizePx", event.target.value)}
@@ -100,21 +105,40 @@ export function WatermarkPanel({
               min="0"
               max={sizeControlMax}
               value={Math.round(displayedSizePx)}
+              disabled={!settings.preserveAspectRatio}
               onChange={(event) => onUpdateNumericSetting("sizePx", event.target.value)}
             />
           </div>
         </label>
 
         <label>
+          <span>
+            <input
+              type="checkbox"
+              checked={settings.preserveAspectRatio}
+              onChange={(event) => onTogglePreserveAspectRatio(event.target.checked)}
+            />{" "}
+            현재 가로세로 비율 유지
+          </span>
+        </label>
+
+        <label>
           <span>가로 (px)</span>
           <div className="control-row">
             <input
+              className="number"
               type="number"
               min="0"
               value={Math.round(renderedWidthPx)}
               onChange={(event) => onWidthPxChange(event.target.value)}
             />
-            <input className="number" type="number" value={Math.round(renderedHeightPx)} readOnly />
+            <input
+              className="number"
+              type="number"
+              min="0"
+              value={Math.round(renderedHeightPx)}
+              onChange={(event) => onHeightPxChange(event.target.value)}
+            />
           </div>
         </label>
 

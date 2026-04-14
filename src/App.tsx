@@ -25,8 +25,7 @@ import {
   getCanvasLongestEdge,
   getLongestEdge,
   getLongestEdgePxFromRatio,
-  getLongestEdgeRatio,
-  resizeFromWidthPreservingAspectRatio
+  getLongestEdgeRatio
 } from "./shared/watermarkSizing";
 import {
   getWatermarkBaseSize,
@@ -38,6 +37,7 @@ import {
 const INITIAL_SETTINGS: WatermarkSettings = {
   opacity: 50,
   sizeRatio: 280 / 842,
+  preserveAspectRatio: true,
   rotation: 0,
   placementMode: "preset",
   position: "C",
@@ -483,18 +483,50 @@ function App() {
   const updateNumericSetting = (key: "opacity" | "sizePx" | "rotation", value: string) => {
     const max = key === "opacity" ? 100 : key === "rotation" ? 360 : sizeControlMax;
     const nextValue = clamp(Number(value), 0, max);
+    const currentCenter = getWatermarkCenterPoint(
+      settings,
+      previewCoordinateSize.width,
+      previewCoordinateSize.height
+    );
     const nextSettingsPatch =
       key === "sizePx"
-        ? {
-            sizeRatio: getLongestEdgeRatio(
-              nextValue,
-              previewCoordinateSize.width,
-              previewCoordinateSize.height
-            ),
-            freeWidthRatio: null,
-            freeHeightRatio: null
-          }
+        ? (() => {
+            if (!settings.preserveAspectRatio) {
+              return null;
+            }
+
+            const currentWidth = renderedWatermarkSize.width;
+            const currentHeight = renderedWatermarkSize.height;
+            const currentLongestEdge = getLongestEdge(currentWidth, currentHeight);
+            const scaleFactor = currentLongestEdge > 0 ? nextValue / currentLongestEdge : 0;
+            const nextWidth = currentWidth * scaleFactor;
+            const nextHeight = currentHeight * scaleFactor;
+
+            return {
+              sizeRatio: getLongestEdgeRatio(
+                nextValue,
+                previewCoordinateSize.width,
+                previewCoordinateSize.height
+              ),
+              placementMode: "free" as const,
+              position: null,
+              freeCenterXRatio:
+                previewCoordinateSize.width > 0 ? currentCenter.x / previewCoordinateSize.width : 0,
+              freeCenterYRatio:
+                previewCoordinateSize.height > 0
+                  ? currentCenter.y / previewCoordinateSize.height
+                  : 0,
+              freeWidthRatio:
+                previewCoordinateSize.width > 0 ? nextWidth / previewCoordinateSize.width : 0,
+              freeHeightRatio:
+                previewCoordinateSize.height > 0 ? nextHeight / previewCoordinateSize.height : 0
+            };
+          })()
         : { [key]: nextValue };
+
+    if (!nextSettingsPatch) {
+      return;
+    }
 
     if (pendingContinuousEditRef.current) {
       currentSnapshotRef.current = {
@@ -535,10 +567,19 @@ function App() {
 
   const onWidthPxChange = (value: string) => {
     const nextWidth = clamp(Number(value), 0, sizeControlMax);
-    const nextSizing = resizeFromWidthPreservingAspectRatio(
-      watermarkNaturalSize.width,
-      watermarkNaturalSize.height,
-      nextWidth
+    const currentWidth = renderedWatermarkSize.width;
+    const currentHeight = renderedWatermarkSize.height;
+    const currentAspectRatio =
+      currentWidth > 0 && currentHeight > 0 ? currentWidth / currentHeight : 0;
+    const nextHeight = settings.preserveAspectRatio
+      ? currentAspectRatio > 0
+        ? nextWidth / currentAspectRatio
+        : 0
+      : currentHeight;
+    const currentCenter = getWatermarkCenterPoint(
+      settings,
+      previewCoordinateSize.width,
+      previewCoordinateSize.height
     );
 
     commitSnapshot((current) => ({
@@ -546,12 +587,58 @@ function App() {
       settings: {
         ...current.settings,
         sizeRatio: getLongestEdgeRatio(
-          nextSizing.sizePx,
+          getLongestEdge(nextWidth, nextHeight),
           previewCoordinateSize.width,
           previewCoordinateSize.height
         ),
-        freeWidthRatio: null,
-        freeHeightRatio: null
+        placementMode: "free",
+        position: null,
+        freeCenterXRatio:
+          previewCoordinateSize.width > 0 ? currentCenter.x / previewCoordinateSize.width : 0,
+        freeCenterYRatio:
+          previewCoordinateSize.height > 0 ? currentCenter.y / previewCoordinateSize.height : 0,
+        freeWidthRatio: previewCoordinateSize.width > 0 ? nextWidth / previewCoordinateSize.width : 0,
+        freeHeightRatio:
+          previewCoordinateSize.height > 0 ? nextHeight / previewCoordinateSize.height : 0
+      }
+    }));
+  };
+
+  const onHeightPxChange = (value: string) => {
+    const nextHeight = clamp(Number(value), 0, sizeControlMax);
+    const currentWidth = renderedWatermarkSize.width;
+    const currentHeight = renderedWatermarkSize.height;
+    const currentAspectRatio =
+      currentWidth > 0 && currentHeight > 0 ? currentWidth / currentHeight : 0;
+    const nextWidth = settings.preserveAspectRatio
+      ? currentAspectRatio > 0
+        ? nextHeight * currentAspectRatio
+        : 0
+      : currentWidth;
+    const currentCenter = getWatermarkCenterPoint(
+      settings,
+      previewCoordinateSize.width,
+      previewCoordinateSize.height
+    );
+
+    commitSnapshot((current) => ({
+      ...current,
+      settings: {
+        ...current.settings,
+        sizeRatio: getLongestEdgeRatio(
+          getLongestEdge(nextWidth, nextHeight),
+          previewCoordinateSize.width,
+          previewCoordinateSize.height
+        ),
+        placementMode: "free",
+        position: null,
+        freeCenterXRatio:
+          previewCoordinateSize.width > 0 ? currentCenter.x / previewCoordinateSize.width : 0,
+        freeCenterYRatio:
+          previewCoordinateSize.height > 0 ? currentCenter.y / previewCoordinateSize.height : 0,
+        freeWidthRatio: previewCoordinateSize.width > 0 ? nextWidth / previewCoordinateSize.width : 0,
+        freeHeightRatio:
+          previewCoordinateSize.height > 0 ? nextHeight / previewCoordinateSize.height : 0
       }
     }));
   };
@@ -899,6 +986,16 @@ function App() {
           onBeginContinuousNumericEdit={beginContinuousEdit}
           onUpdateNumericSetting={updateNumericSetting}
           onWidthPxChange={onWidthPxChange}
+          onHeightPxChange={onHeightPxChange}
+          onTogglePreserveAspectRatio={(checked) =>
+            commitSnapshot((current) => ({
+              ...current,
+              settings: {
+                ...current.settings,
+                preserveAspectRatio: checked
+              }
+            }))
+          }
           onSelectPosition={(position) =>
             commitSnapshot((current) => ({
               ...current,
@@ -907,9 +1004,7 @@ function App() {
                 placementMode: "preset",
                 position,
                 freeCenterXRatio: null,
-                freeCenterYRatio: null,
-                freeWidthRatio: null,
-                freeHeightRatio: null
+                freeCenterYRatio: null
               }
             }))
           }

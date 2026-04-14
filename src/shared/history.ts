@@ -24,6 +24,7 @@ const areInputFilesEqual = (left: InputFile[], right: InputFile[]) =>
 const areSettingsEqual = (left: WatermarkSettings, right: WatermarkSettings) =>
   left.opacity === right.opacity &&
   left.sizeRatio === right.sizeRatio &&
+  left.preserveAspectRatio === right.preserveAspectRatio &&
   left.rotation === right.rotation &&
   left.placementMode === right.placementMode &&
   left.position === right.position &&

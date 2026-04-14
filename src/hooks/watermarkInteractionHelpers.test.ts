@@ -13,6 +13,7 @@ const makeSnapshot = (): EditableStateSnapshot => ({
   settings: {
     opacity: 50,
     sizeRatio: 280 / 842,
+    preserveAspectRatio: true,
     rotation: 0,
     placementMode: "preset",
     position: "C",
