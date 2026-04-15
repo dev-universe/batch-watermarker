@@ -59,13 +59,47 @@ Run with `npm run dev` before tagging or distributing a release.
 
 Run on a Windows machine before Windows distribution.
 
+### Windows Automated Checks
+
 - [ ] `npm install`
 - [ ] `npm run typecheck`
 - [ ] `npm test`
+  - [ ] test file count matches the current expected count
+  - [ ] test count matches the current expected count
 - [ ] `npm run build`
 - [ ] `npm run dist`
+
+### Windows Packaging Checks
+
 - [ ] NSIS installer is generated
+- [ ] installer filename and app name use `Batch Watermarker`
+- [ ] installer icon matches `build/icon.ico`
 - [ ] installer launches and installs successfully
 - [ ] installed app launches
-- [ ] PDF/image preview and export smoke tests pass
+- [ ] installed app can be removed or reinstalled cleanly
+
+### Windows App Smoke Checks
+
+- [ ] PDF preview loads
+- [ ] PNG/image preview loads
+- [ ] PDF page navigation works
+- [ ] input file picker works
+- [ ] input file drag-and-drop works
+- [ ] output folder picker works
+- [ ] watermark image picker works
+- [ ] watermark image drag-and-drop works
+- [ ] opacity, size, rotation, width, and height controls work
+- [ ] direct manipulation works: select, move, resize, rotate
+- [ ] keyboard shortcuts work: Ctrl undo/redo, arrow nudge, Shift arrow nudge
+- [ ] PDF export matches preview
+- [ ] PNG/image export matches preview
+- [ ] output folder empty + suffix empty shows original overwrite warning
+- [ ] output folder empty + suffix set saves beside each source file
+- [ ] output folder set + suffix empty saves to the selected output folder with the original filename
+- [ ] output folder set + suffix set saves to the selected output folder with the suffix
+- [ ] conflict confirmation appears when non-overwrite planned output paths collide
+
+### Windows Distribution Checks
+
 - [ ] SmartScreen/code-signing expectations are documented for distribution
+- [ ] a clean Windows machine or VM has been used for at least one installer smoke test
