@@ -129,11 +129,19 @@ export function useFileSelectionActions({
     });
   };
 
+  const selectPreviewFile = (path: string) => {
+    commitSnapshot((current) => ({
+      ...current,
+      selectedPreviewPath: path
+    }));
+  };
+
   return {
     openInputPicker,
     onDropInputFiles,
     openWatermarkPicker,
     onDropWatermarkFile,
-    removeInputFile
+    removeInputFile,
+    selectPreviewFile
   };
 }

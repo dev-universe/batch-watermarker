@@ -126,7 +126,8 @@
 - [x] output settings actions hook 분리
 - [x] watermark settings actions hook 분리
 - [x] preview overlay style hook 분리
-- [ ] App는 hook 조합과 레이아웃만 담당
+- [x] inline app handlers 정리
+- [x] App는 hook 조합과 레이아웃만 담당
 - [ ] panel / preview props 연결 정리
 
 ### 2-4. 검증
