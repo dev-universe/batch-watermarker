@@ -123,6 +123,7 @@
 - [x] editable state history hook 분리
 - [x] output summary 계산 분리
 - [x] file selection actions hook 분리
+- [x] output settings actions hook 분리
 - [ ] App는 hook 조합과 레이아웃만 담당
 - [ ] panel / preview props 연결 정리
 
