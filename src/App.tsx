@@ -1,16 +1,15 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type SyntheticEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { InputFilesPanel } from "./components/InputFilesPanel";
 import { OutputPanel } from "./components/OutputPanel";
 import { PreviewPane } from "./components/PreviewPane";
 import { WatermarkPanel } from "./components/WatermarkPanel";
+import {
+  createObjectUrlFromPreview,
+  readImageNaturalSize
+} from "./hooks/previewStateHelpers";
+import { usePreviewState } from "./hooks/usePreviewState";
 import { useWatermarkInteraction } from "./hooks/useWatermarkInteraction";
-import type { PDFDocumentProxy } from "pdfjs-dist";
-import type {
-  InputFile,
-  PreviewPayload,
-  ProcessResponse,
-  WatermarkSettings
-} from "./shared/types";
+import type { InputFile, ProcessResponse, WatermarkSettings } from "./shared/types";
 import {
   applyRedo,
   applyUndo,
@@ -66,24 +65,6 @@ const clamp = (value: number, min: number, max: number) =>
 
 const humanCount = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
 
-const createObjectUrlFromPreview = (previewPayload: PreviewPayload) => {
-  const bytes = Uint8Array.from(previewPayload.data);
-  const blob = new Blob([bytes], { type: previewPayload.mimeType });
-  return URL.createObjectURL(blob);
-};
-
-const readImageNaturalSize = (objectUrl: string) =>
-  new Promise<{ width: number; height: number }>((resolve, reject) => {
-    const image = new Image();
-    image.onload = () =>
-      resolve({
-        width: image.naturalWidth,
-        height: image.naturalHeight
-      });
-    image.onerror = () => reject(new Error("Unable to read watermark dimensions."));
-    image.src = objectUrl;
-  });
-
 const formatConflictConfirmMessage = (conflicts: string[]) => {
   const previewLines = conflicts.slice(0, 6).map((conflict) => `- ${conflict}`);
   const remainingCount = conflicts.length - previewLines.length;
@@ -103,44 +84,14 @@ const formatConflictConfirmMessage = (conflicts: string[]) => {
     .join("\n");
 };
 
-type PdfJsModule = typeof import("pdfjs-dist");
-
-let pdfJsLoader: Promise<PdfJsModule> | null = null;
-
-const loadPdfJs = async () => {
-  if (!pdfJsLoader) {
-    pdfJsLoader = (async () => {
-      const [pdfjsLib, pdfWorkerModule] = await Promise.all([
-        import("pdfjs-dist"),
-        import("pdfjs-dist/build/pdf.worker.mjs?url")
-      ]);
-      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerModule.default;
-      return pdfjsLib;
-    })();
-  }
-
-  return pdfJsLoader;
-};
-
 function App() {
   const [inputFiles, setInputFiles] = useState<InputFile[]>([]);
   const [watermarkFile, setWatermarkFile] = useState<InputFile | null>(null);
   const [settings, setSettings] = useState(INITIAL_SETTINGS);
   const [selectedPreviewPath, setSelectedPreviewPath] = useState("");
-  const [preview, setPreview] = useState<PreviewPayload | null>(null);
-  const [previewImageUrl, setPreviewImageUrl] = useState("");
-  const [watermarkPreviewUrl, setWatermarkPreviewUrl] = useState("");
-  const [watermarkNaturalSize, setWatermarkNaturalSize] = useState({ width: 0, height: 0 });
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState("입력 파일과 워터마크를 넣으면 바로 처리할 수 있습니다.");
   const [lastResult, setLastResult] = useState<ProcessResponse | null>(null);
-  const [previewCoordinateSize, setPreviewCoordinateSize] = useState({ width: 0, height: 0 });
-  const [previewDisplaySize, setPreviewDisplaySize] = useState({ width: 0, height: 0 });
-  const [pdfPageCount, setPdfPageCount] = useState(0);
-  const [pdfPreviewPage, setPdfPreviewPage] = useState(1);
-  const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
-  const previewImageRef = useRef<HTMLImageElement | null>(null);
-  const pdfRenderTokenRef = useRef(0);
   const pendingContinuousEditRef = useRef<EditableStateSnapshot | null>(null);
   const historyRef = useRef(createEmptyHistoryState());
   const currentSnapshotRef = useRef<EditableStateSnapshot>({
@@ -149,10 +100,26 @@ function App() {
     settings: INITIAL_SETTINGS,
     selectedPreviewPath: ""
   });
-  const selectedPreviewFile = useMemo(
-    () => inputFiles.find((file) => file.path === selectedPreviewPath) ?? inputFiles[0] ?? null,
-    [inputFiles, selectedPreviewPath]
-  );
+  const {
+    selectedPreviewFile,
+    previewKind,
+    previewBaseUrl,
+    watermarkPreviewUrl,
+    watermarkNaturalSize,
+    previewCoordinateSize,
+    previewDisplaySize,
+    pdfPageCount,
+    pdfPreviewPage,
+    previewImageRef,
+    onPreviewImageLoad,
+    onPreviousPdfPage,
+    onNextPdfPage
+  } = usePreviewState({
+    inputFiles,
+    selectedPreviewPath,
+    setSelectedPreviewPath,
+    watermarkFile
+  });
 
   const applySnapshot = (snapshot: EditableStateSnapshot) => {
     setInputFiles(snapshot.inputFiles);
@@ -222,84 +189,6 @@ function App() {
       selectedPreviewPath
     });
   }, [inputFiles, watermarkFile, settings, selectedPreviewPath]);
-
-  useEffect(() => {
-    void (async () => {
-      if (!selectedPreviewFile) {
-        setPreview(null);
-        return;
-      }
-
-      const nextPreview = await window.watermarkApi.readPreview(selectedPreviewFile.path);
-      setPreview(nextPreview);
-    })();
-  }, [selectedPreviewFile]);
-
-  useEffect(() => {
-    if (!preview || preview.kind !== "image") {
-      setPreviewImageUrl("");
-      setPreviewCoordinateSize({ width: 0, height: 0 });
-      return;
-    }
-
-    const objectUrl = createObjectUrlFromPreview(preview);
-    setPreviewImageUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [preview]);
-
-  useEffect(() => {
-    void (async () => {
-      if (!watermarkFile) {
-        setWatermarkPreviewUrl("");
-        setWatermarkNaturalSize({ width: 0, height: 0 });
-        return;
-      }
-      const nextPreview = await window.watermarkApi.readPreview(watermarkFile.path);
-      const objectUrl = createObjectUrlFromPreview(nextPreview);
-      setWatermarkPreviewUrl((current) => {
-        if (current) {
-          URL.revokeObjectURL(current);
-        }
-        return objectUrl;
-      });
-    })();
-  }, [watermarkFile]);
-
-  useEffect(() => {
-    return () => {
-      if (watermarkPreviewUrl) {
-        URL.revokeObjectURL(watermarkPreviewUrl);
-      }
-    };
-  }, [watermarkPreviewUrl]);
-
-  useEffect(() => {
-    if (!watermarkPreviewUrl) {
-      setWatermarkNaturalSize({ width: 0, height: 0 });
-      return;
-    }
-
-    const image = new Image();
-    image.onload = () =>
-      setWatermarkNaturalSize({
-        width: image.naturalWidth,
-        height: image.naturalHeight
-      });
-    image.src = watermarkPreviewUrl;
-  }, [watermarkPreviewUrl]);
-
-  useEffect(() => {
-    if (selectedPreviewFile && selectedPreviewFile.path !== selectedPreviewPath) {
-      setSelectedPreviewPath(selectedPreviewFile.path);
-    }
-    if (!selectedPreviewFile && selectedPreviewPath) {
-      setSelectedPreviewPath("");
-    }
-  }, [selectedPreviewFile, selectedPreviewPath]);
-
-  useEffect(() => {
-    setPdfPreviewPage(1);
-  }, [selectedPreviewPath]);
 
   useEffect(() => {
     const onPointerEnd = () => {
@@ -686,98 +575,6 @@ function App() {
     }));
   };
 
-  const onPreviewImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
-    const nextSize = {
-      width: event.currentTarget.naturalWidth,
-      height: event.currentTarget.naturalHeight
-    };
-    setPreviewCoordinateSize(nextSize);
-    setPreviewDisplaySize({
-      width: event.currentTarget.clientWidth,
-      height: event.currentTarget.clientHeight
-    });
-  };
-
-  const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
-  useEffect(() => {
-    let cancelled = false;
-
-    void (async () => {
-      if (!preview || preview.kind !== "pdf") {
-        if (!cancelled) {
-          setPdfDocument(null);
-          setPdfPreviewUrl("");
-          setPdfPageCount(0);
-          setPreviewCoordinateSize({ width: 0, height: 0 });
-        }
-        return;
-      }
-
-      const pdfjsLib = await loadPdfJs();
-      const loadingTask = pdfjsLib.getDocument({
-        data: preview.data
-      });
-      const nextPdfDocument = await loadingTask.promise;
-      if (cancelled) {
-        await nextPdfDocument.destroy();
-        return;
-      }
-      setPdfDocument(nextPdfDocument);
-      setPdfPageCount(nextPdfDocument.numPages);
-      setPdfPreviewPage((current) => Math.min(Math.max(current, 1), nextPdfDocument.numPages));
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [preview]);
-
-  useEffect(() => {
-    return () => {
-      void pdfDocument?.destroy();
-    };
-  }, [pdfDocument]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void (async () => {
-      if (!pdfDocument) {
-        setPdfPreviewUrl("");
-        return;
-      }
-
-      const renderToken = ++pdfRenderTokenRef.current;
-      const safePage = Math.min(Math.max(pdfPreviewPage, 1), pdfDocument.numPages);
-      const page = await pdfDocument.getPage(safePage);
-      const coordinateViewport = page.getViewport({ scale: 1 });
-      const viewport = page.getViewport({ scale: 1.4 });
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-      if (!context) {
-        return;
-      }
-
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      await page.render({ canvasContext: context, viewport, canvas }).promise;
-
-      if (cancelled || renderToken !== pdfRenderTokenRef.current) {
-        return;
-      }
-
-      setPdfPreviewUrl(canvas.toDataURL("image/png"));
-      setPreviewCoordinateSize({
-        width: coordinateViewport.width,
-        height: coordinateViewport.height
-      });
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [pdfDocument, pdfPreviewPage]);
-
   const startProcessing = async () => {
     if (!inputFiles.length) {
       window.alert("입력 파일을 먼저 추가하세요.");
@@ -845,32 +642,6 @@ function App() {
     }
   };
 
-  const previewKind = preview?.kind ?? selectedPreviewFile?.kind ?? null;
-  const previewBaseUrl = previewKind === "pdf" ? pdfPreviewUrl : previewKind === "image" ? previewImageUrl : "";
-
-  useEffect(() => {
-    const node = previewImageRef.current;
-    if (!node) {
-      setPreviewDisplaySize({ width: 0, height: 0 });
-      return;
-    }
-
-    const syncPreviewDisplaySize = () =>
-      setPreviewDisplaySize({
-        width: node.clientWidth,
-        height: node.clientHeight
-      });
-
-    syncPreviewDisplaySize();
-    const observer = new ResizeObserver(syncPreviewDisplaySize);
-    observer.observe(node);
-    window.addEventListener("resize", syncPreviewDisplaySize);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", syncPreviewDisplaySize);
-    };
-  }, [previewBaseUrl]);
   const overlayStyle = useMemo(() => {
     if (
       !previewDisplaySize.width ||
@@ -1078,8 +849,8 @@ function App() {
         isWatermarkSelected={isWatermarkSelected}
         isWatermarkDragging={isWatermarkDragging}
         previewImageRef={previewImageRef}
-        onPreviousPdfPage={() => setPdfPreviewPage((current) => Math.max(1, current - 1))}
-        onNextPdfPage={() => setPdfPreviewPage((current) => Math.min(pdfPageCount, current + 1))}
+        onPreviousPdfPage={onPreviousPdfPage}
+        onNextPdfPage={onNextPdfPage}
         onPreviewImageLoad={onPreviewImageLoad}
         onClearWatermarkSelection={clearWatermarkSelection}
         onWatermarkPointerEnter={() => setIsWatermarkHovered(true)}
