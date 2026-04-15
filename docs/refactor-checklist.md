@@ -14,7 +14,8 @@
 ## Current Focus
 
 - [x] 현재 우선순위: `1단계 > 1-1. output path / preflight 분리`
-- [ ] 다음 우선순위: `1단계 > 1-2. 워터마크 자산 생성 분리`
+- [x] 현재 우선순위: `1단계 > 1-2. 워터마크 자산 생성 분리`
+- [ ] 다음 우선순위: `1단계 > 1-3. PDF export / image export 분리`
 
 ## Done Criteria
 
@@ -50,14 +51,14 @@
 
 ### 1-2. 워터마크 자산 생성 분리
 
-- [ ] 출력용 워터마크 자산 생성 코드 추출
-- [ ] opacity 적용 경로 정리
-- [ ] image export용 자산 생성과 PDF export용 자산 경로 분리
-- [ ] oversample / padding / fit 정책을 한 곳에 모으기
-- [ ] 호출부는 필요한 자산만 요청하게 정리
+- [x] 출력용 워터마크 자산 생성 코드 추출
+- [x] opacity 적용 경로 정리
+- [x] image export용 자산 생성과 PDF export용 자산 경로 분리
+- [x] oversample / padding / fit 정책을 한 곳에 모으기
+- [x] 호출부는 필요한 자산만 요청하게 정리
 
 후보 파일:
-- [ ] `/Users/fd2/dev/pdf-watermark/electron/watermarkAssets.ts`
+- [x] `/Users/fd2/dev/pdf-watermark/electron/watermarkAssets.ts`
 
 ### 1-3. PDF export / image export 분리
 
