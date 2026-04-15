@@ -18,7 +18,8 @@
 - [x] 현재 우선순위: `1단계 > 1-3. PDF export / image export 분리`
 - [x] 현재 우선순위: `1단계 > 1-4. IPC orchestration만 남기기`
 - [x] 현재 우선순위: `2단계 > 2-1. preview state hook 분리`
-- [ ] 다음 우선순위: `2단계 > 2-2. processing submission hook 분리`
+- [x] 현재 우선순위: `2단계 > 2-2. processing submission hook 분리`
+- [ ] 다음 우선순위: `2단계 > 2-3. App는 조합만 하도록 정리`
 
 ## Done Criteria
 
@@ -109,13 +110,13 @@
 
 ### 2-2. processing submission hook 분리
 
-- [ ] 시작 전 입력 검증
-- [ ] preflight conflict confirm
-- [ ] `isProcessing`, `statusMessage`, `lastResult` 분리
-- [ ] `window.watermarkApi.processFiles(...)` orchestration 분리
+- [x] 시작 전 입력 검증
+- [x] preflight conflict confirm
+- [x] `isProcessing`, `statusMessage`, `lastResult` 분리
+- [x] `window.watermarkApi.processFiles(...)` orchestration 분리
 
 후보 파일:
-- [ ] `/Users/fd2/dev/pdf-watermark/src/hooks/useProcessingState.ts`
+- [x] `/Users/fd2/dev/pdf-watermark/src/hooks/useProcessingState.ts`
 
 ### 2-3. App는 조합만 하도록 정리
 
@@ -211,7 +212,7 @@
 - [ ] `electron/main.ts`에서 watermark asset build 분리
 - [ ] `electron/main.ts`에서 PDF / image processor 분리
 - [x] `App.tsx`에서 preview state hook 분리
-- [ ] `App.tsx`에서 processing state hook 분리
+- [x] `App.tsx`에서 processing state hook 분리
 - [ ] `WatermarkPanel` / `PreviewPane` props 정리
 - [ ] shared / helper 경계 정리
 - [ ] architecture note 작성
