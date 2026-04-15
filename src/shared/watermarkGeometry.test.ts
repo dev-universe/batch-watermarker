@@ -49,6 +49,26 @@ describe("getWatermarkBaseSize", () => {
       height: 160
     });
   });
+
+  it("falls back to size ratio when free dimensions are unavailable", () => {
+    expect(
+      getWatermarkBaseSize(
+        {
+          placementMode: "free",
+          freeWidthRatio: null,
+          freeHeightRatio: null,
+          sizeRatio: 0.5
+        },
+        1200,
+        600,
+        1000,
+        800
+      )
+    ).toEqual({
+      width: 500,
+      height: 250
+    });
+  });
 });
 
 describe("resizeWatermarkBoxFromHandle", () => {
@@ -112,6 +132,25 @@ describe("resizeRotatedWatermarkBoxFromHandle", () => {
 
     expect(resized.width / resized.height).toBeCloseTo(2, 6);
   });
+
+  it("does not apply aspect lock to edge handles", () => {
+    const resized = resizeRotatedWatermarkBoxFromHandle(
+      "e",
+      200,
+      150,
+      100,
+      50,
+      40,
+      20,
+      0,
+      true,
+      2,
+      24,
+      24
+    );
+
+    expect(resized.width / resized.height).not.toBeCloseTo(2, 6);
+  });
 });
 
 describe("isCornerResizeHandle", () => {
@@ -149,5 +188,10 @@ describe("snapRotationDegrees", () => {
 
   it("normalizes snapped values into the 0-360 range", () => {
     expect(snapRotationDegrees(359, 15)).toBe(0);
+  });
+
+  it("falls back to normalized rotation for invalid snap steps", () => {
+    expect(snapRotationDegrees(-44, 0)).toBe(316);
+    expect(snapRotationDegrees(721, Number.NaN)).toBe(1);
   });
 });

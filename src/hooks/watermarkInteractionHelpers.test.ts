@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  canStartWatermarkTransform,
   canClearWatermarkSelection,
+  getInteractionActivity,
   getKeyboardNudgeSnapshot,
   getKeyboardNudgeStep
 } from "./watermarkInteractionHelpers";
@@ -44,6 +46,42 @@ describe("canClearWatermarkSelection", () => {
         hasDrag: true,
         hasResize: false,
         hasRotate: false
+      })
+    ).toBe(false);
+  });
+});
+
+describe("getInteractionActivity", () => {
+  it("maps active refs into interaction activity flags", () => {
+    expect(
+      getInteractionActivity({
+        drag: {},
+        resize: null,
+        rotate: undefined
+      })
+    ).toEqual({
+      hasDrag: true,
+      hasResize: false,
+      hasRotate: false
+    });
+  });
+});
+
+describe("canStartWatermarkTransform", () => {
+  it("allows transforms when preview and watermark sizes are available", () => {
+    expect(
+      canStartWatermarkTransform({
+        previewCoordinateSize: { width: 600, height: 900 },
+        watermarkNaturalSize: { width: 1200, height: 600 }
+      })
+    ).toBe(true);
+  });
+
+  it("prevents transforms when preview or watermark sizes are missing", () => {
+    expect(
+      canStartWatermarkTransform({
+        previewCoordinateSize: { width: 0, height: 900 },
+        watermarkNaturalSize: { width: 1200, height: 600 }
       })
     ).toBe(false);
   });

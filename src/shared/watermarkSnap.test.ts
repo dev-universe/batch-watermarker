@@ -28,4 +28,12 @@ describe("snapWatermarkCenterPoint", () => {
       snapped: false
     });
   });
+
+  it("chooses the closest anchor point within the threshold", () => {
+    expect(snapWatermarkCenterPoint(290, 148, 600, 300, 110)).toEqual({
+      x: 300,
+      y: 150,
+      snapped: true
+    });
+  });
 });
