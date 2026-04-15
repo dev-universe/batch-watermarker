@@ -5,34 +5,33 @@
 
 ## How To Use
 
-- [ ] 새 리팩터링 작업을 시작하기 전에 이 문서를 먼저 읽기
-- [ ] 작업 범위가 체크리스트의 어느 단계 / 세부 단계에 해당하는지 먼저 정하기
-- [ ] 구현 전에 해당 세부 단계의 계획을 더 잘게 쪼개기
-- [ ] 구현 후에는 검증 항목까지 실제로 확인하고 체크 갱신하기
-- [ ] 새로운 리팩터링 원칙이나 후속 작업이 생기면 이 문서에 즉시 반영하기
+- [x] 새 리팩터링 작업을 시작하기 전에 이 문서를 먼저 읽기
+- [x] 작업 범위가 체크리스트의 어느 단계 / 세부 단계에 해당하는지 먼저 정하기
+- [x] 구현 전에 해당 세부 단계의 계획을 더 잘게 쪼개기
+- [x] 구현 후에는 검증 항목까지 실제로 확인하고 체크 갱신하기
+- [x] 새로운 리팩터링 원칙이나 후속 작업이 생기면 이 문서에 즉시 반영하기
 
 ## Current Focus
 
-- [x] 현재 우선순위: `1단계 > 1-1. output path / preflight 분리`
-- [x] 현재 우선순위: `1단계 > 1-2. 워터마크 자산 생성 분리`
-- [x] 현재 우선순위: `1단계 > 1-3. PDF export / image export 분리`
-- [x] 현재 우선순위: `1단계 > 1-4. IPC orchestration만 남기기`
-- [x] 현재 우선순위: `2단계 > 2-1. preview state hook 분리`
-- [x] 현재 우선순위: `2단계 > 2-2. processing submission hook 분리`
-- [ ] 다음 우선순위: `2단계 > 2-3. App는 조합만 하도록 정리`
+- [x] 1단계 완료: `electron/main.ts` 책임 분리
+- [x] 2단계 완료: `App.tsx`의 preview / processing state 분리
+- [x] 3단계 완료: 컴포넌트 props / 인터페이스 정리
+- [x] 4단계 완료: shared 계산 계층 정리
+- [x] 5단계 완료: 아키텍처 / 설계 의도 문서화
+- [ ] 다음 우선순위: 릴리스 전 안정화 점검
 
 ## Done Criteria
 
-- [ ] 해당 단계의 체크박스가 모두 완료됨
+- [x] 해당 단계의 체크박스가 모두 완료됨
 - [x] `npm run typecheck` 통과
 - [x] `npm test` 통과
 - [x] `npm run build` 통과
-- [ ] 관련 수동 검증까지 끝남
-- [ ] 필요하면 이 문서의 다음 우선순위 갱신
+- [x] 관련 수동 검증까지 끝남
+- [x] 필요하면 이 문서의 다음 우선순위 갱신
 
 ## 전체 로드맵
 
-- [ ] 1단계: `electron/main.ts` 책임 분리
+- [x] 1단계: `electron/main.ts` 책임 분리
 - [x] 2단계: `App.tsx`의 preview / processing state 분리
 - [x] 3단계: 컴포넌트 props / 인터페이스 정리
 - [x] 4단계: shared 계산 계층 정리
@@ -69,7 +68,7 @@
 - [x] PDF 처리 함수를 별도 모듈로 분리
 - [x] image 처리 함수를 별도 모듈로 분리
 - [x] `main.ts`는 파일 종류 분기 + orchestration만 담당하게 정리
-- [ ] PDF / image preview parity 수동 확인
+- [x] PDF / image preview parity 수동 확인
 
 후보 파일:
 - [x] `/Users/fd2/dev/pdf-watermark/electron/processPdfFile.ts`
@@ -88,9 +87,9 @@
 - [x] `npm run typecheck`
 - [x] `npm test`
 - [x] `npm run build`
-- [ ] PDF export 수동 확인
-- [ ] PNG export 수동 확인
-- [ ] conflict confirm 수동 확인
+- [x] PDF export 수동 확인
+- [x] PNG export 수동 확인
+- [x] conflict confirm 수동 확인
 
 ## 2단계: `App.tsx` preview / processing state 분리
 
@@ -196,7 +195,7 @@
 - [x] preview / export parity 원칙
 
 후보 위치:
-- [ ] `/Users/fd2/dev/pdf-watermark/README.md`
+- [x] `/Users/fd2/dev/pdf-watermark/README.md`는 기존 사용법/배포 문서 유지
 - [x] `/Users/fd2/dev/pdf-watermark/docs/architecture.md`
 
 ### 5-2. 리팩터링 규칙 문서화
@@ -207,22 +206,22 @@
 
 ## 적용 원칙 체크리스트
 
-- [ ] SRP: 모듈이 한 이유로만 바뀌는가
-- [ ] OCP: PDF / image / export 규칙 확장 시 기존 코드 수정 범위가 작나
-- [ ] ISP: props / interface가 과하게 크지 않은가
-- [ ] DIP: 상위 흐름이 `sharp`, `pdf-lib` 세부 구현에 과하게 묶이지 않는가
-- [ ] DRY: preview / export / path planning / resize 규칙 중복이 없는가
-- [ ] KISS: 과한 패턴 없이 함수 / 훅 / 모듈 단위로 단순한가
-- [ ] YAGNI: 아직 안 쓸 일반화를 미리 넣지 않았는가
+- [x] SRP: 모듈이 한 이유로만 바뀌는가
+- [x] OCP: PDF / image / export 규칙 확장 시 기존 코드 수정 범위가 작나
+- [x] ISP: props / interface가 과하게 크지 않은가
+- [x] DIP: 상위 흐름이 `sharp`, `pdf-lib` 세부 구현에 과하게 묶이지 않는가
+- [x] DRY: preview / export / path planning / resize 규칙 중복이 없는가
+- [x] KISS: 과한 패턴 없이 함수 / 훅 / 모듈 단위로 단순한가
+- [x] YAGNI: 아직 안 쓸 일반화를 미리 넣지 않았는가
 
 ## 추천 실제 진행 순서
 
-- [ ] `electron/main.ts`에서 output path / preflight 분리
-- [ ] `electron/main.ts`에서 watermark asset build 분리
-- [ ] `electron/main.ts`에서 PDF / image processor 분리
+- [x] `electron/main.ts`에서 output path / preflight 분리
+- [x] `electron/main.ts`에서 watermark asset build 분리
+- [x] `electron/main.ts`에서 PDF / image processor 분리
 - [x] `App.tsx`에서 preview state hook 분리
 - [x] `App.tsx`에서 processing state hook 분리
 - [x] `WatermarkPanel` / `PreviewPane` props 연결 정리
-- [ ] `WatermarkPanel` / `PreviewPane` props 인터페이스 정리
-- [ ] shared / helper 경계 정리
+- [x] `WatermarkPanel` / `PreviewPane` props 인터페이스 정리
+- [x] shared / helper 경계 정리
 - [x] architecture note 작성
