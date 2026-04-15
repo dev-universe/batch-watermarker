@@ -148,9 +148,9 @@
 
 ### 3-2. `PreviewPane` props 정리
 
-- [ ] pager 관련 props 묶기
-- [ ] overlay / interaction props 묶기
-- [ ] preview asset props 묶기
+- [x] pager 관련 props 묶기
+- [x] overlay / interaction props 묶기
+- [x] preview asset props 묶기
 
 ### 3-3. 타입 이름 정리
 

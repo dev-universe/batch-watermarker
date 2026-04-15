@@ -224,27 +224,37 @@ function App() {
     onStartProcessing: startProcessing
   };
   const previewPaneProps = {
-    selectedFileName: selectedPreviewFile?.name ?? "선택된 파일 없음",
-    previewKind,
-    pdfPageCount,
-    pdfPreviewPage,
-    previewBaseUrl,
-    watermarkPreviewUrl,
-    overlayStyle,
-    overlayImageStyle,
-    isWatermarkHovered,
-    isWatermarkSelected,
-    isWatermarkDragging,
-    previewImageRef,
-    onPreviousPdfPage,
-    onNextPdfPage,
-    onPreviewImageLoad,
-    onClearWatermarkSelection: clearWatermarkSelection,
-    onWatermarkPointerEnter,
-    onWatermarkPointerLeave,
-    onResizeHandlePointerDown,
-    onRotateHandlePointerDown,
-    onWatermarkPointerDown
+    preview: {
+      selectedFileName: selectedPreviewFile?.name ?? "선택된 파일 없음",
+      previewKind,
+      previewBaseUrl,
+      watermarkPreviewUrl
+    },
+    pager: {
+      pdfPageCount,
+      pdfPreviewPage,
+      onPreviousPdfPage,
+      onNextPdfPage
+    },
+    image: {
+      previewImageRef,
+      onPreviewImageLoad
+    },
+    overlay: {
+      overlayStyle,
+      overlayImageStyle,
+      isWatermarkHovered,
+      isWatermarkSelected,
+      isWatermarkDragging
+    },
+    interaction: {
+      onClearWatermarkSelection: clearWatermarkSelection,
+      onWatermarkPointerEnter,
+      onWatermarkPointerLeave,
+      onResizeHandlePointerDown,
+      onRotateHandlePointerDown,
+      onWatermarkPointerDown
+    }
   };
 
   return (

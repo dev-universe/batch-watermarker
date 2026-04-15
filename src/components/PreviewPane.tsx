@@ -4,55 +4,68 @@ import type { ResizeHandle } from "../shared/watermarkGeometry";
 const RESIZE_HANDLES = ["n", "ne", "e", "se", "s", "sw", "w", "nw"] as const;
 
 interface PreviewPaneProps {
-  selectedFileName: string;
-  previewKind: "pdf" | "image" | null;
-  pdfPageCount: number;
-  pdfPreviewPage: number;
-  previewBaseUrl: string;
-  watermarkPreviewUrl: string;
-  overlayStyle?: CSSProperties;
-  overlayImageStyle?: CSSProperties;
-  isWatermarkHovered: boolean;
-  isWatermarkSelected: boolean;
-  isWatermarkDragging: boolean;
-  previewImageRef: MutableRefObject<HTMLImageElement | null>;
-  onPreviousPdfPage: () => void;
-  onNextPdfPage: () => void;
-  onPreviewImageLoad: (event: React.SyntheticEvent<HTMLImageElement>) => void;
-  onClearWatermarkSelection: () => void;
-  onWatermarkPointerEnter: () => void;
-  onWatermarkPointerLeave: () => void;
-  onResizeHandlePointerDown: (
-    handle: ResizeHandle,
-    event: React.PointerEvent<HTMLDivElement>
-  ) => void;
-  onRotateHandlePointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
-  onWatermarkPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
+  preview: {
+    selectedFileName: string;
+    previewKind: "pdf" | "image" | null;
+    previewBaseUrl: string;
+    watermarkPreviewUrl: string;
+  };
+  pager: {
+    pdfPageCount: number;
+    pdfPreviewPage: number;
+    onPreviousPdfPage: () => void;
+    onNextPdfPage: () => void;
+  };
+  image: {
+    previewImageRef: MutableRefObject<HTMLImageElement | null>;
+    onPreviewImageLoad: (event: React.SyntheticEvent<HTMLImageElement>) => void;
+  };
+  overlay: {
+    overlayStyle?: CSSProperties;
+    overlayImageStyle?: CSSProperties;
+    isWatermarkHovered: boolean;
+    isWatermarkSelected: boolean;
+    isWatermarkDragging: boolean;
+  };
+  interaction: {
+    onClearWatermarkSelection: () => void;
+    onWatermarkPointerEnter: () => void;
+    onWatermarkPointerLeave: () => void;
+    onResizeHandlePointerDown: (
+      handle: ResizeHandle,
+      event: React.PointerEvent<HTMLDivElement>
+    ) => void;
+    onRotateHandlePointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
+    onWatermarkPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
+  };
 }
 
 export function PreviewPane({
-  selectedFileName,
-  previewKind,
-  pdfPageCount,
-  pdfPreviewPage,
-  previewBaseUrl,
-  watermarkPreviewUrl,
-  overlayStyle,
-  overlayImageStyle,
-  isWatermarkHovered,
-  isWatermarkSelected,
-  isWatermarkDragging,
-  previewImageRef,
-  onPreviousPdfPage,
-  onNextPdfPage,
-  onPreviewImageLoad,
-  onClearWatermarkSelection,
-  onWatermarkPointerEnter,
-  onWatermarkPointerLeave,
-  onResizeHandlePointerDown,
-  onRotateHandlePointerDown,
-  onWatermarkPointerDown
+  preview,
+  pager,
+  image,
+  overlay,
+  interaction
 }: PreviewPaneProps) {
+  const { selectedFileName, previewKind, previewBaseUrl, watermarkPreviewUrl } = preview;
+  const { pdfPageCount, pdfPreviewPage, onPreviousPdfPage, onNextPdfPage } = pager;
+  const { previewImageRef, onPreviewImageLoad } = image;
+  const {
+    overlayStyle,
+    overlayImageStyle,
+    isWatermarkHovered,
+    isWatermarkSelected,
+    isWatermarkDragging
+  } = overlay;
+  const {
+    onClearWatermarkSelection,
+    onWatermarkPointerEnter,
+    onWatermarkPointerLeave,
+    onResizeHandlePointerDown,
+    onRotateHandlePointerDown,
+    onWatermarkPointerDown
+  } = interaction;
+
   return (
     <main className="preview-pane">
       <div className="preview-sticky">
