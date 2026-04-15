@@ -64,9 +64,10 @@ npm run dev
 
 ### Output Rules
 
-- If `suffix` is empty, the app warns before overwriting the original files.
-- If `suffix` is set and `output folder` is empty, the result is saved next to each source file.
-- If `suffix` is set and `output folder` is set, the result is saved in the selected output folder.
+- If both `output folder` and `suffix` are empty, the app warns before overwriting the original files.
+- If `output folder` is empty and `suffix` is set, the result is saved next to each source file.
+- If `output folder` is set and `suffix` is empty, the result is saved in the selected output folder with the original filename.
+- If both `output folder` and `suffix` are set, the result is saved in the selected output folder with the suffix.
 - Before processing starts, the app checks for planned output path conflicts and asks for confirmation if conflicts are found.
 
 ## Tests
@@ -143,7 +144,7 @@ The default Windows target is `nsis`.
 - image export works
 - suffix output beside the source file works
 - selected output folder export works
-- overwrite warning appears when suffix is empty
+- overwrite warning appears when output folder and suffix are both empty
 - preflight conflict confirmation appears when output paths collide
 - rotated watermark output matches preview
 - output files open normally after export
