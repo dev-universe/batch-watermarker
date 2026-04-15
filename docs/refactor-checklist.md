@@ -33,7 +33,7 @@
 ## 전체 로드맵
 
 - [ ] 1단계: `electron/main.ts` 책임 분리
-- [ ] 2단계: `App.tsx`의 preview / processing state 분리
+- [x] 2단계: `App.tsx`의 preview / processing state 분리
 - [ ] 3단계: 컴포넌트 props / 인터페이스 정리
 - [ ] 4단계: shared 계산 계층 정리
 - [ ] 5단계: 아키텍처 / 설계 의도 문서화
@@ -128,13 +128,13 @@
 - [x] preview overlay style hook 분리
 - [x] inline app handlers 정리
 - [x] App는 hook 조합과 레이아웃만 담당
-- [ ] panel / preview props 연결 정리
+- [x] panel / preview props 연결 정리
 
 ### 2-4. 검증
 
-- [ ] preview 로딩 회귀 없음
-- [ ] processing / export 회귀 없음
-- [ ] direct manipulation 회귀 없음
+- [x] preview 로딩 회귀 없음
+- [x] processing / export 회귀 없음
+- [x] direct manipulation 회귀 없음
 
 ## 3단계: 컴포넌트 props / 인터페이스 정리
 
@@ -220,6 +220,7 @@
 - [ ] `electron/main.ts`에서 PDF / image processor 분리
 - [x] `App.tsx`에서 preview state hook 분리
 - [x] `App.tsx`에서 processing state hook 분리
-- [ ] `WatermarkPanel` / `PreviewPane` props 정리
+- [x] `WatermarkPanel` / `PreviewPane` props 연결 정리
+- [ ] `WatermarkPanel` / `PreviewPane` props 인터페이스 정리
 - [ ] shared / helper 경계 정리
 - [ ] architecture note 작성
