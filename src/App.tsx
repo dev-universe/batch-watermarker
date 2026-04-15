@@ -1,10 +1,11 @@
-import { useMemo, type ChangeEvent } from "react";
+import { useMemo } from "react";
 import { InputFilesPanel } from "./components/InputFilesPanel";
 import { OutputPanel } from "./components/OutputPanel";
 import { PreviewPane } from "./components/PreviewPane";
 import { WatermarkPanel } from "./components/WatermarkPanel";
 import { useEditableStateHistory } from "./hooks/useEditableStateHistory";
 import { useFileSelectionActions } from "./hooks/useFileSelectionActions";
+import { useOutputSettingsActions } from "./hooks/useOutputSettingsActions";
 import { useProcessingState } from "./hooks/useProcessingState";
 import { usePreviewState } from "./hooks/usePreviewState";
 import { useWatermarkInteraction } from "./hooks/useWatermarkInteraction";
@@ -124,6 +125,14 @@ function App() {
     previewCoordinateSize,
     commitSnapshot
   });
+  const {
+    openOutputFolderPicker,
+    clearOutputDirectory,
+    onOutputDirectoryChange,
+    onSuffixChange
+  } = useOutputSettingsActions({
+    commitSnapshot
+  });
 
   const outputSummary = getOutputSummary(settings);
   const renderedWatermarkSize = useMemo(
@@ -152,20 +161,6 @@ function App() {
       ),
     [displayedSizePx, previewCoordinateSize, watermarkNaturalSize]
   );
-
-  const openOutputFolderPicker = async () => {
-    const folder = await window.watermarkApi.pickOutputFolder();
-    if (folder) {
-      commitSnapshot((current) => ({
-        ...current,
-        settings: {
-          ...current.settings,
-          outputDirectory: folder,
-          overwriteOriginal: false
-        }
-      }));
-    }
-  };
 
   const updateNumericSetting = (key: "opacity" | "sizePx" | "rotation", value: string) => {
     const max = key === "opacity" ? 100 : key === "rotation" ? 360 : sizeControlMax;
@@ -311,37 +306,6 @@ function App() {
           previewCoordinateSize.width > 0 ? resized.width / previewCoordinateSize.width : 0,
         freeHeightRatio:
           previewCoordinateSize.height > 0 ? resized.height / previewCoordinateSize.height : 0
-      }
-    }));
-  };
-
-  const clearOutputDirectory = () => {
-    commitSnapshot((current) => ({
-      ...current,
-      settings: {
-        ...current.settings,
-        outputDirectory: ""
-      }
-    }));
-  };
-
-  const onOutputDirectoryChange = (event: ChangeEvent<HTMLInputElement>) => {
-    commitSnapshot((current) => ({
-      ...current,
-      settings: {
-        ...current.settings,
-        outputDirectory: event.target.value,
-        overwriteOriginal: false
-      }
-    }));
-  };
-
-  const onSuffixChange = (event: ChangeEvent<HTMLInputElement>) => {
-    commitSnapshot((current) => ({
-      ...current,
-      settings: {
-        ...current.settings,
-        suffix: event.target.value
       }
     }));
   };
