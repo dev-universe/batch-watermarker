@@ -12,7 +12,7 @@ exports.default = async function notarizeApp(context) {
   }
 
   await notarize({
-    appBundleId: "com.fd2.pdfwatermark",
+    appBundleId: "com.fd2.batchwatermarker",
     appPath: `${context.appOutDir}/${context.packager.appInfo.productFilename}.app`,
     appleId: APPLE_ID,
     appleIdPassword: APPLE_APP_SPECIFIC_PASSWORD,

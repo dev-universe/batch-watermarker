@@ -11,7 +11,7 @@ Date: 2026-04-15
 - [x] `npm run build`
 - [x] `npm run dist -- --dir`
   - Generated macOS app bundle:
-    - `release/mac-arm64/PDF Watermark.app`
+    - `release/mac-arm64/Batch Watermarker.app`
   - Notarization was skipped because `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`,
     and `APPLE_TEAM_ID` are not set.
   - The build used ad-hoc macOS signing, which matches the current README

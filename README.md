@@ -90,12 +90,12 @@ npm run dist -- --dir
 
 The packaged macOS app is created here:
 
-- `release/mac-arm64/PDF Watermark.app`
+- `release/mac-arm64/Batch Watermarker.app`
 
 Create a zip file for sharing:
 
 ```bash
-ditto -c -k --sequesterRsrc --keepParent "release/mac-arm64/PDF Watermark.app" "release/mac-arm64/PDF Watermark-mac.zip"
+ditto -c -k --sequesterRsrc --keepParent "release/mac-arm64/Batch Watermarker.app" "release/mac-arm64/Batch Watermarker-mac.zip"
 ```
 
 ## macOS Distribution Notes
