@@ -28,32 +28,32 @@ Date: 2026-04-15
 
 Run with `npm run dev` before tagging or distributing a release.
 
-- [ ] PDF preview loads
-- [ ] PNG/image preview loads
-- [ ] PDF page navigation works
-- [ ] input file picker works
-- [ ] input file drag-and-drop works
-- [ ] watermark image picker works
-- [ ] watermark image drag-and-drop works
-- [ ] opacity, size, and rotation controls work
-- [ ] width/height pixel inputs work
-- [ ] aspect ratio toggle and reset work
-- [ ] position presets work
-- [ ] watermark hover/select/deselect works
-- [ ] drag works
-- [ ] resize works
-- [ ] rotate works
-- [ ] Cmd/Ctrl corner aspect lock works
-- [ ] Shift rotation snap works
-- [ ] keyboard nudge works
-- [ ] undo/redo works
-- [ ] PDF export matches preview
-- [ ] PNG/image export matches preview
-- [ ] output folder empty + suffix empty shows original overwrite warning
-- [ ] output folder empty + suffix set saves beside each source file
-- [ ] output folder set + suffix empty saves to the selected output folder with the original filename
-- [ ] output folder set + suffix set saves to the selected output folder with the suffix
-- [ ] conflict confirmation appears when non-overwrite planned output paths collide
+- [x] PDF preview loads
+- [x] PNG/image preview loads
+- [x] PDF page navigation works
+- [x] input file picker works
+- [x] input file drag-and-drop works
+- [x] watermark image picker works
+- [x] watermark image drag-and-drop works
+- [x] opacity, size, and rotation controls work
+- [x] width/height pixel inputs work
+- [x] aspect ratio toggle and reset work
+- [x] position presets work
+- [x] watermark hover/select/deselect works
+- [x] drag works
+- [x] resize works
+- [x] rotate works
+- [x] Cmd/Ctrl corner aspect lock works
+- [x] Shift rotation snap works
+- [x] keyboard nudge works
+- [x] undo/redo works
+- [x] PDF export matches preview
+- [x] PNG/image export matches preview
+- [x] output folder empty + suffix empty shows original overwrite warning
+- [x] output folder empty + suffix set saves beside each source file
+- [x] output folder set + suffix empty saves to the selected output folder with the original filename
+- [x] output folder set + suffix set saves to the selected output folder with the suffix
+- [x] conflict confirmation appears when non-overwrite planned output paths collide
 
 ## Windows Release Checklist
 
