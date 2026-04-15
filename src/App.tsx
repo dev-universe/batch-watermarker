@@ -113,7 +113,8 @@ function App() {
     onDropInputFiles,
     openWatermarkPicker,
     onDropWatermarkFile,
-    removeInputFile
+    removeInputFile,
+    selectPreviewFile
   } = useFileSelectionActions({
     previewCoordinateSize,
     commitSnapshot
@@ -176,6 +177,8 @@ function App() {
     previewCoordinateSize,
     previewDisplaySize
   });
+  const onWatermarkPointerEnter = () => setIsWatermarkHovered(true);
+  const onWatermarkPointerLeave = () => setIsWatermarkHovered(false);
 
   return (
     <div className="shell">
@@ -192,12 +195,7 @@ function App() {
           selectedPreviewPath={selectedPreviewFile?.path ?? ""}
           onOpenInputPicker={openInputPicker}
           onDropInputFiles={onDropInputFiles}
-          onSelectPreview={(path) =>
-            commitSnapshot((current) => ({
-              ...current,
-              selectedPreviewPath: path
-            }))
-          }
+          onSelectPreview={selectPreviewFile}
           onRemoveInputFile={removeInputFile}
         />
 
@@ -250,8 +248,8 @@ function App() {
         onNextPdfPage={onNextPdfPage}
         onPreviewImageLoad={onPreviewImageLoad}
         onClearWatermarkSelection={clearWatermarkSelection}
-        onWatermarkPointerEnter={() => setIsWatermarkHovered(true)}
-        onWatermarkPointerLeave={() => setIsWatermarkHovered(false)}
+        onWatermarkPointerEnter={onWatermarkPointerEnter}
+        onWatermarkPointerLeave={onWatermarkPointerLeave}
         onResizeHandlePointerDown={onResizeHandlePointerDown}
         onRotateHandlePointerDown={onRotateHandlePointerDown}
         onWatermarkPointerDown={onWatermarkPointerDown}
