@@ -43,8 +43,8 @@
     "wait-on": "^9.0.5"
   },
   "build": {
-    "appId": "com.fd2.pdfwatermark",
-    "productName": "PDF Watermark",
+    "appId": "com.fd2.batchwatermarker",
+    "productName": "Batch Watermarker",
     "afterSign": "scripts/notarize.cjs",
     "directories": {
       "output": "release"
