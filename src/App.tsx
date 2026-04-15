@@ -26,6 +26,7 @@ import {
   getLongestEdge,
   getLongestEdgePxFromRatio,
   getLongestEdgeRatio,
+  getSizeFromLongestEdge,
   resizeFromWidthPreservingAspectRatio
 } from "./shared/watermarkSizing";
 import { resizeBoxFromHeight, resizeBoxFromWidth } from "./shared/watermarkSizing";
@@ -501,8 +502,17 @@ function App() {
             const currentHeight = renderedWatermarkSize.height;
             const currentLongestEdge = getLongestEdge(currentWidth, currentHeight);
             const scaleFactor = currentLongestEdge > 0 ? nextValue / currentLongestEdge : 0;
-            const nextWidth = currentWidth * scaleFactor;
-            const nextHeight = currentHeight * scaleFactor;
+            const nextSize =
+              currentLongestEdge > 0
+                ? {
+                    width: currentWidth * scaleFactor,
+                    height: currentHeight * scaleFactor
+                  }
+                : getSizeFromLongestEdge(
+                    watermarkNaturalSize.width,
+                    watermarkNaturalSize.height,
+                    nextValue
+                  );
 
             return {
               sizeRatio: getLongestEdgeRatio(
@@ -519,9 +529,9 @@ function App() {
                   ? currentCenter.y / previewCoordinateSize.height
                   : 0,
               freeWidthRatio:
-                previewCoordinateSize.width > 0 ? nextWidth / previewCoordinateSize.width : 0,
+                previewCoordinateSize.width > 0 ? nextSize.width / previewCoordinateSize.width : 0,
               freeHeightRatio:
-                previewCoordinateSize.height > 0 ? nextHeight / previewCoordinateSize.height : 0
+                previewCoordinateSize.height > 0 ? nextSize.height / previewCoordinateSize.height : 0
             };
           })()
         : { [key]: nextValue };

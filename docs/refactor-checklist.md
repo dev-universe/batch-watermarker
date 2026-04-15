@@ -15,7 +15,8 @@
 
 - [x] 현재 우선순위: `1단계 > 1-1. output path / preflight 분리`
 - [x] 현재 우선순위: `1단계 > 1-2. 워터마크 자산 생성 분리`
-- [ ] 다음 우선순위: `1단계 > 1-3. PDF export / image export 분리`
+- [x] 현재 우선순위: `1단계 > 1-3. PDF export / image export 분리`
+- [ ] 다음 우선순위: `1단계 > 1-4. IPC orchestration만 남기기`
 
 ## Done Criteria
 
@@ -62,14 +63,14 @@
 
 ### 1-3. PDF export / image export 분리
 
-- [ ] PDF 처리 함수를 별도 모듈로 분리
-- [ ] image 처리 함수를 별도 모듈로 분리
-- [ ] `main.ts`는 파일 종류 분기 + orchestration만 담당하게 정리
+- [x] PDF 처리 함수를 별도 모듈로 분리
+- [x] image 처리 함수를 별도 모듈로 분리
+- [x] `main.ts`는 파일 종류 분기 + orchestration만 담당하게 정리
 - [ ] PDF / image preview parity 수동 확인
 
 후보 파일:
-- [ ] `/Users/fd2/dev/pdf-watermark/electron/processPdfFile.ts`
-- [ ] `/Users/fd2/dev/pdf-watermark/electron/processImageFile.ts`
+- [x] `/Users/fd2/dev/pdf-watermark/electron/processPdfFile.ts`
+- [x] `/Users/fd2/dev/pdf-watermark/electron/processImageFile.ts`
 
 ### 1-4. IPC orchestration만 남기기
 
