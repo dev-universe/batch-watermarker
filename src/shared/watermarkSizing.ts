@@ -1,3 +1,6 @@
+// Sizing helpers convert between source image dimensions, canvas-relative ratios,
+// and explicit width/height edits. They do not decide placement or rotation.
+
 export const getCanvasLongestEdge = (canvasWidth: number, canvasHeight: number) =>
   Math.max(canvasWidth, canvasHeight);
 

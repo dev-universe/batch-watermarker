@@ -1,6 +1,10 @@
 import type { AnchorPosition, WatermarkSettings } from "./types";
 import { getSizeFromLongestEdgeRatio } from "./watermarkSizing";
 
+// Geometry helpers compute placement, rotation, transformed boxes, and rendered
+// watermark metrics. They may call sizing helpers when settings need conversion
+// into a canvas-space box, but they do not own UI interaction state.
+
 const fitWithin = (
   targetWidth: number,
   targetHeight: number,
@@ -55,6 +59,8 @@ export const getWatermarkBaseSize = (
   canvasWidth: number,
   canvasHeight: number
 ) => {
+  // Keep this in geometry: callers need the rendered canvas-space box for
+  // placement, interaction, overlay, and export parity.
   if (settings.freeWidthRatio !== null && settings.freeHeightRatio !== null) {
     return {
       width: settings.freeWidthRatio * canvasWidth,

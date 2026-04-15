@@ -2,6 +2,9 @@ import { getWatermarkCenterPoint } from "../shared/watermarkGeometry";
 import type { EditableStateSnapshot } from "../shared/history";
 import type { WatermarkSettings } from "../shared/types";
 
+// Interaction helpers are hook-level calculations that translate user input
+// into editable snapshots. Shared geometry remains responsible for coordinates.
+
 interface InteractionActivity {
   hasDrag: boolean;
   hasResize: boolean;

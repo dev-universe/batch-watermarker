@@ -1,6 +1,9 @@
 import { getAnchorCenterPoint } from "./watermarkGeometry";
 import type { AnchorPosition } from "./types";
 
+// Snap helpers only choose nearby anchor points. Anchor coordinates come from
+// geometry so snap behavior stays aligned with preset placement.
+
 const SNAP_POSITIONS: AnchorPosition[] = ["NW", "N", "NE", "W", "C", "E", "SW", "S", "SE"];
 
 export const getWatermarkSnapPoints = (canvasWidth: number, canvasHeight: number) =>

@@ -163,10 +163,11 @@
 
 ### 4-1. sizing / geometry / snap 경계 재정리
 
-- [ ] `watermarkSizing.ts` 책임 점검
-- [ ] `watermarkGeometry.ts` 책임 점검
-- [ ] `watermarkSnap.ts` 책임 점검
-- [ ] 경계가 애매한 함수 재배치
+- [x] `watermarkSizing.ts` 책임 점검
+- [x] `watermarkGeometry.ts` 책임 점검
+- [x] `watermarkSnap.ts` 책임 점검
+- [x] 경계가 애매한 함수 재배치 여부 점검
+- [x] 함수 이동 없이 책임 경계 문서화
 
 ### 4-2. interaction helper 경계 정리
 
