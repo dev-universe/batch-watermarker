@@ -10,6 +10,10 @@ export interface PlannedOutputConflictOptions {
   inputPaths?: string[];
 }
 
+export const shouldOverwriteOriginals = (
+  settings: Pick<WatermarkSettings, "suffix" | "outputDirectory">
+) => settings.suffix.trim() === "" && settings.outputDirectory.trim() === "";
+
 const splitFilePath = (filePath: string) => {
   const separatorIndex = Math.max(filePath.lastIndexOf("/"), filePath.lastIndexOf("\\"));
   const directory = separatorIndex >= 0 ? filePath.slice(0, separatorIndex) : "";

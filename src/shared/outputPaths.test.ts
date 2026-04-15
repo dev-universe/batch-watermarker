@@ -3,13 +3,28 @@ import type { InputFile } from "./types";
 import {
   collectPlannedOutputConflicts,
   collectPlannedOutputs,
-  resolveOutputPath
+  resolveOutputPath,
+  shouldOverwriteOriginals
 } from "./outputPaths";
 
 const pdfFile = (path: string, name: string): InputFile => ({
   path,
   name,
   kind: "pdf"
+});
+
+describe("shouldOverwriteOriginals", () => {
+  it("only overwrites originals when output directory and suffix are both empty", () => {
+    expect(shouldOverwriteOriginals({ outputDirectory: "", suffix: "" })).toBe(true);
+    expect(shouldOverwriteOriginals({ outputDirectory: "", suffix: "_wm" })).toBe(false);
+    expect(shouldOverwriteOriginals({ outputDirectory: "/output", suffix: "" })).toBe(false);
+    expect(shouldOverwriteOriginals({ outputDirectory: "/output", suffix: "_wm" })).toBe(false);
+  });
+
+  it("trims output directory and suffix before deciding", () => {
+    expect(shouldOverwriteOriginals({ outputDirectory: " ", suffix: " " })).toBe(true);
+    expect(shouldOverwriteOriginals({ outputDirectory: " /output ", suffix: " " })).toBe(false);
+  });
 });
 
 describe("resolveOutputPath", () => {
@@ -23,6 +38,10 @@ describe("resolveOutputPath", () => {
 
   it("uses the specified output directory when provided", () => {
     expect(resolveOutputPath("/files/song.pdf", "_wm", "/output", false)).toBe("/output/song_wm.pdf");
+  });
+
+  it("uses the specified output directory without requiring a suffix", () => {
+    expect(resolveOutputPath("/files/song.pdf", "", "/output", false)).toBe("/output/song.pdf");
   });
 
   it("preserves Windows-style paths", () => {
@@ -57,6 +76,31 @@ describe("collectPlannedOutputs", () => {
       }
     ]);
   });
+
+  it("plans same-name files into the same output path when output directory is shared and suffix is empty", () => {
+    const plannedOutputs = collectPlannedOutputs(
+      [
+        pdfFile("/A/song.pdf", "song.pdf"),
+        pdfFile("/B/song.pdf", "song.pdf")
+      ],
+      {
+        suffix: "",
+        outputDirectory: "/output",
+        overwriteOriginal: false
+      }
+    );
+
+    expect(plannedOutputs).toEqual([
+      {
+        sourcePath: "/A/song.pdf",
+        outputPath: "/output/song.pdf"
+      },
+      {
+        sourcePath: "/B/song.pdf",
+        outputPath: "/output/song.pdf"
+      }
+    ]);
+  });
 });
 
 describe("collectPlannedOutputConflicts", () => {
@@ -67,6 +111,22 @@ describe("collectPlannedOutputConflicts", () => {
     ]);
 
     expect(conflicts).toEqual(["/output/song_wm.pdf"]);
+  });
+
+  it("detects duplicate planned output paths when suffix is empty in a shared output directory", () => {
+    const plannedOutputs = collectPlannedOutputs(
+      [
+        pdfFile("/A/song.pdf", "song.pdf"),
+        pdfFile("/B/song.pdf", "song.pdf")
+      ],
+      {
+        suffix: "",
+        outputDirectory: "/output",
+        overwriteOriginal: false
+      }
+    );
+
+    expect(collectPlannedOutputConflicts(plannedOutputs)).toEqual(["/output/song.pdf"]);
   });
 
   it("detects conflicts with other input files while ignoring self-overwrite", () => {

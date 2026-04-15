@@ -1,6 +1,10 @@
 import { useState } from "react";
 import type { InputFile, ProcessResponse, WatermarkSettings } from "../shared/types";
-import { collectPlannedOutputConflicts, collectPlannedOutputs } from "../shared/outputPaths";
+import {
+  collectPlannedOutputConflicts,
+  collectPlannedOutputs,
+  shouldOverwriteOriginals
+} from "../shared/outputPaths";
 
 interface UseProcessingStateOptions {
   inputFiles: InputFile[];
@@ -48,10 +52,10 @@ export function useProcessingState({
       return;
     }
 
-    const overwriteOriginal = settings.suffix.trim() === "";
+    const overwriteOriginal = shouldOverwriteOriginals(settings);
     if (overwriteOriginal) {
       const confirmed = window.confirm(
-        "접미사가 비어 있어서 원본 파일에 그대로 덮어쓰게 됩니다. 계속하시겠습니까?"
+        "출력 폴더와 접미사가 모두 비어 있어서 원본 파일에 그대로 덮어쓰게 됩니다. 계속하시겠습니까?"
       );
       if (!confirmed) {
         return;
