@@ -9,6 +9,7 @@ import { useOutputSettingsActions } from "./hooks/useOutputSettingsActions";
 import { useProcessingState } from "./hooks/useProcessingState";
 import { usePreviewState } from "./hooks/usePreviewState";
 import { useWatermarkInteraction } from "./hooks/useWatermarkInteraction";
+import { useWatermarkOverlayStyle } from "./hooks/useWatermarkOverlayStyle";
 import { useWatermarkSettingsActions } from "./hooks/useWatermarkSettingsActions";
 import type { WatermarkSettings } from "./shared/types";
 import { getOutputSummary } from "./shared/outputSummary";
@@ -18,8 +19,6 @@ import {
 } from "./shared/watermarkSizing";
 import {
   getWatermarkBaseSize,
-  getWatermarkCenterPoint,
-  getWatermarkMetrics,
   type ResizeHandle
 } from "./shared/watermarkGeometry";
 
@@ -171,97 +170,12 @@ function App() {
     commitSnapshot,
     updateSettingsDuringContinuousEdit
   });
-
-  const overlayStyle = useMemo(() => {
-    if (
-      !previewDisplaySize.width ||
-      !previewDisplaySize.height ||
-      !previewCoordinateSize.width ||
-      !previewCoordinateSize.height ||
-      !watermarkNaturalSize.width ||
-      !watermarkNaturalSize.height
-    ) {
-      return undefined;
-    }
-
-    const metrics = getWatermarkMetrics(
-      watermarkNaturalSize.width,
-      watermarkNaturalSize.height,
-      settings,
-      previewCoordinateSize.width,
-      previewCoordinateSize.height,
-      settings.rotation
-    );
-    const anchorCenter = getWatermarkCenterPoint(
-      settings,
-      previewCoordinateSize.width,
-      previewCoordinateSize.height
-    );
-    const displayScaleX = previewDisplaySize.width / previewCoordinateSize.width;
-    const displayScaleY = previewDisplaySize.height / previewCoordinateSize.height;
-
-    return {
-      width: `${metrics.rotated.width * displayScaleX}px`,
-      height: `${metrics.rotated.height * displayScaleY}px`,
-      left: `${(anchorCenter.x - metrics.rotated.width / 2) * displayScaleX}px`,
-      top: `${(anchorCenter.y - metrics.rotated.height / 2) * displayScaleY}px`,
-      opacity: settings.opacity / 100
-    };
-  }, [
-    previewDisplaySize,
+  const { overlayStyle, overlayImageStyle } = useWatermarkOverlayStyle({
+    settings,
+    watermarkNaturalSize,
     previewCoordinateSize,
-    settings.opacity,
-    settings.placementMode,
-    settings.position,
-    settings.freeCenterXRatio,
-    settings.freeCenterYRatio,
-    settings.freeWidthRatio,
-    settings.freeHeightRatio,
-    settings.rotation,
-    settings.sizeRatio,
-    watermarkNaturalSize
-  ]);
-
-  const overlayImageStyle = useMemo(() => {
-    if (
-      !previewDisplaySize.width ||
-      !previewDisplaySize.height ||
-      !previewCoordinateSize.width ||
-      !previewCoordinateSize.height ||
-      !watermarkNaturalSize.width ||
-      !watermarkNaturalSize.height
-    ) {
-      return undefined;
-    }
-
-    const metrics = getWatermarkMetrics(
-      watermarkNaturalSize.width,
-      watermarkNaturalSize.height,
-      settings,
-      previewCoordinateSize.width,
-      previewCoordinateSize.height,
-      settings.rotation
-    );
-    const displayScaleX = previewDisplaySize.width / previewCoordinateSize.width;
-    const displayScaleY = previewDisplaySize.height / previewCoordinateSize.height;
-
-    return {
-      width: `${metrics.base.width * displayScaleX}px`,
-      height: `${metrics.base.height * displayScaleY}px`,
-      transform: `translate(-50%, -50%) rotate(${settings.rotation}deg)`,
-      transformOrigin: "center center",
-      left: "50%",
-      top: "50%"
-    } as const;
-  }, [
-    previewCoordinateSize,
-    previewDisplaySize,
-    settings.rotation,
-    settings.sizeRatio,
-    settings.freeWidthRatio,
-    settings.freeHeightRatio,
-    watermarkNaturalSize
-  ]);
+    previewDisplaySize
+  });
 
   return (
     <div className="shell">
