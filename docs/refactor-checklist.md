@@ -142,9 +142,9 @@
 
 ### 3-1. `WatermarkPanel` props 정리
 
-- [ ] numeric control handlers 묶기
-- [ ] size control handlers 묶기
-- [ ] flat prop 과다 여부 정리
+- [x] numeric control handlers 묶기
+- [x] size control handlers 묶기
+- [x] flat prop 과다 여부 정리
 
 ### 3-2. `PreviewPane` props 정리
 

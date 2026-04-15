@@ -188,20 +188,28 @@ function App() {
   };
   const watermarkPanelProps = {
     settings,
-    watermarkFile,
-    sizeControlMax,
-    displayedSizePx,
-    renderedWidthPx: renderedWatermarkSize.width,
-    renderedHeightPx: renderedWatermarkSize.height,
-    onOpenWatermarkPicker: openWatermarkPicker,
-    onDropWatermarkFile,
-    onBeginContinuousNumericEdit: beginContinuousEdit,
-    onUpdateNumericSetting: updateNumericSetting,
-    onWidthPxChange,
-    onHeightPxChange,
-    onTogglePreserveAspectRatio,
-    onResetOriginalAspectRatio,
-    onSelectPosition
+    file: {
+      watermarkFile,
+      onOpenWatermarkPicker: openWatermarkPicker,
+      onDropWatermarkFile
+    },
+    numeric: {
+      onBeginContinuousNumericEdit: beginContinuousEdit,
+      onUpdateNumericSetting: updateNumericSetting
+    },
+    size: {
+      sizeControlMax,
+      displayedSizePx,
+      renderedWidthPx: renderedWatermarkSize.width,
+      renderedHeightPx: renderedWatermarkSize.height,
+      onWidthPxChange,
+      onHeightPxChange,
+      onTogglePreserveAspectRatio,
+      onResetOriginalAspectRatio
+    },
+    position: {
+      onSelectPosition
+    }
   };
   const outputPanelProps = {
     settings,
