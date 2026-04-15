@@ -11,6 +11,33 @@ interface InteractionActivity {
   hasRotate: boolean;
 }
 
+interface TransformAvailability {
+  previewCoordinateSize: {
+    width: number;
+    height: number;
+  };
+  watermarkNaturalSize: {
+    width: number;
+    height: number;
+  };
+}
+
+interface InteractionRefs {
+  drag: unknown;
+  resize: unknown;
+  rotate: unknown;
+}
+
+export const getInteractionActivity = ({
+  drag,
+  resize,
+  rotate
+}: InteractionRefs): InteractionActivity => ({
+  hasDrag: Boolean(drag),
+  hasResize: Boolean(resize),
+  hasRotate: Boolean(rotate)
+});
+
 export const canClearWatermarkSelection = (
   isWatermarkSelected: boolean,
   interactionActivity: InteractionActivity
@@ -19,6 +46,17 @@ export const canClearWatermarkSelection = (
   !interactionActivity.hasDrag &&
   !interactionActivity.hasResize &&
   !interactionActivity.hasRotate;
+
+export const canStartWatermarkTransform = ({
+  previewCoordinateSize,
+  watermarkNaturalSize
+}: TransformAvailability) =>
+  Boolean(
+    previewCoordinateSize.width &&
+      previewCoordinateSize.height &&
+      watermarkNaturalSize.width &&
+      watermarkNaturalSize.height
+  );
 
 export const getKeyboardNudgeStep = (shiftKey: boolean) => (shiftKey ? 10 : 1);
 

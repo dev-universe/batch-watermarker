@@ -4,6 +4,8 @@ import type { EditableStateSnapshot } from "../shared/history";
 import type { WatermarkSettings } from "../shared/types";
 import {
   canClearWatermarkSelection,
+  canStartWatermarkTransform,
+  getInteractionActivity,
   getKeyboardNudgeSnapshot
 } from "./watermarkInteractionHelpers";
 import {
@@ -111,11 +113,14 @@ export function useWatermarkInteraction({
       const key = event.key.toLowerCase();
       if (
         key === "escape" &&
-        canClearWatermarkSelection(isWatermarkSelected, {
-          hasDrag: Boolean(dragStateRef.current),
-          hasResize: Boolean(resizeStateRef.current),
-          hasRotate: Boolean(rotationStateRef.current)
-        })
+        canClearWatermarkSelection(
+          isWatermarkSelected,
+          getInteractionActivity({
+            drag: dragStateRef.current,
+            resize: resizeStateRef.current,
+            rotate: rotationStateRef.current
+          })
+        )
       ) {
         event.preventDefault();
         setIsWatermarkSelected(false);
@@ -376,11 +381,14 @@ export function useWatermarkInteraction({
 
   const clearWatermarkSelection = () => {
     if (
-      canClearWatermarkSelection(isWatermarkSelected, {
-        hasDrag: Boolean(dragStateRef.current),
-        hasResize: Boolean(resizeStateRef.current),
-        hasRotate: Boolean(rotationStateRef.current)
-      })
+      canClearWatermarkSelection(
+        isWatermarkSelected,
+        getInteractionActivity({
+          drag: dragStateRef.current,
+          resize: resizeStateRef.current,
+          rotate: rotationStateRef.current
+        })
+      )
     ) {
       setIsWatermarkSelected(false);
     }
@@ -388,12 +396,7 @@ export function useWatermarkInteraction({
 
   const onResizeHandlePointerDown = (handle: ResizeHandle, event: React.PointerEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    if (
-      !previewCoordinateSize.width ||
-      !previewCoordinateSize.height ||
-      !watermarkNaturalSize.width ||
-      !watermarkNaturalSize.height
-    ) {
+    if (!canStartWatermarkTransform({ previewCoordinateSize, watermarkNaturalSize })) {
       return;
     }
 
@@ -441,12 +444,7 @@ export function useWatermarkInteraction({
 
   const onRotateHandlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    if (
-      !previewCoordinateSize.width ||
-      !previewCoordinateSize.height ||
-      !watermarkNaturalSize.width ||
-      !watermarkNaturalSize.height
-    ) {
+    if (!canStartWatermarkTransform({ previewCoordinateSize, watermarkNaturalSize })) {
       return;
     }
 
@@ -479,12 +477,7 @@ export function useWatermarkInteraction({
 
   const onWatermarkPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    if (
-      !previewCoordinateSize.width ||
-      !previewCoordinateSize.height ||
-      !watermarkNaturalSize.width ||
-      !watermarkNaturalSize.height
-    ) {
+    if (!canStartWatermarkTransform({ previewCoordinateSize, watermarkNaturalSize })) {
       return;
     }
 
