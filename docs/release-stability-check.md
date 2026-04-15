@@ -6,8 +6,8 @@ Date: 2026-04-15
 
 - [x] `npm run typecheck`
 - [x] `npm test`
-  - 6 test files passed
-  - 58 tests passed
+  - 7 test files passed
+  - 67 tests passed
 - [x] `npm run build`
 - [x] `npm run dist -- --dir`
   - Generated macOS app bundle:
@@ -49,10 +49,11 @@ Run with `npm run dev` before tagging or distributing a release.
 - [ ] undo/redo works
 - [ ] PDF export matches preview
 - [ ] PNG/image export matches preview
-- [ ] suffix output beside source works
-- [ ] selected output folder export works
-- [ ] overwrite warning appears when suffix is empty
-- [ ] conflict confirmation appears when planned output paths collide
+- [ ] output folder empty + suffix empty shows original overwrite warning
+- [ ] output folder empty + suffix set saves beside each source file
+- [ ] output folder set + suffix empty saves to the selected output folder with the original filename
+- [ ] output folder set + suffix set saves to the selected output folder with the suffix
+- [ ] conflict confirmation appears when non-overwrite planned output paths collide
 
 ## Windows Release Checklist
 
