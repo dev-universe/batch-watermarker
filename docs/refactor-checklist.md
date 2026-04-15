@@ -16,7 +16,8 @@
 - [x] 현재 우선순위: `1단계 > 1-1. output path / preflight 분리`
 - [x] 현재 우선순위: `1단계 > 1-2. 워터마크 자산 생성 분리`
 - [x] 현재 우선순위: `1단계 > 1-3. PDF export / image export 분리`
-- [ ] 다음 우선순위: `1단계 > 1-4. IPC orchestration만 남기기`
+- [x] 현재 우선순위: `1단계 > 1-4. IPC orchestration만 남기기`
+- [ ] 다음 우선순위: `2단계 > 2-1. preview state hook 분리`
 
 ## Done Criteria
 
@@ -74,11 +75,11 @@
 
 ### 1-4. IPC orchestration만 남기기
 
-- [ ] `ipcMain.handle(...)` 내부 로직 최소화
-- [ ] 입력 검증
-- [ ] process 요청 orchestration
-- [ ] 오류 포맷팅
-- [ ] 결과 반환만 담당하게 정리
+- [x] `ipcMain.handle(...)` 내부 로직 최소화
+- [x] 입력 검증
+- [x] process 요청 orchestration
+- [x] 오류 포맷팅
+- [x] 결과 반환만 담당하게 정리
 
 ### 1-5. 검증
 

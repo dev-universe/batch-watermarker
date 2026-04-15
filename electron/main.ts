@@ -2,11 +2,8 @@ import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import { pathToFileURL } from "node:url";
-import sharp from "sharp";
 import { getExistingPaths } from "./outputPlanning";
-import { processImageFile } from "./processImageFile";
-import { processPdfFile } from "./processPdfFile";
-import type { WatermarkAssetCache } from "./watermarkAssets";
+import { processWatermarkRequest } from "./processWatermarkRequest";
 import type {
   InputFile,
   PreviewPayload,
@@ -156,29 +153,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("watermark:process", async (_event, request: ProcessRequest): Promise<ProcessResponse> => {
-    const watermarkBuffer = await fs.readFile(request.watermarkPath);
-    const watermarkMetadata = await sharp(watermarkBuffer).metadata();
-    const watermarkAssetCache: WatermarkAssetCache = new Map();
-    const results: ProcessResponse["results"] = [];
-    const errors: string[] = [];
-
-    for (const inputFile of request.inputFiles) {
-      try {
-        const outputPath =
-          inputFile.kind === "pdf"
-            ? await processPdfFile(inputFile, watermarkBuffer, request, watermarkMetadata)
-            : await processImageFile(inputFile, watermarkBuffer, request, watermarkMetadata, watermarkAssetCache);
-        results.push({
-          sourcePath: inputFile.path,
-          outputPath
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        errors.push(`${inputFile.name}: ${message}`);
-      }
-    }
-
-    return { results, errors };
+    return processWatermarkRequest(request);
   });
 
   createWindow().catch((error) => {
