@@ -17,7 +17,8 @@
 - [x] 현재 우선순위: `1단계 > 1-2. 워터마크 자산 생성 분리`
 - [x] 현재 우선순위: `1단계 > 1-3. PDF export / image export 분리`
 - [x] 현재 우선순위: `1단계 > 1-4. IPC orchestration만 남기기`
-- [ ] 다음 우선순위: `2단계 > 2-1. preview state hook 분리`
+- [x] 현재 우선순위: `2단계 > 2-1. preview state hook 분리`
+- [ ] 다음 우선순위: `2단계 > 2-2. processing submission hook 분리`
 
 ## Done Criteria
 
@@ -96,15 +97,15 @@
 
 ### 2-1. preview state hook 분리
 
-- [ ] selected preview file 계산
-- [ ] preview payload 로딩
-- [ ] object URL 관리
-- [ ] PDF document / page preview 상태
-- [ ] preview coordinate / display size 관리
-- [ ] watermark preview URL / natural size 관리
+- [x] selected preview file 계산
+- [x] preview payload 로딩
+- [x] object URL 관리
+- [x] PDF document / page preview 상태
+- [x] preview coordinate / display size 관리
+- [x] watermark preview URL / natural size 관리
 
 후보 파일:
-- [ ] `/Users/fd2/dev/pdf-watermark/src/hooks/usePreviewState.ts`
+- [x] `/Users/fd2/dev/pdf-watermark/src/hooks/usePreviewState.ts`
 
 ### 2-2. processing submission hook 분리
 
@@ -209,7 +210,7 @@
 - [ ] `electron/main.ts`에서 output path / preflight 분리
 - [ ] `electron/main.ts`에서 watermark asset build 분리
 - [ ] `electron/main.ts`에서 PDF / image processor 분리
-- [ ] `App.tsx`에서 preview state hook 분리
+- [x] `App.tsx`에서 preview state hook 분리
 - [ ] `App.tsx`에서 processing state hook 분리
 - [ ] `WatermarkPanel` / `PreviewPane` props 정리
 - [ ] shared / helper 경계 정리
