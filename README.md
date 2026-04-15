@@ -75,6 +75,11 @@ npm run dev
 npm test
 ```
 
+## Project Notes
+
+- Architecture and refactoring boundaries: [docs/architecture.md](/Users/fd2/dev/pdf-watermark/docs/architecture.md)
+- Release validation checklist: [docs/release-stability-check.md](/Users/fd2/dev/pdf-watermark/docs/release-stability-check.md)
+
 ## Build For macOS
 
 Create the app bundle without installer packaging:
