@@ -3,30 +3,38 @@ import type { AnchorPosition, InputFile, WatermarkSettings } from "../shared/typ
 
 const POSITIONS: AnchorPosition[] = ["NW", "N", "NE", "W", "C", "E", "SW", "S", "SE"];
 
+interface WatermarkPanelFileProps {
+  watermarkFile: InputFile | null;
+  onOpenWatermarkPicker: () => void;
+  onDropWatermarkFile: (event: DragEvent<HTMLElement>) => Promise<void>;
+}
+
+interface WatermarkPanelNumericProps {
+  onBeginContinuousNumericEdit: () => void;
+  onUpdateNumericSetting: (key: "opacity" | "sizePx" | "rotation", value: string) => void;
+}
+
+interface WatermarkPanelSizeProps {
+  sizeControlMax: number;
+  displayedSizePx: number;
+  renderedWidthPx: number;
+  renderedHeightPx: number;
+  onWidthPxChange: (value: string) => void;
+  onHeightPxChange: (value: string) => void;
+  onTogglePreserveAspectRatio: (checked: boolean) => void;
+  onResetOriginalAspectRatio: () => void;
+}
+
+interface WatermarkPanelPositionProps {
+  onSelectPosition: (position: AnchorPosition) => void;
+}
+
 interface WatermarkPanelProps {
   settings: WatermarkSettings;
-  file: {
-    watermarkFile: InputFile | null;
-    onOpenWatermarkPicker: () => void;
-    onDropWatermarkFile: (event: DragEvent<HTMLElement>) => Promise<void>;
-  };
-  numeric: {
-    onBeginContinuousNumericEdit: () => void;
-    onUpdateNumericSetting: (key: "opacity" | "sizePx" | "rotation", value: string) => void;
-  };
-  size: {
-    sizeControlMax: number;
-    displayedSizePx: number;
-    renderedWidthPx: number;
-    renderedHeightPx: number;
-    onWidthPxChange: (value: string) => void;
-    onHeightPxChange: (value: string) => void;
-    onTogglePreserveAspectRatio: (checked: boolean) => void;
-    onResetOriginalAspectRatio: () => void;
-  };
-  position: {
-    onSelectPosition: (position: AnchorPosition) => void;
-  };
+  file: WatermarkPanelFileProps;
+  numeric: WatermarkPanelNumericProps;
+  size: WatermarkPanelSizeProps;
+  position: WatermarkPanelPositionProps;
 }
 
 export function WatermarkPanel({

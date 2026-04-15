@@ -34,7 +34,7 @@
 
 - [ ] 1단계: `electron/main.ts` 책임 분리
 - [x] 2단계: `App.tsx`의 preview / processing state 분리
-- [ ] 3단계: 컴포넌트 props / 인터페이스 정리
+- [x] 3단계: 컴포넌트 props / 인터페이스 정리
 - [ ] 4단계: shared 계산 계층 정리
 - [ ] 5단계: 아키텍처 / 설계 의도 문서화
 
@@ -154,8 +154,8 @@
 
 ### 3-3. 타입 이름 정리
 
-- [ ] UI props 타입을 컴포넌트 옆에 유지
-- [ ] shared 타입과 component props 타입 구분
+- [x] UI props 타입을 컴포넌트 옆에 유지
+- [x] shared 타입과 component props 타입 구분
 
 ## 4단계: shared 계산 계층 정리
 
