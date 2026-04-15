@@ -9,16 +9,13 @@ import { useOutputSettingsActions } from "./hooks/useOutputSettingsActions";
 import { useProcessingState } from "./hooks/useProcessingState";
 import { usePreviewState } from "./hooks/usePreviewState";
 import { useWatermarkInteraction } from "./hooks/useWatermarkInteraction";
+import { useWatermarkSettingsActions } from "./hooks/useWatermarkSettingsActions";
 import type { WatermarkSettings } from "./shared/types";
 import { getOutputSummary } from "./shared/outputSummary";
 import {
   getLongestEdge,
-  getLongestEdgePxFromRatio,
-  getLongestEdgeRatio,
-  getSizeFromLongestEdge,
-  resizeFromWidthPreservingAspectRatio
+  getLongestEdgePxFromRatio
 } from "./shared/watermarkSizing";
-import { resizeBoxFromHeight, resizeBoxFromWidth } from "./shared/watermarkSizing";
 import {
   getWatermarkBaseSize,
   getWatermarkCenterPoint,
@@ -41,9 +38,6 @@ const INITIAL_SETTINGS: WatermarkSettings = {
   outputDirectory: "",
   overwriteOriginal: false
 };
-
-const clamp = (value: number, min: number, max: number) =>
-  Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : min;
 
 function App() {
   const {
@@ -161,154 +155,22 @@ function App() {
       ),
     [displayedSizePx, previewCoordinateSize, watermarkNaturalSize]
   );
-
-  const updateNumericSetting = (key: "opacity" | "sizePx" | "rotation", value: string) => {
-    const max = key === "opacity" ? 100 : key === "rotation" ? 360 : sizeControlMax;
-    const nextValue = clamp(Number(value), 0, max);
-    const currentCenter = getWatermarkCenterPoint(
-      settings,
-      previewCoordinateSize.width,
-      previewCoordinateSize.height
-    );
-    const nextSettingsPatch =
-      key === "sizePx"
-        ? (() => {
-            if (!settings.preserveAspectRatio) {
-              return null;
-            }
-
-            const currentWidth = renderedWatermarkSize.width;
-            const currentHeight = renderedWatermarkSize.height;
-            const currentLongestEdge = getLongestEdge(currentWidth, currentHeight);
-            const scaleFactor = currentLongestEdge > 0 ? nextValue / currentLongestEdge : 0;
-            const nextSize =
-              currentLongestEdge > 0
-                ? {
-                    width: currentWidth * scaleFactor,
-                    height: currentHeight * scaleFactor
-                  }
-                : getSizeFromLongestEdge(
-                    watermarkNaturalSize.width,
-                    watermarkNaturalSize.height,
-                    nextValue
-                  );
-
-            return {
-              sizeRatio: getLongestEdgeRatio(
-                nextValue,
-                previewCoordinateSize.width,
-                previewCoordinateSize.height
-              ),
-              placementMode: "free" as const,
-              position: null,
-              freeCenterXRatio:
-                previewCoordinateSize.width > 0 ? currentCenter.x / previewCoordinateSize.width : 0,
-              freeCenterYRatio:
-                previewCoordinateSize.height > 0
-                  ? currentCenter.y / previewCoordinateSize.height
-                  : 0,
-              freeWidthRatio:
-                previewCoordinateSize.width > 0 ? nextSize.width / previewCoordinateSize.width : 0,
-              freeHeightRatio:
-                previewCoordinateSize.height > 0 ? nextSize.height / previewCoordinateSize.height : 0
-            };
-          })()
-        : { [key]: nextValue };
-
-    if (!nextSettingsPatch) {
-      return;
-    }
-
-    if (updateSettingsDuringContinuousEdit(nextSettingsPatch)) {
-      return;
-    }
-
-    commitSnapshot((current) => ({
-      ...current,
-      settings: {
-        ...current.settings,
-        ...nextSettingsPatch
-      }
-    }));
-  };
-
-  const onWidthPxChange = (value: string) => {
-    const nextWidth = clamp(Number(value), 0, sizeControlMax);
-    const currentWidth = renderedWatermarkSize.width;
-    const currentHeight = renderedWatermarkSize.height;
-    const resized = resizeBoxFromWidth(
-      currentWidth,
-      currentHeight,
-      nextWidth,
-      settings.preserveAspectRatio
-    );
-    const currentCenter = getWatermarkCenterPoint(
-      settings,
-      previewCoordinateSize.width,
-      previewCoordinateSize.height
-    );
-
-    commitSnapshot((current) => ({
-      ...current,
-      settings: {
-        ...current.settings,
-        sizeRatio: getLongestEdgeRatio(
-          getLongestEdge(resized.width, resized.height),
-          previewCoordinateSize.width,
-          previewCoordinateSize.height
-        ),
-        placementMode: "free",
-        position: null,
-        freeCenterXRatio:
-          previewCoordinateSize.width > 0 ? currentCenter.x / previewCoordinateSize.width : 0,
-        freeCenterYRatio:
-          previewCoordinateSize.height > 0 ? currentCenter.y / previewCoordinateSize.height : 0,
-        freeWidthRatio:
-          previewCoordinateSize.width > 0 ? resized.width / previewCoordinateSize.width : 0,
-        freeHeightRatio:
-          previewCoordinateSize.height > 0 ? resized.height / previewCoordinateSize.height : 0
-      }
-    }));
-  };
-
-  const onHeightPxChange = (value: string) => {
-    const nextHeight = clamp(Number(value), 0, sizeControlMax);
-    const currentWidth = renderedWatermarkSize.width;
-    const currentHeight = renderedWatermarkSize.height;
-    const resized = resizeBoxFromHeight(
-      currentWidth,
-      currentHeight,
-      nextHeight,
-      settings.preserveAspectRatio
-    );
-    const currentCenter = getWatermarkCenterPoint(
-      settings,
-      previewCoordinateSize.width,
-      previewCoordinateSize.height
-    );
-
-    commitSnapshot((current) => ({
-      ...current,
-      settings: {
-        ...current.settings,
-        sizeRatio: getLongestEdgeRatio(
-          getLongestEdge(resized.width, resized.height),
-          previewCoordinateSize.width,
-          previewCoordinateSize.height
-        ),
-        placementMode: "free",
-        position: null,
-        freeCenterXRatio:
-          previewCoordinateSize.width > 0 ? currentCenter.x / previewCoordinateSize.width : 0,
-        freeCenterYRatio:
-          previewCoordinateSize.height > 0 ? currentCenter.y / previewCoordinateSize.height : 0,
-        freeWidthRatio:
-          previewCoordinateSize.width > 0 ? resized.width / previewCoordinateSize.width : 0,
-        freeHeightRatio:
-          previewCoordinateSize.height > 0 ? resized.height / previewCoordinateSize.height : 0
-      }
-    }));
-  };
+  const {
+    updateNumericSetting,
+    onWidthPxChange,
+    onHeightPxChange,
+    onTogglePreserveAspectRatio,
+    onResetOriginalAspectRatio,
+    onSelectPosition
+  } = useWatermarkSettingsActions({
+    settings,
+    watermarkNaturalSize,
+    previewCoordinateSize,
+    renderedWatermarkSize,
+    sizeControlMax,
+    commitSnapshot,
+    updateSettingsDuringContinuousEdit
+  });
 
   const overlayStyle = useMemo(() => {
     if (
@@ -438,56 +300,9 @@ function App() {
           onUpdateNumericSetting={updateNumericSetting}
           onWidthPxChange={onWidthPxChange}
           onHeightPxChange={onHeightPxChange}
-          onTogglePreserveAspectRatio={(checked) =>
-            commitSnapshot((current) => ({
-              ...current,
-              settings: {
-                ...current.settings,
-                preserveAspectRatio: checked
-              }
-            }))
-          }
-          onResetOriginalAspectRatio={() =>
-            commitSnapshot((current) => {
-              const nextSizing = resizeFromWidthPreservingAspectRatio(
-                watermarkNaturalSize.width,
-                watermarkNaturalSize.height,
-                renderedWatermarkSize.width
-              );
-
-              return {
-                ...current,
-                settings: {
-                  ...current.settings,
-                  sizeRatio: getLongestEdgeRatio(
-                    nextSizing.sizePx,
-                    previewCoordinateSize.width,
-                    previewCoordinateSize.height
-                  ),
-                  freeWidthRatio:
-                    previewCoordinateSize.width > 0
-                      ? nextSizing.width / previewCoordinateSize.width
-                      : 0,
-                  freeHeightRatio:
-                    previewCoordinateSize.height > 0
-                      ? nextSizing.height / previewCoordinateSize.height
-                      : 0
-                }
-              };
-            })
-          }
-          onSelectPosition={(position) =>
-            commitSnapshot((current) => ({
-              ...current,
-              settings: {
-                ...current.settings,
-                placementMode: "preset",
-                position,
-                freeCenterXRatio: null,
-                freeCenterYRatio: null
-              }
-            }))
-          }
+          onTogglePreserveAspectRatio={onTogglePreserveAspectRatio}
+          onResetOriginalAspectRatio={onResetOriginalAspectRatio}
+          onSelectPosition={onSelectPosition}
         />
 
         <OutputPanel
