@@ -1,10 +1,10 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import os from "node:os";
 import { pathToFileURL } from "node:url";
 import { degrees, PDFDocument } from "pdf-lib";
 import sharp from "sharp";
+import { getExistingPaths, getOutputWritePaths } from "./outputPlanning";
 import type {
   InputFile,
   PreviewPayload,
@@ -13,7 +13,6 @@ import type {
   SupportedKind,
   WatermarkSettings
 } from "../src/shared/types";
-import { resolveOutputPath } from "../src/shared/outputPaths";
 import { getWatermarkCenterPoint, getWatermarkMetrics } from "../src/shared/watermarkGeometry";
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
@@ -51,14 +50,6 @@ const toInputFile = (filePath: string): InputFile | null => {
     name: path.basename(filePath),
     kind
   };
-};
-
-const getTemporaryOutputPath = (targetPath: string) => {
-  const parsed = path.parse(targetPath);
-  return path.join(
-    os.tmpdir(),
-    `${parsed.name}-${Date.now()}-${Math.random().toString(36).slice(2)}${parsed.ext}`
-  );
 };
 
 interface WatermarkAsset {
@@ -254,13 +245,10 @@ const processImageFile = async (
   watermarkAssetCache: WatermarkAssetCache
 ) => {
   const { settings } = request;
-  const finalOutputPath = resolveOutputPath(
+  const { finalOutputPath, writePath, shouldReplaceOriginal } = getOutputWritePaths(
     inputFile.path,
-    settings.suffix,
-    settings.outputDirectory,
-    settings.overwriteOriginal
+    settings
   );
-  const writePath = settings.overwriteOriginal ? getTemporaryOutputPath(finalOutputPath) : finalOutputPath;
   const image = sharp(inputFile.path, { failOn: "none" });
   const metadata = await image.metadata();
 
@@ -318,7 +306,7 @@ const processImageFile = async (
     await composite.jpeg({ quality: 95 }).withMetadata({ density }).toFile(writePath);
   }
 
-  if (settings.overwriteOriginal) {
+  if (shouldReplaceOriginal) {
     await fs.rm(finalOutputPath, { force: true });
     await fs.rename(writePath, finalOutputPath);
   }
@@ -333,12 +321,7 @@ const processPdfFile = async (
   watermarkMetadata: sharp.Metadata
 ) => {
   const { settings } = request;
-  const outputPath = resolveOutputPath(
-    inputFile.path,
-    settings.suffix,
-    settings.outputDirectory,
-    settings.overwriteOriginal
-  );
+  const { finalOutputPath } = getOutputWritePaths(inputFile.path, settings);
   const sourceBytes = await fs.readFile(inputFile.path);
   const pdf = await PDFDocument.load(sourceBytes);
   if (!watermarkMetadata.width || !watermarkMetadata.height) {
@@ -386,8 +369,8 @@ const processPdfFile = async (
   }
 
   const outputBytes = await pdf.save();
-  await fs.writeFile(outputPath, outputBytes);
-  return outputPath;
+  await fs.writeFile(finalOutputPath, outputBytes);
+  return finalOutputPath;
 };
 
 const createWindow = async () => {
@@ -490,19 +473,7 @@ app.whenReady().then(() => {
   ipcMain.handle("util:file-url", async (_event, filePath: string) => pathToFileURL(filePath).href);
 
   ipcMain.handle("paths:existing", async (_event, incomingPaths: string[]) => {
-    const uniquePaths = [...new Set(incomingPaths)];
-    const existingPaths = await Promise.all(
-      uniquePaths.map(async (filePath) => {
-        try {
-          await fs.access(filePath);
-          return filePath;
-        } catch {
-          return null;
-        }
-      })
-    );
-
-    return existingPaths.filter(Boolean);
+    return getExistingPaths(incomingPaths);
   });
 
   ipcMain.handle("watermark:process", async (_event, request: ProcessRequest): Promise<ProcessResponse> => {

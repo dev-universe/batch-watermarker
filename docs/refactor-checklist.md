@@ -13,15 +13,15 @@
 
 ## Current Focus
 
-- [ ] 현재 우선순위: `1단계 > 1-1. output path / preflight 분리`
-- [ ] 이 단계가 끝나면 다음은 `1-2. 워터마크 자산 생성 분리`
+- [x] 현재 우선순위: `1단계 > 1-1. output path / preflight 분리`
+- [ ] 다음 우선순위: `1단계 > 1-2. 워터마크 자산 생성 분리`
 
 ## Done Criteria
 
 - [ ] 해당 단계의 체크박스가 모두 완료됨
-- [ ] `npm run typecheck` 통과
-- [ ] `npm test` 통과
-- [ ] `npm run build` 통과
+- [x] `npm run typecheck` 통과
+- [x] `npm test` 통과
+- [x] `npm run build` 통과
 - [ ] 관련 수동 검증까지 끝남
 - [ ] 필요하면 이 문서의 다음 우선순위 갱신
 
@@ -39,14 +39,14 @@
 
 ### 1-1. output path / preflight 분리
 
-- [ ] `resolveOutputPath` / `collectPlannedOutputs` / 충돌 검사 흐름 연결 구조 확인
-- [ ] `electron/main.ts`에서 경로 계산 / 충돌 관련 코드를 별도 모듈로 이동
-- [ ] 메인 프로세스는 검사 요청 orchestration만 담당하게 정리
-- [ ] 관련 타입을 shared 또는 electron 전용 모듈로 정리
-- [ ] 기존 테스트 통과 확인
+- [x] `resolveOutputPath` / `collectPlannedOutputs` / 충돌 검사 흐름 연결 구조 확인
+- [x] `electron/main.ts`에서 경로 계산 / 충돌 관련 코드를 별도 모듈로 이동
+- [x] 메인 프로세스는 검사 요청 orchestration만 담당하게 정리
+- [x] 관련 타입을 shared 또는 electron 전용 모듈로 정리
+- [x] 기존 테스트 통과 확인
 
 후보 파일:
-- [ ] `/Users/fd2/dev/pdf-watermark/electron/outputPlanning.ts`
+- [x] `/Users/fd2/dev/pdf-watermark/electron/outputPlanning.ts`
 
 ### 1-2. 워터마크 자산 생성 분리
 
@@ -80,9 +80,9 @@
 
 ### 1-5. 검증
 
-- [ ] `npm run typecheck`
-- [ ] `npm test`
-- [ ] `npm run build`
+- [x] `npm run typecheck`
+- [x] `npm test`
+- [x] `npm run build`
 - [ ] PDF export 수동 확인
 - [ ] PNG export 수동 확인
 - [ ] conflict confirm 수동 확인
