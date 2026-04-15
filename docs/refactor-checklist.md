@@ -171,10 +171,10 @@
 
 ### 4-2. interaction helper 경계 정리
 
-- [ ] keyboard helper 정리
-- [ ] resize helper 정리
-- [ ] rotation helper 정리
-- [ ] helper 책임 범위 점검
+- [x] keyboard helper 정리
+- [x] resize helper 정리
+- [x] rotation helper 정리
+- [x] helper 책임 범위 점검
 
 ### 4-3. 테스트 보강
 
