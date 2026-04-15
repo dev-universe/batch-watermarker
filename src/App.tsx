@@ -18,8 +18,7 @@ import {
   getLongestEdgePxFromRatio
 } from "./shared/watermarkSizing";
 import {
-  getWatermarkBaseSize,
-  type ResizeHandle
+  getWatermarkBaseSize
 } from "./shared/watermarkGeometry";
 
 const INITIAL_SETTINGS: WatermarkSettings = {
@@ -179,6 +178,66 @@ function App() {
   });
   const onWatermarkPointerEnter = () => setIsWatermarkHovered(true);
   const onWatermarkPointerLeave = () => setIsWatermarkHovered(false);
+  const inputFilesPanelProps = {
+    inputFiles,
+    selectedPreviewPath: selectedPreviewFile?.path ?? "",
+    onOpenInputPicker: openInputPicker,
+    onDropInputFiles,
+    onSelectPreview: selectPreviewFile,
+    onRemoveInputFile: removeInputFile
+  };
+  const watermarkPanelProps = {
+    settings,
+    watermarkFile,
+    sizeControlMax,
+    displayedSizePx,
+    renderedWidthPx: renderedWatermarkSize.width,
+    renderedHeightPx: renderedWatermarkSize.height,
+    onOpenWatermarkPicker: openWatermarkPicker,
+    onDropWatermarkFile,
+    onBeginContinuousNumericEdit: beginContinuousEdit,
+    onUpdateNumericSetting: updateNumericSetting,
+    onWidthPxChange,
+    onHeightPxChange,
+    onTogglePreserveAspectRatio,
+    onResetOriginalAspectRatio,
+    onSelectPosition
+  };
+  const outputPanelProps = {
+    settings,
+    outputSummary,
+    isProcessing,
+    statusMessage,
+    lastResult,
+    onOpenOutputFolderPicker: openOutputFolderPicker,
+    onClearOutputDirectory: clearOutputDirectory,
+    onOutputDirectoryChange,
+    onSuffixChange,
+    onStartProcessing: startProcessing
+  };
+  const previewPaneProps = {
+    selectedFileName: selectedPreviewFile?.name ?? "선택된 파일 없음",
+    previewKind,
+    pdfPageCount,
+    pdfPreviewPage,
+    previewBaseUrl,
+    watermarkPreviewUrl,
+    overlayStyle,
+    overlayImageStyle,
+    isWatermarkHovered,
+    isWatermarkSelected,
+    isWatermarkDragging,
+    previewImageRef,
+    onPreviousPdfPage,
+    onNextPdfPage,
+    onPreviewImageLoad,
+    onClearWatermarkSelection: clearWatermarkSelection,
+    onWatermarkPointerEnter,
+    onWatermarkPointerLeave,
+    onResizeHandlePointerDown,
+    onRotateHandlePointerDown,
+    onWatermarkPointerDown
+  };
 
   return (
     <div className="shell">
@@ -190,70 +249,14 @@ function App() {
           </p>
         </div>
 
-        <InputFilesPanel
-          inputFiles={inputFiles}
-          selectedPreviewPath={selectedPreviewFile?.path ?? ""}
-          onOpenInputPicker={openInputPicker}
-          onDropInputFiles={onDropInputFiles}
-          onSelectPreview={selectPreviewFile}
-          onRemoveInputFile={removeInputFile}
-        />
+        <InputFilesPanel {...inputFilesPanelProps} />
 
-        <WatermarkPanel
-          settings={settings}
-          watermarkFile={watermarkFile}
-          sizeControlMax={sizeControlMax}
-          displayedSizePx={displayedSizePx}
-          renderedWidthPx={renderedWatermarkSize.width}
-          renderedHeightPx={renderedWatermarkSize.height}
-          onOpenWatermarkPicker={openWatermarkPicker}
-          onDropWatermarkFile={onDropWatermarkFile}
-          onBeginContinuousNumericEdit={beginContinuousEdit}
-          onUpdateNumericSetting={updateNumericSetting}
-          onWidthPxChange={onWidthPxChange}
-          onHeightPxChange={onHeightPxChange}
-          onTogglePreserveAspectRatio={onTogglePreserveAspectRatio}
-          onResetOriginalAspectRatio={onResetOriginalAspectRatio}
-          onSelectPosition={onSelectPosition}
-        />
+        <WatermarkPanel {...watermarkPanelProps} />
 
-        <OutputPanel
-          settings={settings}
-          outputSummary={outputSummary}
-          isProcessing={isProcessing}
-          statusMessage={statusMessage}
-          lastResult={lastResult}
-          onOpenOutputFolderPicker={openOutputFolderPicker}
-          onClearOutputDirectory={clearOutputDirectory}
-          onOutputDirectoryChange={onOutputDirectoryChange}
-          onSuffixChange={onSuffixChange}
-          onStartProcessing={startProcessing}
-        />
+        <OutputPanel {...outputPanelProps} />
       </aside>
 
-      <PreviewPane
-        selectedFileName={selectedPreviewFile?.name ?? "선택된 파일 없음"}
-        previewKind={previewKind}
-        pdfPageCount={pdfPageCount}
-        pdfPreviewPage={pdfPreviewPage}
-        previewBaseUrl={previewBaseUrl}
-        watermarkPreviewUrl={watermarkPreviewUrl}
-        overlayStyle={overlayStyle}
-        overlayImageStyle={overlayImageStyle}
-        isWatermarkHovered={isWatermarkHovered}
-        isWatermarkSelected={isWatermarkSelected}
-        isWatermarkDragging={isWatermarkDragging}
-        previewImageRef={previewImageRef}
-        onPreviousPdfPage={onPreviousPdfPage}
-        onNextPdfPage={onNextPdfPage}
-        onPreviewImageLoad={onPreviewImageLoad}
-        onClearWatermarkSelection={clearWatermarkSelection}
-        onWatermarkPointerEnter={onWatermarkPointerEnter}
-        onWatermarkPointerLeave={onWatermarkPointerLeave}
-        onResizeHandlePointerDown={onResizeHandlePointerDown}
-        onRotateHandlePointerDown={onRotateHandlePointerDown}
-        onWatermarkPointerDown={onWatermarkPointerDown}
-      />
+      <PreviewPane {...previewPaneProps} />
     </div>
   );
 }
