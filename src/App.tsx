@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useMemo, type ChangeEvent, type DragEvent } from "react";
 import { InputFilesPanel } from "./components/InputFilesPanel";
 import { OutputPanel } from "./components/OutputPanel";
 import { PreviewPane } from "./components/PreviewPane";
 import { WatermarkPanel } from "./components/WatermarkPanel";
+import { useEditableStateHistory } from "./hooks/useEditableStateHistory";
 import {
   createObjectUrlFromPreview,
   readImageNaturalSize
@@ -11,15 +12,7 @@ import { useProcessingState } from "./hooks/useProcessingState";
 import { usePreviewState } from "./hooks/usePreviewState";
 import { useWatermarkInteraction } from "./hooks/useWatermarkInteraction";
 import type { InputFile, WatermarkSettings } from "./shared/types";
-import {
-  applyRedo,
-  applyUndo,
-  areSnapshotsEqual,
-  cloneSnapshot,
-  commitContinuousEdit,
-  createEmptyHistoryState,
-  type EditableStateSnapshot
-} from "./shared/history";
+import { getOutputSummary } from "./shared/outputSummary";
 import {
   getCanvasLongestEdge,
   getLongestEdge,
@@ -64,18 +57,21 @@ const clamp = (value: number, min: number, max: number) =>
   Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : min;
 
 function App() {
-  const [inputFiles, setInputFiles] = useState<InputFile[]>([]);
-  const [watermarkFile, setWatermarkFile] = useState<InputFile | null>(null);
-  const [settings, setSettings] = useState(INITIAL_SETTINGS);
-  const [selectedPreviewPath, setSelectedPreviewPath] = useState("");
-  const pendingContinuousEditRef = useRef<EditableStateSnapshot | null>(null);
-  const historyRef = useRef(createEmptyHistoryState());
-  const currentSnapshotRef = useRef<EditableStateSnapshot>({
-    inputFiles: [],
-    watermarkFile: null,
-    settings: INITIAL_SETTINGS,
-    selectedPreviewPath: ""
-  });
+  const {
+    inputFiles,
+    watermarkFile,
+    settings,
+    selectedPreviewPath,
+    setSettings,
+    setSelectedPreviewPath,
+    currentSnapshotRef,
+    commitSnapshot,
+    beginContinuousEdit,
+    updateSettingsDuringContinuousEdit,
+    endContinuousEdit,
+    undo,
+    redo
+  } = useEditableStateHistory(INITIAL_SETTINGS);
   const {
     selectedPreviewFile,
     previewKind,
@@ -107,104 +103,6 @@ function App() {
     settings
   });
 
-  const applySnapshot = (snapshot: EditableStateSnapshot) => {
-    setInputFiles(snapshot.inputFiles);
-    setWatermarkFile(snapshot.watermarkFile);
-    setSettings(snapshot.settings);
-    setSelectedPreviewPath(snapshot.selectedPreviewPath);
-  };
-
-  const commitSnapshot = (updater: (current: EditableStateSnapshot) => EditableStateSnapshot) => {
-    const current = currentSnapshotRef.current;
-    const next = updater(current);
-
-    if (areSnapshotsEqual(current, next)) {
-      return;
-    }
-
-    historyRef.current.past.push(cloneSnapshot(current));
-    if (historyRef.current.past.length > 100) {
-      historyRef.current.past.shift();
-    }
-    historyRef.current.future = [];
-    currentSnapshotRef.current = cloneSnapshot(next);
-    applySnapshot(next);
-  };
-
-  const undo = () => {
-    const previous = applyUndo(historyRef.current, currentSnapshotRef.current);
-    if (!previous) {
-      return;
-    }
-
-    currentSnapshotRef.current = cloneSnapshot(previous);
-    applySnapshot(previous);
-  };
-
-  const redo = () => {
-    const next = applyRedo(historyRef.current, currentSnapshotRef.current);
-    if (!next) {
-      return;
-    }
-
-    currentSnapshotRef.current = cloneSnapshot(next);
-    applySnapshot(next);
-  };
-
-  const beginContinuousEdit = () => {
-    if (!pendingContinuousEditRef.current) {
-      pendingContinuousEditRef.current = cloneSnapshot(currentSnapshotRef.current);
-    }
-  };
-
-  const endContinuousEdit = () => {
-    const pendingSnapshot = pendingContinuousEditRef.current;
-    if (!pendingSnapshot) {
-      return;
-    }
-
-    pendingContinuousEditRef.current = null;
-    commitContinuousEdit(historyRef.current, pendingSnapshot, currentSnapshotRef.current);
-  };
-
-  useEffect(() => {
-    currentSnapshotRef.current = cloneSnapshot({
-      inputFiles,
-      watermarkFile,
-      settings,
-      selectedPreviewPath
-    });
-  }, [inputFiles, watermarkFile, settings, selectedPreviewPath]);
-
-  useEffect(() => {
-    const onPointerEnd = () => {
-      endContinuousEdit();
-    };
-    const onKeyUp = (event: KeyboardEvent) => {
-      if (
-        event.key.startsWith("Arrow") ||
-        event.key === "Home" ||
-        event.key === "End" ||
-        event.key === "PageUp" ||
-        event.key === "PageDown"
-      ) {
-        endContinuousEdit();
-      }
-    };
-
-    window.addEventListener("pointerup", onPointerEnd);
-    window.addEventListener("pointercancel", onPointerEnd);
-    window.addEventListener("keyup", onKeyUp);
-    window.addEventListener("blur", onPointerEnd);
-
-    return () => {
-      window.removeEventListener("pointerup", onPointerEnd);
-      window.removeEventListener("pointercancel", onPointerEnd);
-      window.removeEventListener("keyup", onKeyUp);
-      window.removeEventListener("blur", onPointerEnd);
-    };
-  }, []);
-
   const {
     isWatermarkHovered,
     isWatermarkSelected,
@@ -229,12 +127,7 @@ function App() {
     previewImageRef
   });
 
-  const willOverwriteOriginal = settings.suffix.trim() === "";
-  const outputSummary = willOverwriteOriginal
-    ? "접미사가 비어 있으면 원본 파일에 직접 덮어씁니다."
-    : settings.outputDirectory
-      ? settings.outputDirectory
-      : "출력 폴더를 비워두면 원본 파일과 같은 폴더에 저장합니다.";
+  const outputSummary = getOutputSummary(settings);
   const renderedWatermarkSize = useMemo(
     () =>
       getWatermarkBaseSize(
@@ -415,15 +308,7 @@ function App() {
       return;
     }
 
-    if (pendingContinuousEditRef.current) {
-      currentSnapshotRef.current = {
-        ...currentSnapshotRef.current,
-        settings: {
-          ...currentSnapshotRef.current.settings,
-          ...nextSettingsPatch
-        }
-      };
-      setSettings((current) => ({ ...current, ...nextSettingsPatch }));
+    if (updateSettingsDuringContinuousEdit(nextSettingsPatch)) {
       return;
     }
 

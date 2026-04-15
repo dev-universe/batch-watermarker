@@ -120,6 +120,8 @@
 
 ### 2-3. App는 조합만 하도록 정리
 
+- [x] editable state history hook 분리
+- [x] output summary 계산 분리
 - [ ] App는 hook 조합과 레이아웃만 담당
 - [ ] panel / preview props 연결 정리
 
