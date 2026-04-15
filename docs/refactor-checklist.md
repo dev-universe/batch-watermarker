@@ -35,7 +35,7 @@
 - [ ] 1단계: `electron/main.ts` 책임 분리
 - [x] 2단계: `App.tsx`의 preview / processing state 분리
 - [x] 3단계: 컴포넌트 props / 인터페이스 정리
-- [ ] 4단계: shared 계산 계층 정리
+- [x] 4단계: shared 계산 계층 정리
 - [ ] 5단계: 아키텍처 / 설계 의도 문서화
 
 ## 1단계: `electron/main.ts` 책임 분리
@@ -178,10 +178,11 @@
 
 ### 4-3. 테스트 보강
 
-- [ ] preset + free size 공존 규칙
-- [ ] aspect-ratio toggle 규칙
-- [ ] rotated resize / modifier 조합
-- [ ] snap / normalize 규칙
+- [x] preset + free size 공존 규칙
+- [x] aspect-ratio toggle 규칙
+- [x] rotated resize / modifier 조합
+- [x] snap / normalize 규칙
+- [x] interaction helper guard 규칙
 
 ## 5단계: 아키텍처 / 설계 의도 문서화
 

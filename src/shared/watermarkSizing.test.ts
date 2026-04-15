@@ -94,6 +94,13 @@ describe("resizeBoxFromWidth", () => {
       height: 232
     });
   });
+
+  it("returns zeros for non-positive target widths", () => {
+    expect(resizeBoxFromWidth(153, 232, 0, true)).toEqual({
+      width: 0,
+      height: 0
+    });
+  });
 });
 
 describe("resizeBoxFromHeight", () => {
@@ -108,6 +115,13 @@ describe("resizeBoxFromHeight", () => {
     expect(resizeBoxFromHeight(153, 232, 300, false)).toEqual({
       width: 153,
       height: 300
+    });
+  });
+
+  it("returns zeros for non-positive target heights", () => {
+    expect(resizeBoxFromHeight(153, 232, 0, true)).toEqual({
+      width: 0,
+      height: 0
     });
   });
 });
