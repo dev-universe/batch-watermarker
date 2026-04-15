@@ -5,39 +5,51 @@ const POSITIONS: AnchorPosition[] = ["NW", "N", "NE", "W", "C", "E", "SW", "S", 
 
 interface WatermarkPanelProps {
   settings: WatermarkSettings;
-  watermarkFile: InputFile | null;
-  sizeControlMax: number;
-  displayedSizePx: number;
-  renderedWidthPx: number;
-  renderedHeightPx: number;
-  onOpenWatermarkPicker: () => void;
-  onDropWatermarkFile: (event: DragEvent<HTMLElement>) => Promise<void>;
-  onBeginContinuousNumericEdit: () => void;
-  onUpdateNumericSetting: (key: "opacity" | "sizePx" | "rotation", value: string) => void;
-  onWidthPxChange: (value: string) => void;
-  onHeightPxChange: (value: string) => void;
-  onTogglePreserveAspectRatio: (checked: boolean) => void;
-  onResetOriginalAspectRatio: () => void;
-  onSelectPosition: (position: AnchorPosition) => void;
+  file: {
+    watermarkFile: InputFile | null;
+    onOpenWatermarkPicker: () => void;
+    onDropWatermarkFile: (event: DragEvent<HTMLElement>) => Promise<void>;
+  };
+  numeric: {
+    onBeginContinuousNumericEdit: () => void;
+    onUpdateNumericSetting: (key: "opacity" | "sizePx" | "rotation", value: string) => void;
+  };
+  size: {
+    sizeControlMax: number;
+    displayedSizePx: number;
+    renderedWidthPx: number;
+    renderedHeightPx: number;
+    onWidthPxChange: (value: string) => void;
+    onHeightPxChange: (value: string) => void;
+    onTogglePreserveAspectRatio: (checked: boolean) => void;
+    onResetOriginalAspectRatio: () => void;
+  };
+  position: {
+    onSelectPosition: (position: AnchorPosition) => void;
+  };
 }
 
 export function WatermarkPanel({
   settings,
-  watermarkFile,
-  sizeControlMax,
-  displayedSizePx,
-  renderedWidthPx,
-  renderedHeightPx,
-  onOpenWatermarkPicker,
-  onDropWatermarkFile,
-  onBeginContinuousNumericEdit,
-  onUpdateNumericSetting,
-  onWidthPxChange,
-  onHeightPxChange,
-  onTogglePreserveAspectRatio,
-  onResetOriginalAspectRatio,
-  onSelectPosition
+  file,
+  numeric,
+  size,
+  position
 }: WatermarkPanelProps) {
+  const { watermarkFile, onOpenWatermarkPicker, onDropWatermarkFile } = file;
+  const { onBeginContinuousNumericEdit, onUpdateNumericSetting } = numeric;
+  const {
+    sizeControlMax,
+    displayedSizePx,
+    renderedWidthPx,
+    renderedHeightPx,
+    onWidthPxChange,
+    onHeightPxChange,
+    onTogglePreserveAspectRatio,
+    onResetOriginalAspectRatio
+  } = size;
+  const { onSelectPosition } = position;
+
   const onRangeKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (
       event.key.startsWith("Arrow") ||
