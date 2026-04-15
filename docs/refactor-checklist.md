@@ -36,7 +36,7 @@
 - [x] 2단계: `App.tsx`의 preview / processing state 분리
 - [x] 3단계: 컴포넌트 props / 인터페이스 정리
 - [x] 4단계: shared 계산 계층 정리
-- [ ] 5단계: 아키텍처 / 설계 의도 문서화
+- [x] 5단계: 아키텍처 / 설계 의도 문서화
 
 ## 1단계: `electron/main.ts` 책임 분리
 
@@ -190,20 +190,20 @@
 
 ### 5-1. architecture note
 
-- [ ] renderer state 구조
-- [ ] interaction hook 구조
-- [ ] export pipeline 구조
-- [ ] preview / export parity 원칙
+- [x] renderer state 구조
+- [x] interaction hook 구조
+- [x] export pipeline 구조
+- [x] preview / export parity 원칙
 
 후보 위치:
 - [ ] `/Users/fd2/dev/pdf-watermark/README.md`
-- [ ] `/Users/fd2/dev/pdf-watermark/docs/architecture.md`
+- [x] `/Users/fd2/dev/pdf-watermark/docs/architecture.md`
 
 ### 5-2. 리팩터링 규칙 문서화
 
-- [ ] SRP: 어디까지가 한 책임인지
-- [ ] shared helper를 언제 만드는지
-- [ ] direct manipulation state 추가 규칙
+- [x] SRP: 어디까지가 한 책임인지
+- [x] shared helper를 언제 만드는지
+- [x] direct manipulation state 추가 규칙
 
 ## 적용 원칙 체크리스트
 
@@ -225,4 +225,4 @@
 - [x] `WatermarkPanel` / `PreviewPane` props 연결 정리
 - [ ] `WatermarkPanel` / `PreviewPane` props 인터페이스 정리
 - [ ] shared / helper 경계 정리
-- [ ] architecture note 작성
+- [x] architecture note 작성
