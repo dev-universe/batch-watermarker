@@ -22,6 +22,7 @@
 - [x] Windows 릴리스 체크리스트 준비 완료
 - [x] 배포 전 코드 서명 / notarization 정책 문서화 완료
 - [ ] 다음 우선순위: Windows 환경에서 릴리스 체크리스트 실행
+- [ ] 대기 사유: 현재 사용 가능한 Windows 머신 / VM 없음
 
 ## Done Criteria
 

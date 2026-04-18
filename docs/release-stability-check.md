@@ -2,6 +2,12 @@
 
 Date: 2026-04-15
 
+## Release Status
+
+- macOS validation is complete for automated checks, packaging, and manual smoke testing.
+- Windows validation is prepared but blocked until a Windows machine or VM is available.
+- Signing and notarization policy is documented; certificate setup remains a separate release decision.
+
 ## Automated Checks
 
 - [x] `npm run typecheck`
