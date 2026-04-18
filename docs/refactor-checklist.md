@@ -20,8 +20,8 @@
 - [x] 5단계 완료: 아키텍처 / 설계 의도 문서화
 - [x] macOS 릴리스 안정화 점검 완료: 자동 검증, 패키징, manual smoke
 - [x] Windows 릴리스 체크리스트 준비 완료
+- [x] 배포 전 코드 서명 / notarization 정책 문서화 완료
 - [ ] 다음 우선순위: Windows 환경에서 릴리스 체크리스트 실행
-- [ ] 후속 결정: 배포 전 코드 서명 / notarization 정책 확정
 
 ## Done Criteria
 

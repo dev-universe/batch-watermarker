@@ -21,6 +21,8 @@ Date: 2026-04-15
 
 - [x] `README.md` includes macOS build, notarization, Windows build, and release
   validation notes.
+- [x] `README.md` documents the signing policy for internal testing, public
+  macOS distribution, and public Windows distribution.
 - [x] `docs/architecture.md` exists and documents renderer state, interaction,
   export pipeline, preview/export parity, and refactoring rules.
 
@@ -101,5 +103,5 @@ Run on a Windows machine before Windows distribution.
 
 ### Windows Distribution Checks
 
-- [ ] SmartScreen/code-signing expectations are documented for distribution
+- [x] SmartScreen/code-signing expectations are documented for distribution
 - [ ] a clean Windows machine or VM has been used for at least one installer smoke test
