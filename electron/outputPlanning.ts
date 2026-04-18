@@ -1,4 +1,3 @@
-import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import type { WatermarkSettings } from "../src/shared/types";
@@ -13,8 +12,8 @@ export interface OutputWritePaths {
 export const getTemporaryOutputPath = (targetPath: string) => {
   const parsed = path.parse(targetPath);
   return path.join(
-    os.tmpdir(),
-    `${parsed.name}-${Date.now()}-${Math.random().toString(36).slice(2)}${parsed.ext}`
+    parsed.dir,
+    `.${parsed.name}-${Date.now()}-${Math.random().toString(36).slice(2)}.tmp${parsed.ext}`
   );
 };
 
