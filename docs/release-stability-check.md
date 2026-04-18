@@ -12,8 +12,8 @@ Date: 2026-04-15
 
 - [x] `npm run typecheck`
 - [x] `npm test`
-  - 7 test files passed
-  - 67 tests passed
+  - 8 test files passed
+  - 73 tests passed
 - [x] `npm run build`
 - [x] `npm run dist -- --dir`
   - Generated macOS app bundle:

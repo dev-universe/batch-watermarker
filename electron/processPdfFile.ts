@@ -3,6 +3,7 @@ import { degrees, PDFDocument } from "pdf-lib";
 import type sharp from "sharp";
 import type { InputFile, ProcessRequest } from "../src/shared/types";
 import { getWatermarkCenterPoint, getWatermarkMetrics } from "../src/shared/watermarkGeometry";
+import { writeOutputBufferSafely } from "./outputFileWrites";
 import { getOutputWritePaths } from "./outputPlanning";
 import { getPdfWatermarkEmbedSource } from "./watermarkAssets";
 
@@ -13,7 +14,7 @@ export const processPdfFile = async (
   watermarkMetadata: sharp.Metadata
 ) => {
   const { settings } = request;
-  const { finalOutputPath } = getOutputWritePaths(inputFile.path, settings);
+  const outputPaths = getOutputWritePaths(inputFile.path, settings);
   const sourceBytes = await fs.readFile(inputFile.path);
   const pdf = await PDFDocument.load(sourceBytes);
   if (!watermarkMetadata.width || !watermarkMetadata.height) {
@@ -61,6 +62,6 @@ export const processPdfFile = async (
   }
 
   const outputBytes = await pdf.save();
-  await fs.writeFile(finalOutputPath, outputBytes);
-  return finalOutputPath;
+  await writeOutputBufferSafely(outputPaths, outputBytes);
+  return outputPaths.finalOutputPath;
 };

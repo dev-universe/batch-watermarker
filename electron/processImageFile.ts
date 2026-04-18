@@ -1,8 +1,8 @@
 import path from "node:path";
-import { promises as fs } from "node:fs";
 import sharp from "sharp";
 import type { InputFile, ProcessRequest } from "../src/shared/types";
 import { getWatermarkCenterPoint } from "../src/shared/watermarkGeometry";
+import { writeOutputSafely } from "./outputFileWrites";
 import { getOutputWritePaths } from "./outputPlanning";
 import {
   applyOpacityToWatermarkAsset,
@@ -19,10 +19,8 @@ export const processImageFile = async (
   watermarkAssetCache: WatermarkAssetCache
 ) => {
   const { settings } = request;
-  const { finalOutputPath, writePath, shouldReplaceOriginal } = getOutputWritePaths(
-    inputFile.path,
-    settings
-  );
+  const outputPaths = getOutputWritePaths(inputFile.path, settings);
+  const { finalOutputPath, writePath } = outputPaths;
   const image = sharp(inputFile.path, { failOn: "none" });
   const metadata = await image.metadata();
 
@@ -69,21 +67,18 @@ export const processImageFile = async (
       ? sharp(inputFile.path, { density, failOn: "none" }).composite([{ input: watermarkLayer, blend: "over" }])
       : sharp(inputFile.path, { density, failOn: "none" });
 
-  const ext = path.extname(inputFile.path).toLowerCase();
-  if (ext === ".png") {
-    await composite.png().withMetadata({ density }).toFile(writePath);
-  } else if (ext === ".webp") {
-    await composite.webp().withMetadata({ density }).toFile(writePath);
-  } else if (ext === ".tif" || ext === ".tiff") {
-    await composite.tiff().withMetadata({ density }).toFile(writePath);
-  } else {
-    await composite.jpeg({ quality: 95 }).withMetadata({ density }).toFile(writePath);
-  }
-
-  if (shouldReplaceOriginal) {
-    await fs.rm(finalOutputPath, { force: true });
-    await fs.rename(writePath, finalOutputPath);
-  }
+  await writeOutputSafely(outputPaths, async () => {
+    const ext = path.extname(inputFile.path).toLowerCase();
+    if (ext === ".png") {
+      await composite.png().withMetadata({ density }).toFile(writePath);
+    } else if (ext === ".webp") {
+      await composite.webp().withMetadata({ density }).toFile(writePath);
+    } else if (ext === ".tif" || ext === ".tiff") {
+      await composite.tiff().withMetadata({ density }).toFile(writePath);
+    } else {
+      await composite.jpeg({ quality: 95 }).withMetadata({ density }).toFile(writePath);
+    }
+  });
 
   return finalOutputPath;
 };
