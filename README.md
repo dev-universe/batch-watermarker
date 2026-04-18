@@ -115,6 +115,13 @@ If you want a smoother end-user install experience, configure these environment 
 
 The notarization hook is already wired through [scripts/notarize.cjs](/Users/fd2/dev/pdf-watermark/scripts/notarize.cjs).
 
+## Release Signing Policy
+
+- Internal testing or personal use can use the current ad-hoc macOS signing flow.
+- Public macOS distribution should use Apple Developer ID signing and notarization.
+- Public Windows distribution should use Windows code signing to reduce SmartScreen warnings.
+- If code signing is not configured, communicate the expected Gatekeeper or SmartScreen warning before sharing the app.
+
 ## Windows Build Notes
 
 - Windows packaging is configured through `electron-builder` with the `nsis` target.
