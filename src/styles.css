@@ -292,6 +292,28 @@ label {
   color: #4b3523;
 }
 
+.layer-texts {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.layer-name-input {
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid rgba(78, 54, 34, 0.16);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.layer-file-name {
+  font-size: 0.78rem;
+  color: rgba(75, 53, 35, 0.72);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .layer-actions {
   display: flex;
   gap: 0.4rem;

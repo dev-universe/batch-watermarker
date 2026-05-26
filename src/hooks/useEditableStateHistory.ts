@@ -182,6 +182,7 @@ export function useEditableStateHistory(initialSettings: WatermarkSettings) {
         ...sourceLayer,
         id: `watermark-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         file: { ...sourceLayer.file },
+        label: `${sourceLayer.label} 복제`,
         settings: { ...sourceLayer.settings },
         previewPayload: {
           ...sourceLayer.previewPayload,
@@ -243,6 +244,21 @@ export function useEditableStateHistory(initialSettings: WatermarkSettings) {
           ? {
               ...layer,
               visible: !layer.visible
+            }
+          : layer
+      )
+    }));
+  };
+
+  const renameWatermarkLayer = (layerId: string, label: string) => {
+    const trimmedLabel = label.trim();
+    commitSnapshot((current) => ({
+      ...current,
+      watermarkLayers: current.watermarkLayers.map((layer) =>
+        layer.id === layerId
+          ? {
+              ...layer,
+              label: trimmedLabel || layer.file.name
             }
           : layer
       )
@@ -328,6 +344,7 @@ export function useEditableStateHistory(initialSettings: WatermarkSettings) {
     duplicateWatermarkLayer,
     moveWatermarkLayer,
     toggleWatermarkLayerVisibility,
+    renameWatermarkLayer,
     removeWatermarkLayer,
     undo,
     redo

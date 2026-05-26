@@ -21,6 +21,7 @@ export interface InputFile {
 export interface WatermarkLayer {
   id: string;
   file: InputFile;
+  label: string;
   settings: WatermarkSettings;
   visible: boolean;
   previewPayload: PreviewPayload;

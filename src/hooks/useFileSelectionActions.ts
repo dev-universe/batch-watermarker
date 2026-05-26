@@ -108,6 +108,7 @@ export function useFileSelectionActions({
       const watermarkLayer: WatermarkLayer = {
         id: layerId,
         file,
+        label: file.name,
         settings: layerSettings,
         visible: true,
         previewPayload,
