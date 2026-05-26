@@ -88,7 +88,7 @@ function App() {
     startProcessing
   } = useProcessingState({
     inputFiles,
-    watermarkFile,
+    watermarkLayers,
     settings
   });
 

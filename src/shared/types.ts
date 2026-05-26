@@ -47,7 +47,7 @@ export interface WatermarkSettings {
 
 export interface ProcessRequest {
   inputFiles: InputFile[];
-  watermarkPath: string;
+  watermarkLayers: WatermarkLayer[];
   settings: WatermarkSettings;
 }
 

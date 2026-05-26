@@ -10,12 +10,12 @@ import {
   getOrCreateWatermarkAsset,
   type WatermarkAssetCache
 } from "./watermarkAssets";
+import type { ResolvedWatermarkLayer } from "./watermarkLayerAssets";
 
 export const processImageFile = async (
   inputFile: InputFile,
-  watermarkBuffer: Buffer,
   request: ProcessRequest,
-  watermarkMetadata: sharp.Metadata,
+  resolvedWatermarkLayers: ResolvedWatermarkLayer[],
   watermarkAssetCache: WatermarkAssetCache
 ) => {
   const { settings } = request;
@@ -27,44 +27,48 @@ export const processImageFile = async (
   if (!metadata.width || !metadata.height) {
     throw new Error(`Unable to read image dimensions: ${inputFile.name}`);
   }
+  const watermarkLayers = await Promise.all(
+    resolvedWatermarkLayers.map(async (layer) => {
+      if (!layer.watermarkMetadata.width || !layer.watermarkMetadata.height) {
+        throw new Error(`Unable to read watermark dimensions: ${layer.file.name}`);
+      }
 
-  if (!watermarkMetadata.width || !watermarkMetadata.height) {
-    throw new Error("Unable to read watermark dimensions.");
-  }
-
-  const anchorCenter = getWatermarkCenterPoint(
-    settings,
-    metadata.width,
-    metadata.height
-  );
-  const { rotatedWatermarkBuffer, drawWidth, drawHeight } = await getOrCreateWatermarkAsset(
-    watermarkAssetCache,
-    watermarkBuffer,
-    metadata.width,
-    metadata.height,
-    watermarkMetadata.width,
-    watermarkMetadata.height,
-    settings,
-    settings.rotation
-  );
-  const watermarkBufferWithOpacity = await applyOpacityToWatermarkAsset(
-    rotatedWatermarkBuffer,
-    settings.opacity / 100
-  );
-  const topLeftX = Math.round(anchorCenter.x - drawWidth / 2);
-  const topLeftY = Math.round(anchorCenter.y - drawHeight / 2);
-  const watermarkLayer = await buildPositionedWatermarkLayer(
-    watermarkBufferWithOpacity,
-    metadata.width,
-    metadata.height,
-    topLeftX,
-    topLeftY
+      const anchorCenter = getWatermarkCenterPoint(layer.settings, metadata.width, metadata.height);
+      const { rotatedWatermarkBuffer, drawWidth, drawHeight } = await getOrCreateWatermarkAsset(
+        watermarkAssetCache,
+        layer.watermarkBuffer,
+        layer.file.path,
+        metadata.width,
+        metadata.height,
+        layer.watermarkMetadata.width,
+        layer.watermarkMetadata.height,
+        layer.settings,
+        layer.settings.rotation
+      );
+      const watermarkBufferWithOpacity = await applyOpacityToWatermarkAsset(
+        rotatedWatermarkBuffer,
+        layer.settings.opacity / 100
+      );
+      const topLeftX = Math.round(anchorCenter.x - drawWidth / 2);
+      const topLeftY = Math.round(anchorCenter.y - drawHeight / 2);
+      return buildPositionedWatermarkLayer(
+        watermarkBufferWithOpacity,
+        metadata.width,
+        metadata.height,
+        topLeftX,
+        topLeftY
+      );
+    })
   );
 
   const density = metadata.density;
   const composite =
-    watermarkLayer.length > 0
-      ? sharp(inputFile.path, { density, failOn: "none" }).composite([{ input: watermarkLayer, blend: "over" }])
+    watermarkLayers.some((layer) => layer.length > 0)
+      ? sharp(inputFile.path, { density, failOn: "none" }).composite(
+          watermarkLayers
+            .filter((layer) => layer.length > 0)
+            .map((layer) => ({ input: layer, blend: "over" }))
+        )
       : sharp(inputFile.path, { density, failOn: "none" });
 
   await writeOutputSafely(outputPaths, async () => {
