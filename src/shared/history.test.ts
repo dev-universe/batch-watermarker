@@ -50,7 +50,36 @@ describe("history helpers", () => {
     };
     const original = createSnapshot({
       inputFiles: [inputFile],
-      watermarkFile
+      watermarkFile,
+      watermarkLayers: [
+        {
+          id: "layer-1",
+          file: watermarkFile,
+          settings: {
+            opacity: 7,
+            sizeRatio: 280 / 842,
+            preserveAspectRatio: true,
+            rotation: 0,
+            placementMode: "preset",
+            position: "C",
+            freeCenterXRatio: null,
+            freeCenterYRatio: null,
+            freeWidthRatio: null,
+            freeHeightRatio: null,
+            suffix: "_wm",
+            outputDirectory: "",
+            overwriteOriginal: false
+          },
+          visible: true,
+          previewPayload: {
+            kind: "image",
+            mimeType: "image/png",
+            name: "logo.png",
+            data: new Uint8Array([1, 2, 3])
+          },
+          naturalSize: { width: 32, height: 32 }
+        }
+      ]
     });
 
     const cloned = cloneSnapshot(original);
@@ -61,6 +90,7 @@ describe("history helpers", () => {
     expect(cloned.inputFiles[0]).toBe(inputFile);
     expect(cloned.watermarkFile).toBe(watermarkFile);
     expect(cloned.watermarkLayers).not.toBe(original.watermarkLayers);
+    expect(cloned.watermarkLayers[0]).not.toBe(original.watermarkLayers[0]);
   });
 
   it("detects equal snapshots", () => {

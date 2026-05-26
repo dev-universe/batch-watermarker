@@ -235,6 +235,20 @@ export function useEditableStateHistory(initialSettings: WatermarkSettings) {
     });
   };
 
+  const toggleWatermarkLayerVisibility = (layerId: string) => {
+    commitSnapshot((current) => ({
+      ...current,
+      watermarkLayers: current.watermarkLayers.map((layer) =>
+        layer.id === layerId
+          ? {
+              ...layer,
+              visible: !layer.visible
+            }
+          : layer
+      )
+    }));
+  };
+
   const removeWatermarkLayer = (layerId: string) => {
     commitSnapshot((current) => {
       const nextLayers = current.watermarkLayers.filter((layer) => layer.id !== layerId);
@@ -313,6 +327,7 @@ export function useEditableStateHistory(initialSettings: WatermarkSettings) {
     activateWatermarkLayer,
     duplicateWatermarkLayer,
     moveWatermarkLayer,
+    toggleWatermarkLayerVisibility,
     removeWatermarkLayer,
     undo,
     redo

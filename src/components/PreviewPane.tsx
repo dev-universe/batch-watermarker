@@ -35,6 +35,7 @@ interface PreviewPaneWatermarkLayer {
   overlayImageStyle: CSSProperties;
   isActive: boolean;
   zIndex: number;
+  visible: boolean;
 }
 
 interface PreviewPaneInteractionProps {
@@ -122,7 +123,9 @@ export function PreviewPane({
                 draggable={false}
                 onLoad={onPreviewImageLoad}
               />
-              {watermarkLayers.map((layer) => (
+              {watermarkLayers
+                .filter((layer) => layer.visible)
+                .map((layer) => (
                 <div
                   key={layer.id}
                   className={`watermark-overlay ${layer.isActive && isWatermarkHovered ? "hovered" : ""} ${layer.isActive && isWatermarkSelected ? "selected" : ""} ${layer.isActive && isWatermarkDragging ? "dragging" : ""}`}
