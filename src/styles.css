@@ -252,6 +252,54 @@ label {
   background: rgba(239, 226, 209, 0.75);
 }
 
+.layer-list {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+}
+
+.layer-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.55rem;
+  border-radius: 16px;
+  background: rgba(241, 232, 220, 0.55);
+  border: 1px solid transparent;
+}
+
+.layer-row.active {
+  border-color: rgba(140, 93, 53, 0.5);
+  background: rgba(248, 239, 228, 0.9);
+}
+
+.layer-select {
+  background: #8c5d35;
+  color: #fffaf5;
+  white-space: nowrap;
+}
+
+.layer-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #4b3523;
+}
+
+.layer-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.layer-actions .subtle-action,
+.layer-remove {
+  padding: 0.45rem 0.7rem;
+}
+
 .position-grid button.selected,
 .primary {
   background: #8c5d35;

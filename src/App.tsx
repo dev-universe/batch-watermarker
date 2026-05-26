@@ -56,6 +56,8 @@ function App() {
     updateSettingsDuringContinuousEdit,
     endContinuousEdit,
     activateWatermarkLayer,
+    duplicateWatermarkLayer,
+    moveWatermarkLayer,
     removeWatermarkLayer,
     undo,
     redo
@@ -274,6 +276,8 @@ function App() {
       onSelectPosition
     },
     onSelectWatermarkLayer: activateWatermarkLayer,
+    onDuplicateWatermarkLayer: duplicateWatermarkLayer,
+    onMoveWatermarkLayer: moveWatermarkLayer,
     onRemoveWatermarkLayer: removeWatermarkLayer
   };
   const outputPanelProps = {
