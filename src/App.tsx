@@ -17,6 +17,10 @@ import { useWatermarkSettingsActions } from "./hooks/useWatermarkSettingsActions
 import type { WatermarkSettings } from "./shared/types";
 import { getOutputSummary } from "./shared/outputSummary";
 import {
+  canEditActiveWatermarkLayer,
+  getActiveWatermarkLayerState
+} from "./shared/watermarkLayerState";
+import {
   getLongestEdge,
   getLongestEdgePxFromRatio
 } from "./shared/watermarkSizing";
@@ -65,14 +69,11 @@ function App() {
     undo,
     redo
   } = useEditableStateHistory(INITIAL_SETTINGS);
-  const activeWatermarkLayer = useMemo(
-    () =>
-      activeWatermarkLayerId
-        ? watermarkLayers.find((layer) => layer.id === activeWatermarkLayerId) ?? null
-        : null,
-    [activeWatermarkLayerId, watermarkLayers]
+  const activeWatermarkLayer = getActiveWatermarkLayerState(
+    currentSnapshotRef.current,
+    INITIAL_SETTINGS
   );
-  const isActiveWatermarkLayerLocked = activeWatermarkLayer?.locked ?? false;
+  const isActiveWatermarkLayerLocked = !canEditActiveWatermarkLayer(activeWatermarkLayer);
   const {
     selectedPreviewFile,
     previewKind,
