@@ -109,6 +109,7 @@ export function useFileSelectionActions({
         id: layerId,
         file,
         label: file.name,
+        locked: false,
         settings: layerSettings,
         visible: true,
         previewPayload,

@@ -25,6 +25,7 @@ interface PreviewPaneOverlayProps {
   isWatermarkHovered: boolean;
   isWatermarkSelected: boolean;
   isWatermarkDragging: boolean;
+  isActiveWatermarkLayerLocked: boolean;
 }
 
 interface PreviewPaneWatermarkLayer {
@@ -36,6 +37,7 @@ interface PreviewPaneWatermarkLayer {
   isActive: boolean;
   zIndex: number;
   visible: boolean;
+  locked: boolean;
 }
 
 interface PreviewPaneInteractionProps {
@@ -74,7 +76,8 @@ export function PreviewPane({
   const {
     isWatermarkHovered,
     isWatermarkSelected,
-    isWatermarkDragging
+    isWatermarkDragging,
+    isActiveWatermarkLayerLocked
   } = overlay;
   const {
     onClearWatermarkSelection,
@@ -128,7 +131,7 @@ export function PreviewPane({
                 .map((layer) => (
                 <div
                   key={layer.id}
-                  className={`watermark-overlay ${layer.isActive && isWatermarkHovered ? "hovered" : ""} ${layer.isActive && isWatermarkSelected ? "selected" : ""} ${layer.isActive && isWatermarkDragging ? "dragging" : ""}`}
+                  className={`watermark-overlay ${layer.isActive && isWatermarkHovered ? "hovered" : ""} ${layer.isActive && isWatermarkSelected ? "selected" : ""} ${layer.isActive && isWatermarkDragging ? "dragging" : ""} ${layer.locked ? "locked" : ""}`}
                   style={{
                     ...layer.overlayStyle,
                     zIndex: layer.zIndex
@@ -161,29 +164,33 @@ export function PreviewPane({
                     {layer.isActive && (
                       <>
                         <div className="watermark-selection-outline" />
-                        <div className="watermark-rotate-stem" />
-                        <div
-                          className="watermark-rotate-handle"
-                          onPointerDown={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            event.currentTarget.setPointerCapture(event.pointerId);
-                            onRotateHandlePointerDown(event);
-                          }}
-                        />
-                        {RESIZE_HANDLES.map((handle) => (
-                          <div
-                            key={handle}
-                            className={`watermark-resize-handle ${handle}`}
-                            data-handle={handle}
-                            onPointerDown={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              event.currentTarget.setPointerCapture(event.pointerId);
-                              onResizeHandlePointerDown(handle, event);
-                            }}
-                          />
-                        ))}
+                        {!layer.locked && (
+                          <>
+                            <div className="watermark-rotate-stem" />
+                            <div
+                              className="watermark-rotate-handle"
+                              onPointerDown={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                event.currentTarget.setPointerCapture(event.pointerId);
+                                onRotateHandlePointerDown(event);
+                              }}
+                            />
+                            {RESIZE_HANDLES.map((handle) => (
+                              <div
+                                key={handle}
+                                className={`watermark-resize-handle ${handle}`}
+                                data-handle={handle}
+                                onPointerDown={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  event.currentTarget.setPointerCapture(event.pointerId);
+                                  onResizeHandlePointerDown(handle, event);
+                                }}
+                              />
+                            ))}
+                          </>
+                        )}
                       </>
                     )}
                   </div>

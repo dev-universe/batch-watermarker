@@ -21,6 +21,7 @@ interface UseWatermarkSettingsActionsOptions {
   previewCoordinateSize: Size;
   renderedWatermarkSize: Size;
   sizeControlMax: number;
+  isActiveWatermarkLayerLocked: boolean;
   commitSnapshot: (updater: (current: EditableStateSnapshot) => EditableStateSnapshot) => void;
   updateSettingsDuringContinuousEdit: (settingsPatch: Partial<WatermarkSettings>) => boolean;
 }
@@ -34,10 +35,15 @@ export function useWatermarkSettingsActions({
   previewCoordinateSize,
   renderedWatermarkSize,
   sizeControlMax,
+  isActiveWatermarkLayerLocked,
   commitSnapshot,
   updateSettingsDuringContinuousEdit
 }: UseWatermarkSettingsActionsOptions) {
   const updateNumericSetting = (key: "opacity" | "sizePx" | "rotation", value: string) => {
+    if (isActiveWatermarkLayerLocked) {
+      return;
+    }
+
     const max = key === "opacity" ? 100 : key === "rotation" ? 360 : sizeControlMax;
     const nextValue = clamp(Number(value), 0, max);
     const currentCenter = getWatermarkCenterPoint(
@@ -108,6 +114,10 @@ export function useWatermarkSettingsActions({
   };
 
   const onWidthPxChange = (value: string) => {
+    if (isActiveWatermarkLayerLocked) {
+      return;
+    }
+
     const nextWidth = clamp(Number(value), 0, sizeControlMax);
     const currentWidth = renderedWatermarkSize.width;
     const currentHeight = renderedWatermarkSize.height;
@@ -147,6 +157,10 @@ export function useWatermarkSettingsActions({
   };
 
   const onHeightPxChange = (value: string) => {
+    if (isActiveWatermarkLayerLocked) {
+      return;
+    }
+
     const nextHeight = clamp(Number(value), 0, sizeControlMax);
     const currentWidth = renderedWatermarkSize.width;
     const currentHeight = renderedWatermarkSize.height;
@@ -186,6 +200,10 @@ export function useWatermarkSettingsActions({
   };
 
   const onTogglePreserveAspectRatio = (checked: boolean) => {
+    if (isActiveWatermarkLayerLocked) {
+      return;
+    }
+
     commitSnapshot((current) => ({
       ...current,
       settings: {
@@ -196,6 +214,10 @@ export function useWatermarkSettingsActions({
   };
 
   const onResetOriginalAspectRatio = () => {
+    if (isActiveWatermarkLayerLocked) {
+      return;
+    }
+
     commitSnapshot((current) => {
       const nextSizing = resizeFromWidthPreservingAspectRatio(
         watermarkNaturalSize.width,
@@ -222,6 +244,10 @@ export function useWatermarkSettingsActions({
   };
 
   const onSelectPosition = (position: AnchorPosition) => {
+    if (isActiveWatermarkLayerLocked) {
+      return;
+    }
+
     commitSnapshot((current) => ({
       ...current,
       settings: {

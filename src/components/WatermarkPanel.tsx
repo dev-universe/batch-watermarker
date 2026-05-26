@@ -13,6 +13,7 @@ interface WatermarkLayerItem {
   id: string;
   label: string;
   name: string;
+  locked: boolean;
   visible: boolean;
 }
 
@@ -48,8 +49,10 @@ interface WatermarkPanelProps {
   onDuplicateWatermarkLayer: (layerId: string) => void;
   onMoveWatermarkLayer: (layerId: string, direction: -1 | 1) => void;
   onToggleWatermarkLayerVisibility: (layerId: string) => void;
+  onToggleWatermarkLayerLock: (layerId: string) => void;
   onRenameWatermarkLayer: (layerId: string, label: string) => void;
   onRemoveWatermarkLayer: (layerId: string) => void;
+  isActiveWatermarkLayerLocked: boolean;
 }
 
 export function WatermarkPanel({
@@ -64,8 +67,10 @@ export function WatermarkPanel({
   onDuplicateWatermarkLayer,
   onMoveWatermarkLayer,
   onToggleWatermarkLayerVisibility,
+  onToggleWatermarkLayerLock,
   onRenameWatermarkLayer,
-  onRemoveWatermarkLayer
+  onRemoveWatermarkLayer,
+  isActiveWatermarkLayerLocked
 }: WatermarkPanelProps) {
   const { watermarkFile, onOpenWatermarkPicker, onDropWatermarkFile } = file;
   const { onBeginContinuousNumericEdit, onUpdateNumericSetting } = numeric;
@@ -93,6 +98,8 @@ export function WatermarkPanel({
     }
   };
 
+  const isWatermarkEditingDisabled = isActiveWatermarkLayerLocked || !watermarkFile;
+
   return (
     <section className="panel">
       <div className="panel-head">
@@ -117,7 +124,7 @@ export function WatermarkPanel({
           watermarkLayers.map((layer, index) => (
             <div
               key={layer.id}
-              className={`layer-row ${layer.id === activeWatermarkLayerId ? "active" : ""} ${layer.visible ? "" : "hidden"}`}
+              className={`layer-row ${layer.id === activeWatermarkLayerId ? "active" : ""} ${layer.visible ? "" : "hidden"} ${layer.locked ? "locked" : ""}`}
             >
               <button className="layer-select" onClick={() => onSelectWatermarkLayer(layer.id)}>
                 {layer.id === activeWatermarkLayerId ? "선택됨" : "선택"}
@@ -127,11 +134,18 @@ export function WatermarkPanel({
                   className="layer-name-input"
                   type="text"
                   value={layer.label}
+                  disabled={layer.locked}
                   onChange={(event) => onRenameWatermarkLayer(layer.id, event.target.value)}
                 />
                 <span className="layer-file-name">{layer.name}</span>
               </div>
               <div className="layer-actions">
+                <button
+                  className="subtle-action"
+                  onClick={() => onToggleWatermarkLayerLock(layer.id)}
+                >
+                  {layer.locked ? "해제" : "잠금"}
+                </button>
                 <button
                   className="subtle-action"
                   onClick={() => onToggleWatermarkLayerVisibility(layer.id)}
@@ -178,6 +192,7 @@ export function WatermarkPanel({
               min="0"
               max="100"
               value={settings.opacity}
+              disabled={isWatermarkEditingDisabled}
               onPointerDown={onBeginContinuousNumericEdit}
               onKeyDown={onRangeKeyDown}
               onChange={(event) => onUpdateNumericSetting("opacity", event.target.value)}
@@ -188,6 +203,7 @@ export function WatermarkPanel({
               min="0"
               max="100"
               value={settings.opacity}
+              disabled={isWatermarkEditingDisabled}
               onChange={(event) => onUpdateNumericSetting("opacity", event.target.value)}
             />
           </div>
@@ -201,7 +217,7 @@ export function WatermarkPanel({
               min="0"
               max={sizeControlMax}
               value={displayedSizePx}
-              disabled={!settings.preserveAspectRatio}
+              disabled={!settings.preserveAspectRatio || isWatermarkEditingDisabled}
               onPointerDown={onBeginContinuousNumericEdit}
               onKeyDown={onRangeKeyDown}
               onChange={(event) => onUpdateNumericSetting("sizePx", event.target.value)}
@@ -212,7 +228,7 @@ export function WatermarkPanel({
               min="0"
               max={sizeControlMax}
               value={Math.round(displayedSizePx)}
-              disabled={!settings.preserveAspectRatio}
+              disabled={!settings.preserveAspectRatio || isWatermarkEditingDisabled}
               onChange={(event) => onUpdateNumericSetting("sizePx", event.target.value)}
             />
           </div>
@@ -223,6 +239,7 @@ export function WatermarkPanel({
             <input
               type="checkbox"
               checked={settings.preserveAspectRatio}
+              disabled={isWatermarkEditingDisabled}
               onChange={(event) => onTogglePreserveAspectRatio(event.target.checked)}
             />{" "}
             현재 가로세로 비율 유지
@@ -236,7 +253,7 @@ export function WatermarkPanel({
 
         <button
           className="subtle-action"
-          disabled={!watermarkFile}
+          disabled={isWatermarkEditingDisabled}
           onClick={onResetOriginalAspectRatio}
         >
           원본 비율로 초기화
@@ -250,6 +267,7 @@ export function WatermarkPanel({
               type="number"
               min="0"
               value={Math.round(renderedWidthPx)}
+              disabled={isWatermarkEditingDisabled}
               onChange={(event) => onWidthPxChange(event.target.value)}
             />
           </label>
@@ -260,6 +278,7 @@ export function WatermarkPanel({
               type="number"
               min="0"
               value={Math.round(renderedHeightPx)}
+              disabled={isWatermarkEditingDisabled}
               onChange={(event) => onHeightPxChange(event.target.value)}
             />
           </label>
@@ -273,6 +292,7 @@ export function WatermarkPanel({
               min="0"
               max="360"
               value={settings.rotation}
+              disabled={isWatermarkEditingDisabled}
               onPointerDown={onBeginContinuousNumericEdit}
               onKeyDown={onRangeKeyDown}
               onChange={(event) => onUpdateNumericSetting("rotation", event.target.value)}
@@ -283,6 +303,7 @@ export function WatermarkPanel({
               min="0"
               max="360"
               value={settings.rotation}
+              disabled={isWatermarkEditingDisabled}
               onChange={(event) => onUpdateNumericSetting("rotation", event.target.value)}
             />
           </div>
@@ -294,6 +315,7 @@ export function WatermarkPanel({
           <button
             key={position}
             className={settings.position === position ? "selected" : ""}
+            disabled={isWatermarkEditingDisabled}
             onClick={() => onSelectPosition(position)}
           >
             {position}
