@@ -37,12 +37,13 @@ export const getPdfWatermarkEmbedSource = async (
 };
 
 const getWatermarkAssetCacheKey = (
+  sourceKey: string,
   canvasWidth: number,
   canvasHeight: number,
   settings: Pick<WatermarkSettings, "placementMode" | "freeWidthRatio" | "freeHeightRatio" | "sizeRatio">,
   rotation: number
 ) =>
-  `${canvasWidth}x${canvasHeight}:${settings.placementMode}:${settings.sizeRatio}:${settings.freeWidthRatio ?? "null"}:${settings.freeHeightRatio ?? "null"}:${rotation}`;
+  `${sourceKey}:${canvasWidth}x${canvasHeight}:${settings.placementMode}:${settings.sizeRatio}:${settings.freeWidthRatio ?? "null"}:${settings.freeHeightRatio ?? "null"}:${rotation}`;
 
 const buildWatermarkAsset = async (
   watermarkBuffer: Buffer,
@@ -90,6 +91,7 @@ const buildWatermarkAsset = async (
 export const getOrCreateWatermarkAsset = async (
   cache: WatermarkAssetCache,
   watermarkBuffer: Buffer,
+  sourceKey: string,
   canvasWidth: number,
   canvasHeight: number,
   watermarkWidth: number,
@@ -97,7 +99,7 @@ export const getOrCreateWatermarkAsset = async (
   settings: Pick<WatermarkSettings, "placementMode" | "freeWidthRatio" | "freeHeightRatio" | "sizeRatio">,
   rotation: number
 ) => {
-  const cacheKey = getWatermarkAssetCacheKey(canvasWidth, canvasHeight, settings, rotation);
+  const cacheKey = getWatermarkAssetCacheKey(sourceKey, canvasWidth, canvasHeight, settings, rotation);
   const cachedAsset = cache.get(cacheKey);
   if (cachedAsset) {
     return cachedAsset;

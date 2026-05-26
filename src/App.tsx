@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { InputFilesPanel } from "./components/InputFilesPanel";
 import { OutputPanel } from "./components/OutputPanel";
 import { PreviewPane } from "./components/PreviewPane";
@@ -9,7 +9,10 @@ import { useOutputSettingsActions } from "./hooks/useOutputSettingsActions";
 import { useProcessingState } from "./hooks/useProcessingState";
 import { usePreviewState } from "./hooks/usePreviewState";
 import { useWatermarkInteraction } from "./hooks/useWatermarkInteraction";
-import { useWatermarkOverlayStyle } from "./hooks/useWatermarkOverlayStyle";
+import {
+  createWatermarkOverlayImageStyle,
+  createWatermarkOverlayStyle
+} from "./hooks/useWatermarkOverlayStyle";
 import { useWatermarkSettingsActions } from "./hooks/useWatermarkSettingsActions";
 import type { WatermarkSettings } from "./shared/types";
 import { getOutputSummary } from "./shared/outputSummary";
@@ -42,6 +45,8 @@ function App() {
     inputFiles,
     watermarkFile,
     settings,
+    watermarkLayers,
+    activeWatermarkLayerId,
     selectedPreviewPath,
     setSettings,
     setSelectedPreviewPath,
@@ -50,6 +55,8 @@ function App() {
     beginContinuousEdit,
     updateSettingsDuringContinuousEdit,
     endContinuousEdit,
+    activateWatermarkLayer,
+    removeWatermarkLayer,
     undo,
     redo
   } = useEditableStateHistory(INITIAL_SETTINGS);
@@ -57,7 +64,7 @@ function App() {
     selectedPreviewFile,
     previewKind,
     previewBaseUrl,
-    watermarkPreviewUrl,
+    watermarkLayerPreviews,
     watermarkNaturalSize,
     previewCoordinateSize,
     previewDisplaySize,
@@ -71,7 +78,8 @@ function App() {
     inputFiles,
     selectedPreviewPath,
     setSelectedPreviewPath,
-    watermarkFile
+    watermarkLayers,
+    activeWatermarkLayerId
   });
   const {
     isProcessing,
@@ -80,7 +88,7 @@ function App() {
     startProcessing
   } = useProcessingState({
     inputFiles,
-    watermarkFile,
+    watermarkLayers,
     settings
   });
 
@@ -170,14 +178,64 @@ function App() {
     commitSnapshot,
     updateSettingsDuringContinuousEdit
   });
-  const { overlayStyle, overlayImageStyle } = useWatermarkOverlayStyle({
-    settings,
-    watermarkNaturalSize,
-    previewCoordinateSize,
-    previewDisplaySize
-  });
   const onWatermarkPointerEnter = () => setIsWatermarkHovered(true);
   const onWatermarkPointerLeave = () => setIsWatermarkHovered(false);
+  const renderedWatermarkLayers = useMemo(
+    () =>
+      watermarkLayers
+        .map((layer, index) => {
+          const layerPreview = watermarkLayerPreviews.find((preview) => preview.id === layer.id);
+          if (!layerPreview) {
+            return null;
+          }
+
+          const overlayStyle = createWatermarkOverlayStyle({
+            settings: layer.settings,
+            watermarkNaturalSize: layerPreview.naturalSize,
+            previewCoordinateSize,
+            previewDisplaySize
+          });
+          const overlayImageStyle = createWatermarkOverlayImageStyle({
+            settings: layer.settings,
+            watermarkNaturalSize: layerPreview.naturalSize,
+            previewCoordinateSize,
+            previewDisplaySize
+          });
+          if (!overlayStyle || !overlayImageStyle) {
+            return null;
+          }
+
+          return {
+            id: layer.id,
+            name: layer.file.name,
+            previewUrl: layerPreview.previewUrl,
+            overlayStyle,
+            overlayImageStyle,
+            isActive: layer.id === activeWatermarkLayerId,
+            zIndex: index + 1
+          };
+        })
+        .filter(
+          (
+            layer
+          ): layer is {
+            id: string;
+            name: string;
+            previewUrl: string;
+            overlayStyle: CSSProperties;
+            overlayImageStyle: CSSProperties;
+            isActive: boolean;
+            zIndex: number;
+          } => layer !== null
+        ),
+    [
+      activeWatermarkLayerId,
+      previewCoordinateSize,
+      previewDisplaySize,
+      watermarkLayerPreviews,
+      watermarkLayers
+    ]
+  );
   const inputFilesPanelProps = {
     inputFiles,
     selectedPreviewPath: selectedPreviewFile?.path ?? "",
@@ -188,6 +246,11 @@ function App() {
   };
   const watermarkPanelProps = {
     settings,
+    watermarkLayers: watermarkLayers.map((layer) => ({
+      id: layer.id,
+      name: layer.file.name
+    })),
+    activeWatermarkLayerId,
     file: {
       watermarkFile,
       onOpenWatermarkPicker: openWatermarkPicker,
@@ -209,7 +272,9 @@ function App() {
     },
     position: {
       onSelectPosition
-    }
+    },
+    onSelectWatermarkLayer: activateWatermarkLayer,
+    onRemoveWatermarkLayer: removeWatermarkLayer
   };
   const outputPanelProps = {
     settings,
@@ -227,8 +292,7 @@ function App() {
     preview: {
       selectedFileName: selectedPreviewFile?.name ?? "선택된 파일 없음",
       previewKind,
-      previewBaseUrl,
-      watermarkPreviewUrl
+      previewBaseUrl
     },
     pager: {
       pdfPageCount,
@@ -241,20 +305,20 @@ function App() {
       onPreviewImageLoad
     },
     overlay: {
-      overlayStyle,
-      overlayImageStyle,
       isWatermarkHovered,
       isWatermarkSelected,
       isWatermarkDragging
     },
     interaction: {
       onClearWatermarkSelection: clearWatermarkSelection,
+      onSelectWatermarkLayer: activateWatermarkLayer,
       onWatermarkPointerEnter,
       onWatermarkPointerLeave,
       onResizeHandlePointerDown,
       onRotateHandlePointerDown,
       onWatermarkPointerDown
-    }
+    },
+    watermarkLayers: renderedWatermarkLayers
   };
 
   return (

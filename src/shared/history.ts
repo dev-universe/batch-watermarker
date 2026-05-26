@@ -1,9 +1,11 @@
-import type { InputFile, WatermarkSettings } from "./types";
+import type { InputFile, WatermarkLayer, WatermarkSettings } from "./types";
 
 export interface EditableStateSnapshot {
   inputFiles: InputFile[];
   watermarkFile: InputFile | null;
   settings: WatermarkSettings;
+  watermarkLayers: WatermarkLayer[];
+  activeWatermarkLayerId: string | null;
   selectedPreviewPath: string;
 }
 
@@ -36,10 +38,46 @@ const areSettingsEqual = (left: WatermarkSettings, right: WatermarkSettings) =>
   left.outputDirectory === right.outputDirectory &&
   left.overwriteOriginal === right.overwriteOriginal;
 
+const areBytesEqual = (left: Uint8Array, right: Uint8Array) =>
+  left.length === right.length && left.every((byte, index) => byte === right[index]);
+
+const arePreviewPayloadsEqual = (left: WatermarkLayer["previewPayload"], right: WatermarkLayer["previewPayload"]) =>
+  left.kind === right.kind &&
+  left.mimeType === right.mimeType &&
+  left.name === right.name &&
+  areBytesEqual(left.data, right.data);
+
+const areWatermarkLayersEqual = (left: WatermarkLayer[], right: WatermarkLayer[]) =>
+  left.length === right.length &&
+  left.every((layer, index) => {
+    const other = right[index];
+    return (
+      layer.id === other?.id &&
+      layer.file.path === other?.file.path &&
+      layer.file.name === other?.file.name &&
+      layer.file.kind === other?.file.kind &&
+      areSettingsEqual(layer.settings, other.settings) &&
+      arePreviewPayloadsEqual(layer.previewPayload, other.previewPayload) &&
+      layer.naturalSize.width === other.naturalSize.width &&
+      layer.naturalSize.height === other.naturalSize.height
+    );
+  });
+
 export const cloneSnapshot = (snapshot: EditableStateSnapshot): EditableStateSnapshot => ({
   inputFiles: [...snapshot.inputFiles],
   watermarkFile: snapshot.watermarkFile,
   settings: { ...snapshot.settings },
+  watermarkLayers: snapshot.watermarkLayers.map((layer) => ({
+    id: layer.id,
+    file: { ...layer.file },
+    settings: { ...layer.settings },
+    previewPayload: {
+      ...layer.previewPayload,
+      data: new Uint8Array(layer.previewPayload.data)
+    },
+    naturalSize: { ...layer.naturalSize }
+  })),
+  activeWatermarkLayerId: snapshot.activeWatermarkLayerId,
   selectedPreviewPath: snapshot.selectedPreviewPath
 });
 
@@ -50,6 +88,8 @@ export const areSnapshotsEqual = (left: EditableStateSnapshot, right: EditableSt
       left.watermarkFile?.name === right.watermarkFile?.name &&
       left.watermarkFile?.kind === right.watermarkFile?.kind)) &&
   areSettingsEqual(left.settings, right.settings) &&
+  areWatermarkLayersEqual(left.watermarkLayers, right.watermarkLayers) &&
+  left.activeWatermarkLayerId === right.activeWatermarkLayerId &&
   left.selectedPreviewPath === right.selectedPreviewPath;
 
 export const createEmptyHistoryState = (): HistoryState => ({

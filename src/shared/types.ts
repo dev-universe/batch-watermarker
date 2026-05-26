@@ -18,6 +18,17 @@ export interface InputFile {
   kind: SupportedKind;
 }
 
+export interface WatermarkLayer {
+  id: string;
+  file: InputFile;
+  settings: WatermarkSettings;
+  previewPayload: PreviewPayload;
+  naturalSize: {
+    width: number;
+    height: number;
+  };
+}
+
 export interface WatermarkSettings {
   opacity: number;
   sizeRatio: number;
@@ -36,7 +47,7 @@ export interface WatermarkSettings {
 
 export interface ProcessRequest {
   inputFiles: InputFile[];
-  watermarkPath: string;
+  watermarkLayers: WatermarkLayer[];
   settings: WatermarkSettings;
 }
 

@@ -1,5 +1,10 @@
 import { useState } from "react";
-import type { InputFile, ProcessResponse, WatermarkSettings } from "../shared/types";
+import type {
+  InputFile,
+  ProcessResponse,
+  WatermarkLayer,
+  WatermarkSettings
+} from "../shared/types";
 import {
   collectPlannedOutputConflicts,
   collectPlannedOutputs,
@@ -8,7 +13,7 @@ import {
 
 interface UseProcessingStateOptions {
   inputFiles: InputFile[];
-  watermarkFile: InputFile | null;
+  watermarkLayers: WatermarkLayer[];
   settings: WatermarkSettings;
 }
 
@@ -35,7 +40,7 @@ const formatConflictConfirmMessage = (conflicts: string[]) => {
 
 export function useProcessingState({
   inputFiles,
-  watermarkFile,
+  watermarkLayers,
   settings
 }: UseProcessingStateOptions) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -47,7 +52,7 @@ export function useProcessingState({
       window.alert("입력 파일을 먼저 추가하세요.");
       return;
     }
-    if (!watermarkFile) {
+    if (!watermarkLayers.length) {
       window.alert("워터마크 이미지를 먼저 지정하세요.");
       return;
     }
@@ -88,7 +93,7 @@ export function useProcessingState({
     try {
       const response = await window.watermarkApi.process({
         inputFiles,
-        watermarkPath: watermarkFile.path,
+        watermarkLayers,
         settings: {
           ...settings,
           suffix: settings.suffix,
