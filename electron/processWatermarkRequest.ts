@@ -7,7 +7,9 @@ import { resolveWatermarkLayers } from "./watermarkLayerAssets";
 export const processWatermarkRequest = async (
   request: ProcessRequest
 ): Promise<ProcessResponse> => {
-  const resolvedWatermarkLayers = await resolveWatermarkLayers(request.watermarkLayers);
+  const resolvedWatermarkLayers = await resolveWatermarkLayers(
+    request.watermarkLayers.filter((layer) => layer.visible)
+  );
   const watermarkAssetCache: WatermarkAssetCache = new Map();
   const results: ProcessResponse["results"] = [];
   const errors: string[] = [];

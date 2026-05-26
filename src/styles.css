@@ -274,6 +274,10 @@ label {
   background: rgba(248, 239, 228, 0.9);
 }
 
+.layer-row.hidden {
+  opacity: 0.65;
+}
+
 .layer-select {
   background: #8c5d35;
   color: #fffaf5;

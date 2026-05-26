@@ -57,6 +57,7 @@ const areWatermarkLayersEqual = (left: WatermarkLayer[], right: WatermarkLayer[]
       layer.file.name === other?.file.name &&
       layer.file.kind === other?.file.kind &&
       areSettingsEqual(layer.settings, other.settings) &&
+      layer.visible === other.visible &&
       arePreviewPayloadsEqual(layer.previewPayload, other.previewPayload) &&
       layer.naturalSize.width === other.naturalSize.width &&
       layer.naturalSize.height === other.naturalSize.height
@@ -71,6 +72,7 @@ export const cloneSnapshot = (snapshot: EditableStateSnapshot): EditableStateSna
     id: layer.id,
     file: { ...layer.file },
     settings: { ...layer.settings },
+    visible: layer.visible,
     previewPayload: {
       ...layer.previewPayload,
       data: new Uint8Array(layer.previewPayload.data)

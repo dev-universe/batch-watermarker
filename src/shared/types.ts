@@ -22,6 +22,7 @@ export interface WatermarkLayer {
   id: string;
   file: InputFile;
   settings: WatermarkSettings;
+  visible: boolean;
   previewPayload: PreviewPayload;
   naturalSize: {
     width: number;

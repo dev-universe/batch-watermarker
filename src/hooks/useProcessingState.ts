@@ -56,6 +56,10 @@ export function useProcessingState({
       window.alert("워터마크 이미지를 먼저 지정하세요.");
       return;
     }
+    if (!watermarkLayers.some((layer) => layer.visible)) {
+      window.alert("표시할 워터마크 레이어를 하나 이상 켜세요.");
+      return;
+    }
 
     const overwriteOriginal = shouldOverwriteOriginals(settings);
     if (overwriteOriginal) {

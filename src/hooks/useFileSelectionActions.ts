@@ -109,6 +109,7 @@ export function useFileSelectionActions({
         id: layerId,
         file,
         settings: layerSettings,
+        visible: true,
         previewPayload,
         naturalSize
       };

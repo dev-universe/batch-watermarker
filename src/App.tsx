@@ -58,6 +58,7 @@ function App() {
     activateWatermarkLayer,
     duplicateWatermarkLayer,
     moveWatermarkLayer,
+    toggleWatermarkLayerVisibility,
     removeWatermarkLayer,
     undo,
     redo
@@ -214,7 +215,8 @@ function App() {
             overlayStyle,
             overlayImageStyle,
             isActive: layer.id === activeWatermarkLayerId,
-            zIndex: index + 1
+            zIndex: index + 1,
+            visible: layer.visible
           };
         })
         .filter(
@@ -228,6 +230,7 @@ function App() {
             overlayImageStyle: CSSProperties;
             isActive: boolean;
             zIndex: number;
+            visible: boolean;
           } => layer !== null
         ),
     [
@@ -250,7 +253,8 @@ function App() {
     settings,
     watermarkLayers: watermarkLayers.map((layer) => ({
       id: layer.id,
-      name: layer.file.name
+      name: layer.file.name,
+      visible: layer.visible
     })),
     activeWatermarkLayerId,
     file: {
@@ -278,6 +282,7 @@ function App() {
     onSelectWatermarkLayer: activateWatermarkLayer,
     onDuplicateWatermarkLayer: duplicateWatermarkLayer,
     onMoveWatermarkLayer: moveWatermarkLayer,
+    onToggleWatermarkLayerVisibility: toggleWatermarkLayerVisibility,
     onRemoveWatermarkLayer: removeWatermarkLayer
   };
   const outputPanelProps = {
