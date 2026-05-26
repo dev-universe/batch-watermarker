@@ -59,6 +59,7 @@ function App() {
     duplicateWatermarkLayer,
     moveWatermarkLayer,
     toggleWatermarkLayerVisibility,
+    renameWatermarkLayer,
     removeWatermarkLayer,
     undo,
     redo
@@ -253,6 +254,7 @@ function App() {
     settings,
     watermarkLayers: watermarkLayers.map((layer) => ({
       id: layer.id,
+      label: layer.label,
       name: layer.file.name,
       visible: layer.visible
     })),
@@ -283,6 +285,7 @@ function App() {
     onDuplicateWatermarkLayer: duplicateWatermarkLayer,
     onMoveWatermarkLayer: moveWatermarkLayer,
     onToggleWatermarkLayerVisibility: toggleWatermarkLayerVisibility,
+    onRenameWatermarkLayer: renameWatermarkLayer,
     onRemoveWatermarkLayer: removeWatermarkLayer
   };
   const outputPanelProps = {

@@ -55,6 +55,7 @@ describe("history helpers", () => {
         {
           id: "layer-1",
           file: watermarkFile,
+          label: "logo.png",
           settings: {
             opacity: 7,
             sizeRatio: 280 / 842,

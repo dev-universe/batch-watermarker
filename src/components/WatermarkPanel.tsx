@@ -11,6 +11,7 @@ interface WatermarkPanelFileProps {
 
 interface WatermarkLayerItem {
   id: string;
+  label: string;
   name: string;
   visible: boolean;
 }
@@ -47,6 +48,7 @@ interface WatermarkPanelProps {
   onDuplicateWatermarkLayer: (layerId: string) => void;
   onMoveWatermarkLayer: (layerId: string, direction: -1 | 1) => void;
   onToggleWatermarkLayerVisibility: (layerId: string) => void;
+  onRenameWatermarkLayer: (layerId: string, label: string) => void;
   onRemoveWatermarkLayer: (layerId: string) => void;
 }
 
@@ -62,6 +64,7 @@ export function WatermarkPanel({
   onDuplicateWatermarkLayer,
   onMoveWatermarkLayer,
   onToggleWatermarkLayerVisibility,
+  onRenameWatermarkLayer,
   onRemoveWatermarkLayer
 }: WatermarkPanelProps) {
   const { watermarkFile, onOpenWatermarkPicker, onDropWatermarkFile } = file;
@@ -119,7 +122,15 @@ export function WatermarkPanel({
               <button className="layer-select" onClick={() => onSelectWatermarkLayer(layer.id)}>
                 {layer.id === activeWatermarkLayerId ? "선택됨" : "선택"}
               </button>
-              <span className="layer-name">{layer.name}</span>
+              <div className="layer-texts">
+                <input
+                  className="layer-name-input"
+                  type="text"
+                  value={layer.label}
+                  onChange={(event) => onRenameWatermarkLayer(layer.id, event.target.value)}
+                />
+                <span className="layer-file-name">{layer.name}</span>
+              </div>
               <div className="layer-actions">
                 <button
                   className="subtle-action"
