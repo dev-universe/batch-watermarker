@@ -1,6 +1,6 @@
 import type { DragEvent } from "react";
 import type { EditableStateSnapshot } from "../shared/history";
-import type { InputFile } from "../shared/types";
+import type { InputFile, WatermarkLayer, WatermarkSettings } from "../shared/types";
 import {
   getCanvasLongestEdge,
   getLongestEdge,
@@ -34,6 +34,32 @@ const collectDroppedPaths = async (event: DragEvent<HTMLElement>) => {
     .filter(Boolean);
 };
 
+const createLayerId = () =>
+  `watermark-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+const createWatermarkLayerSettings = (
+  currentSettings: WatermarkSettings,
+  previewCoordinateSize: UseFileSelectionActionsOptions["previewCoordinateSize"],
+  naturalSize: { width: number; height: number }
+) => {
+  const longestEdgePx = getLongestEdge(naturalSize.width, naturalSize.height);
+  const canvasLongestEdge =
+    getCanvasLongestEdge(previewCoordinateSize.width, previewCoordinateSize.height) || longestEdgePx;
+  const sizeRatio = getLongestEdgeRatio(longestEdgePx, canvasLongestEdge, canvasLongestEdge);
+
+  return {
+    ...currentSettings,
+    opacity: 50,
+    sizeRatio,
+    placementMode: "preset" as const,
+    position: "C" as const,
+    freeCenterXRatio: null,
+    freeCenterYRatio: null,
+    freeWidthRatio: null,
+    freeHeightRatio: null
+  };
+};
+
 export function useFileSelectionActions({
   previewCoordinateSize,
   commitSnapshot
@@ -59,25 +85,40 @@ export function useFileSelectionActions({
 
     try {
       const naturalSize = await readImageNaturalSize(objectUrl);
-      const longestEdgePx = getLongestEdge(naturalSize.width, naturalSize.height);
-      const canvasLongestEdge =
-        getCanvasLongestEdge(previewCoordinateSize.width, previewCoordinateSize.height) || longestEdgePx;
-      const sizeRatio = getLongestEdgeRatio(longestEdgePx, canvasLongestEdge, canvasLongestEdge);
-
-      commitSnapshot((current) => ({
-        ...current,
-        watermarkFile: file,
-        settings: {
-          ...current.settings,
+      const layerId = createLayerId();
+      const layerSettings = createWatermarkLayerSettings(
+        {
           opacity: 50,
-          sizeRatio,
+          sizeRatio: 0,
+          preserveAspectRatio: true,
+          rotation: 0,
           placementMode: "preset",
           position: "C",
           freeCenterXRatio: null,
           freeCenterYRatio: null,
           freeWidthRatio: null,
-          freeHeightRatio: null
-        }
+          freeHeightRatio: null,
+          suffix: "_wm",
+          outputDirectory: "",
+          overwriteOriginal: false
+        },
+        previewCoordinateSize,
+        naturalSize
+      );
+      const watermarkLayer: WatermarkLayer = {
+        id: layerId,
+        file,
+        settings: layerSettings,
+        previewPayload,
+        naturalSize
+      };
+
+      commitSnapshot((current) => ({
+        ...current,
+        watermarkFile: file,
+        settings: layerSettings,
+        watermarkLayers: [...current.watermarkLayers, watermarkLayer],
+        activeWatermarkLayerId: layerId
       }));
     } finally {
       URL.revokeObjectURL(objectUrl);

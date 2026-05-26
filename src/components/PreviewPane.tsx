@@ -7,7 +7,6 @@ interface PreviewPanePreviewProps {
   selectedFileName: string;
   previewKind: "pdf" | "image" | null;
   previewBaseUrl: string;
-  watermarkPreviewUrl: string;
 }
 
 interface PreviewPanePagerProps {
@@ -23,15 +22,24 @@ interface PreviewPaneImageProps {
 }
 
 interface PreviewPaneOverlayProps {
-  overlayStyle?: CSSProperties;
-  overlayImageStyle?: CSSProperties;
   isWatermarkHovered: boolean;
   isWatermarkSelected: boolean;
   isWatermarkDragging: boolean;
 }
 
+interface PreviewPaneWatermarkLayer {
+  id: string;
+  name: string;
+  previewUrl: string;
+  overlayStyle: CSSProperties;
+  overlayImageStyle: CSSProperties;
+  isActive: boolean;
+  zIndex: number;
+}
+
 interface PreviewPaneInteractionProps {
   onClearWatermarkSelection: () => void;
+  onSelectWatermarkLayer: (layerId: string) => void;
   onWatermarkPointerEnter: () => void;
   onWatermarkPointerLeave: () => void;
   onResizeHandlePointerDown: (
@@ -48,6 +56,7 @@ interface PreviewPaneProps {
   image: PreviewPaneImageProps;
   overlay: PreviewPaneOverlayProps;
   interaction: PreviewPaneInteractionProps;
+  watermarkLayers: PreviewPaneWatermarkLayer[];
 }
 
 export function PreviewPane({
@@ -55,20 +64,20 @@ export function PreviewPane({
   pager,
   image,
   overlay,
-  interaction
+  interaction,
+  watermarkLayers
 }: PreviewPaneProps) {
-  const { selectedFileName, previewKind, previewBaseUrl, watermarkPreviewUrl } = preview;
+  const { selectedFileName, previewKind, previewBaseUrl } = preview;
   const { pdfPageCount, pdfPreviewPage, onPreviousPdfPage, onNextPdfPage } = pager;
   const { previewImageRef, onPreviewImageLoad } = image;
   const {
-    overlayStyle,
-    overlayImageStyle,
     isWatermarkHovered,
     isWatermarkSelected,
     isWatermarkDragging
   } = overlay;
   const {
     onClearWatermarkSelection,
+    onSelectWatermarkLayer,
     onWatermarkPointerEnter,
     onWatermarkPointerLeave,
     onResizeHandlePointerDown,
@@ -113,29 +122,42 @@ export function PreviewPane({
                 draggable={false}
                 onLoad={onPreviewImageLoad}
               />
-              {watermarkPreviewUrl && overlayStyle && overlayImageStyle && (
+              {watermarkLayers.map((layer) => (
                 <div
-                  className={`watermark-overlay ${isWatermarkHovered ? "hovered" : ""} ${isWatermarkSelected ? "selected" : ""} ${isWatermarkDragging ? "dragging" : ""}`}
-                  style={overlayStyle}
+                  key={layer.id}
+                  className={`watermark-overlay ${layer.isActive && isWatermarkHovered ? "hovered" : ""} ${layer.isActive && isWatermarkSelected ? "selected" : ""} ${layer.isActive && isWatermarkDragging ? "dragging" : ""}`}
+                  style={{
+                    ...layer.overlayStyle,
+                    zIndex: layer.zIndex
+                  }}
                   onPointerDown={(event) => {
                     event.preventDefault();
                     event.currentTarget.setPointerCapture(event.pointerId);
+                    onSelectWatermarkLayer(layer.id);
                     onWatermarkPointerDown(event);
                   }}
                   onDragStart={(event) => event.preventDefault()}
-                  onPointerEnter={onWatermarkPointerEnter}
-                  onPointerLeave={onWatermarkPointerLeave}
+                  onPointerEnter={() => {
+                    if (layer.isActive) {
+                      onWatermarkPointerEnter();
+                    }
+                  }}
+                  onPointerLeave={() => {
+                    if (layer.isActive) {
+                      onWatermarkPointerLeave();
+                    }
+                  }}
                 >
-                  <div className="watermark-transform-box" style={overlayImageStyle}>
+                  <div className="watermark-transform-box" style={layer.overlayImageStyle}>
                     <img
                       className="watermark-overlay-image"
-                      src={watermarkPreviewUrl}
-                      alt="Watermark preview"
+                      src={layer.previewUrl}
+                      alt={`${layer.name} watermark preview`}
                       draggable={false}
                     />
-                    <div className="watermark-selection-outline" />
-                    {isWatermarkSelected && (
+                    {layer.isActive && (
                       <>
+                        <div className="watermark-selection-outline" />
                         <div className="watermark-rotate-stem" />
                         <div
                           className="watermark-rotate-handle"
@@ -163,7 +185,7 @@ export function PreviewPane({
                     )}
                   </div>
                 </div>
-              )}
+              ))}
             </div>
           ) : (
             <div className="empty-preview">미리볼 입력 파일을 선택하세요.</div>

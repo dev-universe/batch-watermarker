@@ -11,6 +11,8 @@ import type { EditableStateSnapshot } from "../shared/history";
 const makeSnapshot = (): EditableStateSnapshot => ({
   inputFiles: [],
   watermarkFile: null,
+  watermarkLayers: [],
+  activeWatermarkLayerId: null,
   selectedPreviewPath: "",
   settings: {
     opacity: 50,

@@ -15,6 +15,8 @@ const createSnapshot = (
 ): EditableStateSnapshot => ({
   inputFiles: [],
   watermarkFile: null,
+  watermarkLayers: [],
+  activeWatermarkLayerId: null,
   settings: {
     opacity: 7,
     sizeRatio: 280 / 842,
@@ -58,6 +60,7 @@ describe("history helpers", () => {
     expect(cloned.inputFiles).not.toBe(original.inputFiles);
     expect(cloned.inputFiles[0]).toBe(inputFile);
     expect(cloned.watermarkFile).toBe(watermarkFile);
+    expect(cloned.watermarkLayers).not.toBe(original.watermarkLayers);
   });
 
   it("detects equal snapshots", () => {

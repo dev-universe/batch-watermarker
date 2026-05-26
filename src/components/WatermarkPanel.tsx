@@ -9,6 +9,11 @@ interface WatermarkPanelFileProps {
   onDropWatermarkFile: (event: DragEvent<HTMLElement>) => Promise<void>;
 }
 
+interface WatermarkLayerItem {
+  id: string;
+  name: string;
+}
+
 interface WatermarkPanelNumericProps {
   onBeginContinuousNumericEdit: () => void;
   onUpdateNumericSetting: (key: "opacity" | "sizePx" | "rotation", value: string) => void;
@@ -31,18 +36,26 @@ interface WatermarkPanelPositionProps {
 
 interface WatermarkPanelProps {
   settings: WatermarkSettings;
+  watermarkLayers: WatermarkLayerItem[];
+  activeWatermarkLayerId: string | null;
   file: WatermarkPanelFileProps;
   numeric: WatermarkPanelNumericProps;
   size: WatermarkPanelSizeProps;
   position: WatermarkPanelPositionProps;
+  onSelectWatermarkLayer: (layerId: string) => void;
+  onRemoveWatermarkLayer: (layerId: string) => void;
 }
 
 export function WatermarkPanel({
   settings,
+  watermarkLayers,
+  activeWatermarkLayerId,
   file,
   numeric,
   size,
-  position
+  position,
+  onSelectWatermarkLayer,
+  onRemoveWatermarkLayer
 }: WatermarkPanelProps) {
   const { watermarkFile, onOpenWatermarkPicker, onDropWatermarkFile } = file;
   const { onBeginContinuousNumericEdit, onUpdateNumericSetting } = numeric;
@@ -82,6 +95,29 @@ export function WatermarkPanel({
         onDrop={(event) => void onDropWatermarkFile(event)}
       >
         {watermarkFile ? watermarkFile.name : "워터마크 이미지를 여기로 드래그하세요."}
+      </div>
+
+      <div className="panel-hint">
+        <p>워터마크를 여러 개 추가할 수 있습니다.</p>
+        <p>아래 목록에서 편집할 워터마크를 선택하세요.</p>
+      </div>
+
+      <div className="layer-list">
+        {watermarkLayers.length > 0 ? (
+          watermarkLayers.map((layer) => (
+            <div key={layer.id} className={`layer-row ${layer.id === activeWatermarkLayerId ? "active" : ""}`}>
+              <button className="layer-select" onClick={() => onSelectWatermarkLayer(layer.id)}>
+                {layer.id === activeWatermarkLayerId ? "선택됨" : "선택"}
+              </button>
+              <span className="layer-name">{layer.name}</span>
+              <button className="layer-remove subtle-action" onClick={() => onRemoveWatermarkLayer(layer.id)}>
+                삭제
+              </button>
+            </div>
+          ))
+        ) : (
+          <p className="panel-empty">아직 추가된 워터마크가 없습니다.</p>
+        )}
       </div>
 
       <div className="field-grid">
