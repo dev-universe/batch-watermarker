@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   canEditActiveWatermarkLayer,
-  getActiveWatermarkLayerState
+  getActiveWatermarkLayerState,
+  getWatermarkLayerStatusLabels
 } from "./watermarkLayerState";
 import type { EditableStateSnapshot } from "./history";
 
@@ -166,5 +167,27 @@ describe("canEditActiveWatermarkLayer", () => {
     const activeLayerState = getActiveWatermarkLayerState(makeSnapshot(), makeSnapshot().settings);
 
     expect(canEditActiveWatermarkLayer(activeLayerState)).toBe(false);
+  });
+});
+
+describe("getWatermarkLayerStatusLabels", () => {
+  it("shows active, locked, and hidden labels in priority order", () => {
+    const labels = getWatermarkLayerStatusLabels({
+      isActive: true,
+      locked: true,
+      visible: false
+    });
+
+    expect(labels).toEqual(["활성", "잠금", "숨김"]);
+  });
+
+  it("shows no labels when the layer is neither active nor hidden nor locked", () => {
+    const labels = getWatermarkLayerStatusLabels({
+      isActive: false,
+      locked: false,
+      visible: true
+    });
+
+    expect(labels).toEqual([]);
   });
 });

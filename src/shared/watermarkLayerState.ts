@@ -35,3 +35,29 @@ export const getActiveWatermarkLayerState = (
 
 export const canEditActiveWatermarkLayer = (activeLayerState: ActiveWatermarkLayerState) =>
   Boolean(activeLayerState.activeWatermarkLayerId && !activeLayerState.locked);
+
+export const getWatermarkLayerStatusLabels = ({
+  isActive,
+  locked,
+  visible
+}: {
+  isActive: boolean;
+  locked: boolean;
+  visible: boolean;
+}) => {
+  const labels: string[] = [];
+
+  if (isActive) {
+    labels.push("활성");
+  }
+
+  if (locked) {
+    labels.push("잠금");
+  }
+
+  if (!visible) {
+    labels.push("숨김");
+  }
+
+  return labels;
+};
