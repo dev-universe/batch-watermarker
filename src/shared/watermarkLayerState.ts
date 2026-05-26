@@ -5,6 +5,7 @@ export interface ActiveWatermarkLayerState {
   watermarkFile: InputFile | null;
   settings: WatermarkSettings;
   activeWatermarkLayerId: string | null;
+  locked: boolean;
 }
 
 export const getActiveWatermarkLayerState = (
@@ -19,13 +20,15 @@ export const getActiveWatermarkLayerState = (
     return {
       watermarkFile: null,
       settings: { ...fallbackSettings },
-      activeWatermarkLayerId: null
+      activeWatermarkLayerId: null,
+      locked: false
     };
   }
 
   return {
     watermarkFile: activeLayer.file,
     settings: { ...activeLayer.settings },
-    activeWatermarkLayerId: activeLayer.id
+    activeWatermarkLayerId: activeLayer.id,
+    locked: activeLayer.locked
   };
 };

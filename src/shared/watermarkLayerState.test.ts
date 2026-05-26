@@ -80,7 +80,8 @@ describe("getActiveWatermarkLayerState", () => {
     expect(getActiveWatermarkLayerState(snapshot, snapshot.settings)).toEqual({
       watermarkFile: activeFile,
       settings: activeSettings,
-      activeWatermarkLayerId: "layer-2"
+      activeWatermarkLayerId: "layer-2",
+      locked: true
     });
   });
 
@@ -91,7 +92,8 @@ describe("getActiveWatermarkLayerState", () => {
     expect(getActiveWatermarkLayerState(snapshot, snapshot.settings)).toEqual({
       watermarkFile: null,
       settings: snapshot.settings,
-      activeWatermarkLayerId: null
+      activeWatermarkLayerId: null,
+      locked: false
     });
   });
 });
