@@ -32,3 +32,6 @@ export const getActiveWatermarkLayerState = (
     locked: activeLayer.locked
   };
 };
+
+export const canEditActiveWatermarkLayer = (activeLayerState: ActiveWatermarkLayerState) =>
+  Boolean(activeLayerState.activeWatermarkLayerId && !activeLayerState.locked);

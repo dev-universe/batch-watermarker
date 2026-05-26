@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { getActiveWatermarkLayerState } from "./watermarkLayerState";
+import {
+  canEditActiveWatermarkLayer,
+  getActiveWatermarkLayerState
+} from "./watermarkLayerState";
 import type { EditableStateSnapshot } from "./history";
 
 const makeSnapshot = (): EditableStateSnapshot => ({
@@ -95,5 +98,73 @@ describe("getActiveWatermarkLayerState", () => {
       activeWatermarkLayerId: null,
       locked: false
     });
+  });
+});
+
+describe("canEditActiveWatermarkLayer", () => {
+  it("allows editing when an active unlocked layer exists", () => {
+    const snapshot = makeSnapshot();
+    snapshot.watermarkLayers = [
+      {
+        id: "layer-1",
+        file: {
+          path: "/tmp/watermark.png",
+          name: "watermark.png",
+          kind: "image" as const
+        },
+        label: "active",
+        locked: false,
+        settings: snapshot.settings,
+        visible: true,
+        previewPayload: {
+          kind: "image",
+          data: new Uint8Array([1, 2, 3]),
+          mimeType: "image/png",
+          name: "watermark.png"
+        },
+        naturalSize: { width: 20, height: 30 }
+      }
+    ];
+    snapshot.activeWatermarkLayerId = "layer-1";
+
+    const activeLayerState = getActiveWatermarkLayerState(snapshot, snapshot.settings);
+
+    expect(canEditActiveWatermarkLayer(activeLayerState)).toBe(true);
+  });
+
+  it("blocks editing when the active layer is locked", () => {
+    const snapshot = makeSnapshot();
+    snapshot.watermarkLayers = [
+      {
+        id: "layer-1",
+        file: {
+          path: "/tmp/watermark.png",
+          name: "watermark.png",
+          kind: "image" as const
+        },
+        label: "active",
+        locked: true,
+        settings: snapshot.settings,
+        visible: true,
+        previewPayload: {
+          kind: "image",
+          data: new Uint8Array([1, 2, 3]),
+          mimeType: "image/png",
+          name: "watermark.png"
+        },
+        naturalSize: { width: 20, height: 30 }
+      }
+    ];
+    snapshot.activeWatermarkLayerId = "layer-1";
+
+    const activeLayerState = getActiveWatermarkLayerState(snapshot, snapshot.settings);
+
+    expect(canEditActiveWatermarkLayer(activeLayerState)).toBe(false);
+  });
+
+  it("blocks editing when no active layer exists", () => {
+    const activeLayerState = getActiveWatermarkLayerState(makeSnapshot(), makeSnapshot().settings);
+
+    expect(canEditActiveWatermarkLayer(activeLayerState)).toBe(false);
   });
 });
