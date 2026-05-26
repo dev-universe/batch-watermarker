@@ -28,6 +28,7 @@ interface Size {
 interface UseWatermarkInteractionParams {
   settings: WatermarkSettings;
   setSettings: React.Dispatch<React.SetStateAction<WatermarkSettings>>;
+  isActiveWatermarkLayerLocked: boolean;
   currentSnapshotRef: MutableRefObject<EditableStateSnapshot>;
   commitSnapshot: (updater: (current: EditableStateSnapshot) => EditableStateSnapshot) => void;
   beginContinuousEdit: () => void;
@@ -43,6 +44,7 @@ interface UseWatermarkInteractionParams {
 export function useWatermarkInteraction({
   settings,
   setSettings,
+  isActiveWatermarkLayerLocked,
   currentSnapshotRef,
   commitSnapshot,
   beginContinuousEdit,
@@ -136,6 +138,7 @@ export function useWatermarkInteraction({
         if (
           !isArrowKey ||
           !isWatermarkSelected ||
+          isActiveWatermarkLayerLocked ||
           !previewCoordinateSize.width ||
           !previewCoordinateSize.height ||
           dragStateRef.current ||
@@ -169,7 +172,15 @@ export function useWatermarkInteraction({
 
     window.addEventListener("keydown", onKeyDown, { capture: true });
     return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
-  }, [commitSnapshot, currentSnapshotRef, isWatermarkSelected, previewCoordinateSize, redo, undo]);
+  }, [
+    commitSnapshot,
+    currentSnapshotRef,
+    isActiveWatermarkLayerLocked,
+    isWatermarkSelected,
+    previewCoordinateSize,
+    redo,
+    undo
+  ]);
 
   useEffect(() => {
     const onPointerEnd = () => {
@@ -215,6 +226,9 @@ export function useWatermarkInteraction({
       const scaleX = previewCoordinateSize.width / previewDisplaySize.width;
       const scaleY = previewCoordinateSize.height / previewDisplaySize.height;
       const rotationState = rotationStateRef.current;
+      if (isActiveWatermarkLayerLocked) {
+        return;
+      }
       if (rotationState && rotationState.pointerId === event.pointerId) {
         const pointerCoordinate = getPreviewCoordinatePointFromClient(event.clientX, event.clientY);
         if (!pointerCoordinate) {
@@ -375,6 +389,7 @@ export function useWatermarkInteraction({
     previewCoordinateSize,
     previewDisplaySize,
     previewImageRef,
+    isActiveWatermarkLayerLocked,
     setSettings,
     watermarkNaturalSize
   ]);
@@ -401,6 +416,9 @@ export function useWatermarkInteraction({
     }
 
     setIsWatermarkSelected(true);
+    if (isActiveWatermarkLayerLocked) {
+      return;
+    }
     setIsWatermarkDragging(true);
     beginContinuousEdit();
     const currentCenter = getWatermarkCenterPoint(
@@ -448,6 +466,10 @@ export function useWatermarkInteraction({
       return;
     }
 
+    setIsWatermarkSelected(true);
+    if (isActiveWatermarkLayerLocked) {
+      return;
+    }
     const currentCenter = getWatermarkCenterPoint(
       currentSnapshotRef.current.settings,
       previewCoordinateSize.width,
@@ -458,7 +480,6 @@ export function useWatermarkInteraction({
       return;
     }
 
-    setIsWatermarkSelected(true);
     setIsWatermarkDragging(true);
     beginContinuousEdit();
     rotationStateRef.current = {
@@ -482,6 +503,9 @@ export function useWatermarkInteraction({
     }
 
     setIsWatermarkSelected(true);
+    if (isActiveWatermarkLayerLocked) {
+      return;
+    }
     setIsWatermarkDragging(true);
     beginContinuousEdit();
     const currentCenter = getWatermarkCenterPoint(

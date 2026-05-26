@@ -71,6 +71,7 @@ describe("history helpers", () => {
             outputDirectory: "",
             overwriteOriginal: false
           },
+          locked: false,
           visible: true,
           previewPayload: {
             kind: "image",

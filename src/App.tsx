@@ -59,11 +59,20 @@ function App() {
     duplicateWatermarkLayer,
     moveWatermarkLayer,
     toggleWatermarkLayerVisibility,
+    toggleWatermarkLayerLock,
     renameWatermarkLayer,
     removeWatermarkLayer,
     undo,
     redo
   } = useEditableStateHistory(INITIAL_SETTINGS);
+  const activeWatermarkLayer = useMemo(
+    () =>
+      activeWatermarkLayerId
+        ? watermarkLayers.find((layer) => layer.id === activeWatermarkLayerId) ?? null
+        : null,
+    [activeWatermarkLayerId, watermarkLayers]
+  );
+  const isActiveWatermarkLayerLocked = activeWatermarkLayer?.locked ?? false;
   const {
     selectedPreviewFile,
     previewKind,
@@ -108,6 +117,7 @@ function App() {
   } = useWatermarkInteraction({
     settings,
     setSettings,
+    isActiveWatermarkLayerLocked,
     currentSnapshotRef,
     commitSnapshot,
     beginContinuousEdit,
@@ -180,7 +190,8 @@ function App() {
     renderedWatermarkSize,
     sizeControlMax,
     commitSnapshot,
-    updateSettingsDuringContinuousEdit
+    updateSettingsDuringContinuousEdit,
+    isActiveWatermarkLayerLocked
   });
   const onWatermarkPointerEnter = () => setIsWatermarkHovered(true);
   const onWatermarkPointerLeave = () => setIsWatermarkHovered(false);
@@ -217,7 +228,8 @@ function App() {
             overlayImageStyle,
             isActive: layer.id === activeWatermarkLayerId,
             zIndex: index + 1,
-            visible: layer.visible
+            visible: layer.visible,
+            locked: layer.locked
           };
         })
         .filter(
@@ -232,6 +244,7 @@ function App() {
             isActive: boolean;
             zIndex: number;
             visible: boolean;
+            locked: boolean;
           } => layer !== null
         ),
     [
@@ -256,9 +269,11 @@ function App() {
       id: layer.id,
       label: layer.label,
       name: layer.file.name,
-      visible: layer.visible
+      visible: layer.visible,
+      locked: layer.locked
     })),
     activeWatermarkLayerId,
+    isActiveWatermarkLayerLocked,
     file: {
       watermarkFile,
       onOpenWatermarkPicker: openWatermarkPicker,
@@ -285,6 +300,7 @@ function App() {
     onDuplicateWatermarkLayer: duplicateWatermarkLayer,
     onMoveWatermarkLayer: moveWatermarkLayer,
     onToggleWatermarkLayerVisibility: toggleWatermarkLayerVisibility,
+    onToggleWatermarkLayerLock: toggleWatermarkLayerLock,
     onRenameWatermarkLayer: renameWatermarkLayer,
     onRemoveWatermarkLayer: removeWatermarkLayer
   };
@@ -319,7 +335,8 @@ function App() {
     overlay: {
       isWatermarkHovered,
       isWatermarkSelected,
-      isWatermarkDragging
+      isWatermarkDragging,
+      isActiveWatermarkLayerLocked
     },
     interaction: {
       onClearWatermarkSelection: clearWatermarkSelection,
