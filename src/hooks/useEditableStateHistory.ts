@@ -170,6 +170,71 @@ export function useEditableStateHistory(initialSettings: WatermarkSettings) {
     syncActiveWatermarkLayer(current, layerId);
   };
 
+  const duplicateWatermarkLayer = (layerId: string) => {
+    commitSnapshot((current) => {
+      const sourceIndex = current.watermarkLayers.findIndex((layer) => layer.id === layerId);
+      if (sourceIndex < 0) {
+        return current;
+      }
+
+      const sourceLayer = current.watermarkLayers[sourceIndex];
+      const nextLayer = {
+        ...sourceLayer,
+        id: `watermark-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        file: { ...sourceLayer.file },
+        settings: { ...sourceLayer.settings },
+        previewPayload: {
+          ...sourceLayer.previewPayload,
+          data: new Uint8Array(sourceLayer.previewPayload.data)
+        },
+        naturalSize: { ...sourceLayer.naturalSize }
+      };
+      const nextLayers = [
+        ...current.watermarkLayers.slice(0, sourceIndex + 1),
+        nextLayer,
+        ...current.watermarkLayers.slice(sourceIndex + 1)
+      ];
+
+      return {
+        ...current,
+        watermarkLayers: nextLayers,
+        activeWatermarkLayerId: nextLayer.id,
+        watermarkFile: nextLayer.file,
+        settings: { ...nextLayer.settings }
+      };
+    });
+  };
+
+  const moveWatermarkLayer = (layerId: string, direction: -1 | 1) => {
+    commitSnapshot((current) => {
+      const sourceIndex = current.watermarkLayers.findIndex((layer) => layer.id === layerId);
+      const targetIndex = sourceIndex + direction;
+      if (
+        sourceIndex < 0 ||
+        targetIndex < 0 ||
+        targetIndex >= current.watermarkLayers.length
+      ) {
+        return current;
+      }
+
+      const nextLayers = [...current.watermarkLayers];
+      const [movedLayer] = nextLayers.splice(sourceIndex, 1);
+      nextLayers.splice(targetIndex, 0, movedLayer);
+
+      return {
+        ...current,
+        watermarkLayers: nextLayers,
+        activeWatermarkLayerId: current.activeWatermarkLayerId,
+        watermarkFile:
+          nextLayers.find((layer) => layer.id === current.activeWatermarkLayerId)?.file ??
+          current.watermarkFile,
+        settings:
+          nextLayers.find((layer) => layer.id === current.activeWatermarkLayerId)?.settings ??
+          current.settings
+      };
+    });
+  };
+
   const removeWatermarkLayer = (layerId: string) => {
     commitSnapshot((current) => {
       const nextLayers = current.watermarkLayers.filter((layer) => layer.id !== layerId);
@@ -246,6 +311,8 @@ export function useEditableStateHistory(initialSettings: WatermarkSettings) {
     updateSettingsDuringContinuousEdit,
     endContinuousEdit,
     activateWatermarkLayer,
+    duplicateWatermarkLayer,
+    moveWatermarkLayer,
     removeWatermarkLayer,
     undo,
     redo

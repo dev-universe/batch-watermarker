@@ -43,6 +43,8 @@ interface WatermarkPanelProps {
   size: WatermarkPanelSizeProps;
   position: WatermarkPanelPositionProps;
   onSelectWatermarkLayer: (layerId: string) => void;
+  onDuplicateWatermarkLayer: (layerId: string) => void;
+  onMoveWatermarkLayer: (layerId: string, direction: -1 | 1) => void;
   onRemoveWatermarkLayer: (layerId: string) => void;
 }
 
@@ -55,6 +57,8 @@ export function WatermarkPanel({
   size,
   position,
   onSelectWatermarkLayer,
+  onDuplicateWatermarkLayer,
+  onMoveWatermarkLayer,
   onRemoveWatermarkLayer
 }: WatermarkPanelProps) {
   const { watermarkFile, onOpenWatermarkPicker, onDropWatermarkFile } = file;
@@ -104,15 +108,40 @@ export function WatermarkPanel({
 
       <div className="layer-list">
         {watermarkLayers.length > 0 ? (
-          watermarkLayers.map((layer) => (
-            <div key={layer.id} className={`layer-row ${layer.id === activeWatermarkLayerId ? "active" : ""}`}>
+          watermarkLayers.map((layer, index) => (
+            <div
+              key={layer.id}
+              className={`layer-row ${layer.id === activeWatermarkLayerId ? "active" : ""}`}
+            >
               <button className="layer-select" onClick={() => onSelectWatermarkLayer(layer.id)}>
                 {layer.id === activeWatermarkLayerId ? "선택됨" : "선택"}
               </button>
               <span className="layer-name">{layer.name}</span>
-              <button className="layer-remove subtle-action" onClick={() => onRemoveWatermarkLayer(layer.id)}>
-                삭제
-              </button>
+              <div className="layer-actions">
+                <button
+                  className="subtle-action"
+                  disabled={index === 0}
+                  onClick={() => onMoveWatermarkLayer(layer.id, -1)}
+                >
+                  위
+                </button>
+                <button
+                  className="subtle-action"
+                  disabled={index === watermarkLayers.length - 1}
+                  onClick={() => onMoveWatermarkLayer(layer.id, 1)}
+                >
+                  아래
+                </button>
+                <button
+                  className="subtle-action"
+                  onClick={() => onDuplicateWatermarkLayer(layer.id)}
+                >
+                  복제
+                </button>
+                <button className="layer-remove subtle-action" onClick={() => onRemoveWatermarkLayer(layer.id)}>
+                  삭제
+                </button>
+              </div>
             </div>
           ))
         ) : (
