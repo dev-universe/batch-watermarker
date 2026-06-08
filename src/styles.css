@@ -339,65 +339,65 @@ input[type="range"] {
 
 .layer-list {
   display: grid;
-  gap: 0.55rem;
-  margin-top: 0.9rem;
+  gap: 0.48rem;
+  margin-top: 0.78rem;
 }
 
 .layer-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: 64px minmax(0, 1fr);
   grid-template-areas:
     "select texts"
-    "actions actions";
-  gap: 0.65rem;
+    "select actions";
+  gap: 0.48rem 0.56rem;
   align-items: center;
-  padding: 0.7rem;
-  border-radius: 16px;
-  background: rgba(241, 232, 220, 0.55);
+  padding: 0.58rem;
+  border-radius: var(--radius-md);
+  background: rgba(241, 245, 249, 0.86);
   border: 1px solid transparent;
 }
 
 .layer-row.active {
-  border-color: rgba(140, 93, 53, 0.5);
-  background: rgba(248, 239, 228, 0.9);
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
 
 .layer-row.hidden {
-  opacity: 0.65;
+  opacity: 0.62;
 }
 
 .layer-row.locked {
-  background: rgba(232, 224, 214, 0.82);
+  background: rgba(226, 232, 240, 0.86);
 }
 
 .layer-select {
   grid-area: select;
-  min-width: 76px;
-  align-self: center;
-  background: #8c5d35;
-  color: #fffaf5;
+  width: 64px;
+  min-height: 58px;
+  align-self: stretch;
+  background: var(--color-text);
+  color: #ffffff;
   white-space: nowrap;
+  border-radius: var(--radius-md);
+  font-weight: 800;
 }
 
-.layer-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #4b3523;
+.layer-row.active .layer-select {
+  background: var(--color-accent);
 }
 
 .layer-texts {
   grid-area: texts;
   display: grid;
-  gap: 0.32rem;
+  gap: 0.26rem;
   min-width: 0;
 }
 
 .layer-status-badges,
 .watermark-status-badges {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.28rem;
   flex-wrap: wrap;
 }
 
@@ -406,26 +406,32 @@ input[type="range"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.16rem 0.45rem;
+  padding: 0.12rem 0.4rem;
   border-radius: 999px;
-  background: rgba(140, 93, 53, 0.12);
-  color: #6a4828;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.layer-row.active .layer-status-badge {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--color-accent);
 }
 
 .layer-name-input {
   min-width: 0;
-  padding: 0.55rem 0.7rem;
-  border-radius: 10px;
-  border: 1px solid rgba(78, 54, 34, 0.16);
-  background: rgba(255, 255, 255, 0.82);
+  padding: 0.46rem 0.55rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  font-weight: 750;
 }
 
 .layer-file-name {
-  font-size: 0.78rem;
-  color: rgba(75, 53, 35, 0.72);
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -435,7 +441,7 @@ input[type="range"] {
   grid-area: actions;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.4rem;
+  gap: 0.36rem;
   width: 100%;
 }
 
@@ -443,8 +449,14 @@ input[type="range"] {
 .layer-remove {
   width: 100%;
   min-width: 0;
-  padding: 0.5rem 0.45rem;
+  padding: 0.42rem 0.38rem;
   justify-self: stretch;
+  font-size: 0.84rem;
+}
+
+.layer-remove {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
 }
 
 .position-grid button.selected,
