@@ -38,6 +38,7 @@ interface PreviewPaneWatermarkLayer {
   previewUrl: string;
   overlayStyle: CSSProperties;
   overlayImageStyle: CSSProperties;
+  rasterStyle: CSSProperties;
   isActive: boolean;
   zIndex: number;
   hitTestBox: {
@@ -225,6 +226,7 @@ export function PreviewPane({
                   <div className="watermark-transform-box" style={layer.overlayImageStyle}>
                     <img
                       className="watermark-overlay-image"
+                      style={layer.rasterStyle}
                       src={layer.previewUrl}
                       alt={`${layer.name} watermark preview`}
                       draggable={false}
