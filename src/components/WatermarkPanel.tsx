@@ -1,5 +1,6 @@
 import type { DragEvent } from "react";
 import type { AnchorPosition, InputFile, WatermarkSettings } from "../shared/types";
+import { getWatermarkLayerStatusLabels } from "../shared/watermarkLayerState";
 
 const POSITIONS: AnchorPosition[] = ["NW", "N", "NE", "W", "C", "E", "SW", "S", "SE"];
 
@@ -138,6 +139,17 @@ export function WatermarkPanel({
                   onChange={(event) => onRenameWatermarkLayer(layer.id, event.target.value)}
                 />
                 <span className="layer-file-name">{layer.name}</span>
+                <div className="layer-status-badges">
+                  {getWatermarkLayerStatusLabels({
+                    isActive: layer.id === activeWatermarkLayerId,
+                    locked: layer.locked,
+                    visible: layer.visible
+                  }).map((label) => (
+                    <span key={label} className="layer-status-badge">
+                      {label}
+                    </span>
+                  ))}
+                </div>
               </div>
               <div className="layer-actions">
                 <button

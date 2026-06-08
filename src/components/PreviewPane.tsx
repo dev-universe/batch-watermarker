@@ -1,5 +1,6 @@
 import type { CSSProperties, MutableRefObject } from "react";
 import type { ResizeHandle } from "../shared/watermarkGeometry";
+import { getWatermarkLayerStatusLabels } from "../shared/watermarkLayerState";
 
 const RESIZE_HANDLES = ["n", "ne", "e", "se", "s", "sw", "w", "nw"] as const;
 
@@ -163,6 +164,17 @@ export function PreviewPane({
                     />
                     {layer.isActive && (
                       <>
+                        <div className="watermark-status-badges">
+                          {getWatermarkLayerStatusLabels({
+                            isActive: layer.isActive,
+                            locked: layer.locked,
+                            visible: layer.visible
+                          }).map((label) => (
+                            <span key={label} className="watermark-status-badge">
+                              {label}
+                            </span>
+                          ))}
+                        </div>
                         <div className="watermark-selection-outline" />
                         {!layer.locked && (
                           <>
