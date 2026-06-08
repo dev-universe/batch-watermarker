@@ -9,7 +9,11 @@ import {
   createEmptyHistoryState,
   type EditableStateSnapshot
 } from "../shared/history";
-import { getActiveWatermarkLayerState } from "../shared/watermarkLayerState";
+import {
+  getActiveWatermarkLayerState,
+  hydrateSnapshotFromActiveWatermarkLayer,
+  persistActiveWatermarkLayerSettings
+} from "../shared/watermarkLayerState";
 
 export function useEditableStateHistory(initialSettings: WatermarkSettings) {
   const [inputFiles, setInputFiles] = useState<InputFile[]>([]);
@@ -29,78 +33,46 @@ export function useEditableStateHistory(initialSettings: WatermarkSettings) {
     selectedPreviewPath: ""
   });
 
-  const reconcileActiveLayer = (snapshot: EditableStateSnapshot): EditableStateSnapshot => {
-    const activeLayerState = getActiveWatermarkLayerState(snapshot, snapshot.settings);
-    if (!activeLayerState.activeWatermarkLayerId) {
-      return snapshot;
-    }
-
-    const nextWatermarkLayers = snapshot.watermarkLayers.map((layer) =>
-      layer.id === activeLayerState.activeWatermarkLayerId
-        ? {
-            ...layer,
-            settings: { ...activeLayerState.settings }
-          }
-        : layer
-    );
-
-    return {
-      ...snapshot,
-      watermarkFile: activeLayerState.watermarkFile,
-      settings: { ...activeLayerState.settings },
-      watermarkLayers: nextWatermarkLayers,
-      activeWatermarkLayerId: activeLayerState.activeWatermarkLayerId
-    };
-  };
-
   const applySnapshot = (snapshot: EditableStateSnapshot) => {
-    const nextSnapshot = reconcileActiveLayer(snapshot);
-    const activeLayerState = getActiveWatermarkLayerState(nextSnapshot, initialSettings);
+    const nextSnapshot = hydrateSnapshotFromActiveWatermarkLayer(snapshot, initialSettings);
 
     setInputFiles(nextSnapshot.inputFiles);
-    setWatermarkFile(activeLayerState.watermarkFile);
-    setSettingsState({ ...activeLayerState.settings });
+    setWatermarkFile(nextSnapshot.watermarkFile);
+    setSettingsState({ ...nextSnapshot.settings });
     setWatermarkLayers(nextSnapshot.watermarkLayers);
-    setActiveWatermarkLayerId(activeLayerState.activeWatermarkLayerId);
+    setActiveWatermarkLayerId(nextSnapshot.activeWatermarkLayerId);
     setSelectedPreviewPath(nextSnapshot.selectedPreviewPath);
   };
 
   const applyActiveLayerSettings = (nextSettings: WatermarkSettings) => {
-    const nextSnapshot = reconcileActiveLayer({
+    const nextSnapshot = persistActiveWatermarkLayerSettings({
       ...currentSnapshotRef.current,
       settings: nextSettings
     });
 
     currentSnapshotRef.current = cloneSnapshot(nextSnapshot);
-    setSettingsState(nextSettings);
-    setWatermarkFile(
-      getActiveWatermarkLayerState(nextSnapshot, initialSettings).watermarkFile
-    );
+    setSettingsState({ ...nextSnapshot.settings });
+    setWatermarkFile(nextSnapshot.watermarkFile);
     setWatermarkLayers(nextSnapshot.watermarkLayers);
     setActiveWatermarkLayerId(nextSnapshot.activeWatermarkLayerId);
   };
 
   const syncActiveWatermarkLayer = (snapshot: EditableStateSnapshot, activeLayerId: string | null) => {
-    const nextSnapshot = reconcileActiveLayer({
-      ...snapshot,
+    const nextSnapshot = hydrateSnapshotFromActiveWatermarkLayer({
+      ...persistActiveWatermarkLayerSettings(snapshot),
       activeWatermarkLayerId: activeLayerId
-    });
-    const activeLayerState = getActiveWatermarkLayerState(nextSnapshot, initialSettings);
+    }, initialSettings);
 
-    setWatermarkFile(activeLayerState.watermarkFile);
-    setSettingsState({ ...activeLayerState.settings });
-    setActiveWatermarkLayerId(activeLayerState.activeWatermarkLayerId);
-    currentSnapshotRef.current = cloneSnapshot({
-      ...nextSnapshot,
-      watermarkFile: activeLayerState.watermarkFile,
-      settings: { ...activeLayerState.settings },
-      activeWatermarkLayerId: activeLayerState.activeWatermarkLayerId
-    });
+    setWatermarkFile(nextSnapshot.watermarkFile);
+    setSettingsState({ ...nextSnapshot.settings });
+    setWatermarkLayers(nextSnapshot.watermarkLayers);
+    setActiveWatermarkLayerId(nextSnapshot.activeWatermarkLayerId);
+    currentSnapshotRef.current = cloneSnapshot(nextSnapshot);
   };
 
   const commitSnapshot = (updater: (current: EditableStateSnapshot) => EditableStateSnapshot) => {
-    const current = currentSnapshotRef.current;
-    const next = reconcileActiveLayer(updater(current));
+    const current = persistActiveWatermarkLayerSettings(currentSnapshotRef.current);
+    const next = persistActiveWatermarkLayerSettings(updater(current));
 
     if (areSnapshotsEqual(current, next)) {
       return;
@@ -296,7 +268,7 @@ export function useEditableStateHistory(initialSettings: WatermarkSettings) {
 
   useEffect(() => {
     currentSnapshotRef.current = cloneSnapshot(
-      reconcileActiveLayer({
+      persistActiveWatermarkLayerSettings({
         inputFiles,
         watermarkFile,
         settings,
