@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getAngleFromPoint,
+  isPointInsideRotatedBox,
   getWatermarkBaseSize,
   isCornerResizeHandle,
   normalizeRotationDegrees,
@@ -88,6 +89,17 @@ describe("resizeWatermarkBoxFromHandle", () => {
       width: 140,
       height: 100
     });
+  });
+});
+
+describe("isPointInsideRotatedBox", () => {
+  it("accepts points inside a rotated box", () => {
+    expect(isPointInsideRotatedBox(100, 100, 100, 40, 45, 100, 100)).toBe(true);
+    expect(isPointInsideRotatedBox(100, 100, 100, 40, 45, 120, 100)).toBe(true);
+  });
+
+  it("rejects points inside the rotated bounding box but outside the actual box", () => {
+    expect(isPointInsideRotatedBox(100, 100, 100, 40, 45, 100, 51)).toBe(false);
   });
 });
 

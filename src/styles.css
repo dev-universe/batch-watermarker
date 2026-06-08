@@ -418,7 +418,7 @@ label {
 
 .watermark-overlay {
   position: absolute;
-  pointer-events: auto;
+  pointer-events: none;
   overflow: visible;
   cursor: grab;
   user-select: none;

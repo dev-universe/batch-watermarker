@@ -230,6 +230,11 @@ function App() {
             overlayImageStyle,
             isActive: layer.id === activeWatermarkLayerId,
             zIndex: getWatermarkLayerZIndex(index, watermarkLayers.length),
+            hitTestBox: {
+              width: Number.parseFloat(String(overlayImageStyle.width ?? "0")),
+              height: Number.parseFloat(String(overlayImageStyle.height ?? "0")),
+              rotation: layer.settings.rotation
+            },
             visible: layer.visible,
             locked: layer.locked
           };
@@ -245,6 +250,11 @@ function App() {
             overlayImageStyle: CSSProperties;
             isActive: boolean;
             zIndex: number;
+            hitTestBox: {
+              width: number;
+              height: number;
+              rotation: number;
+            };
             visible: boolean;
             locked: boolean;
           } => layer !== null

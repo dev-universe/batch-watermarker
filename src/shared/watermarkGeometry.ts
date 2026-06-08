@@ -90,6 +90,23 @@ const rotateVector = (x: number, y: number, rotationDegrees: number) => {
   };
 };
 
+export const isPointInsideRotatedBox = (
+  centerX: number,
+  centerY: number,
+  width: number,
+  height: number,
+  rotationDegrees: number,
+  pointX: number,
+  pointY: number
+) => {
+  if (!width || !height) {
+    return false;
+  }
+
+  const localPoint = rotateVector(pointX - centerX, pointY - centerY, -rotationDegrees);
+  return Math.abs(localPoint.x) <= width / 2 && Math.abs(localPoint.y) <= height / 2;
+};
+
 export const resizeWatermarkBoxFromHandle = (
   handle: ResizeHandle,
   startCenterX: number,
