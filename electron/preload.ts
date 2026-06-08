@@ -3,7 +3,7 @@ import type { InputFile, PreviewPayload, ProcessRequest, ProcessResponse } from 
 
 contextBridge.exposeInMainWorld("watermarkApi", {
   pickInputFiles: () => ipcRenderer.invoke("dialog:pick-input-files") as Promise<InputFile[]>,
-  pickWatermarkFile: () => ipcRenderer.invoke("dialog:pick-watermark-file") as Promise<InputFile | null>,
+  pickWatermarkFiles: () => ipcRenderer.invoke("dialog:pick-watermark-files") as Promise<InputFile[]>,
   pickOutputFolder: () => ipcRenderer.invoke("dialog:pick-output-folder") as Promise<string>,
   normalizeDroppedFiles: (paths: string[]) =>
     ipcRenderer.invoke("files:normalize-dropped", paths) as Promise<InputFile[]>,

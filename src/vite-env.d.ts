@@ -6,7 +6,7 @@ declare global {
   interface Window {
     watermarkApi: {
       pickInputFiles: () => Promise<InputFile[]>;
-      pickWatermarkFile: () => Promise<InputFile | null>;
+      pickWatermarkFiles: () => Promise<InputFile[]>;
       pickOutputFolder: () => Promise<string>;
       normalizeDroppedFiles: (paths: string[]) => Promise<InputFile[]>;
       process: (request: ProcessRequest) => Promise<ProcessResponse>;

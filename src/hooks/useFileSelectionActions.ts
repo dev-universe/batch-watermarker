@@ -60,6 +60,24 @@ const createWatermarkLayerSettings = (
   };
 };
 
+export const addWatermarkLayersToSnapshot = (
+  current: EditableStateSnapshot,
+  watermarkLayers: WatermarkLayer[]
+): EditableStateSnapshot => {
+  const activeLayer = watermarkLayers[watermarkLayers.length - 1] ?? null;
+  if (!activeLayer) {
+    return current;
+  }
+
+  return {
+    ...current,
+    watermarkFile: activeLayer.file,
+    settings: { ...activeLayer.settings },
+    watermarkLayers: [...current.watermarkLayers, ...watermarkLayers],
+    activeWatermarkLayerId: activeLayer.id
+  };
+};
+
 export function useFileSelectionActions({
   previewCoordinateSize,
   commitSnapshot
@@ -79,7 +97,7 @@ export function useFileSelectionActions({
     });
   };
 
-  const selectWatermarkFile = async (file: InputFile) => {
+  const createWatermarkLayer = async (file: InputFile) => {
     const previewPayload = await window.watermarkApi.readPreview(file.path);
     const objectUrl = createObjectUrlFromPreview(previewPayload);
 
@@ -105,7 +123,7 @@ export function useFileSelectionActions({
         previewCoordinateSize,
         naturalSize
       );
-      const watermarkLayer: WatermarkLayer = {
+      return {
         id: layerId,
         file,
         label: file.name,
@@ -115,17 +133,19 @@ export function useFileSelectionActions({
         previewPayload,
         naturalSize
       };
-
-      commitSnapshot((current) => ({
-        ...current,
-        watermarkFile: file,
-        settings: layerSettings,
-        watermarkLayers: [...current.watermarkLayers, watermarkLayer],
-        activeWatermarkLayerId: layerId
-      }));
     } finally {
       URL.revokeObjectURL(objectUrl);
     }
+  };
+
+  const selectWatermarkFiles = async (files: InputFile[]) => {
+    const imageFiles = files.filter((file) => file.kind === "image");
+    if (!imageFiles.length) {
+      return;
+    }
+
+    const watermarkLayers = await Promise.all(imageFiles.map(createWatermarkLayer));
+    commitSnapshot((current) => addWatermarkLayersToSnapshot(current, watermarkLayers));
   };
 
   const onDropInputFiles = async (event: DragEvent<HTMLElement>) => {
@@ -137,12 +157,7 @@ export function useFileSelectionActions({
   const onDropWatermarkFile = async (event: DragEvent<HTMLElement>) => {
     const paths = await collectDroppedPaths(event);
     const normalized = await window.watermarkApi.normalizeDroppedFiles(paths);
-    const imageFile = normalized.find((file) => file.kind === "image") ?? null;
-    if (!imageFile) {
-      return;
-    }
-
-    await selectWatermarkFile(imageFile);
+    await selectWatermarkFiles(normalized);
   };
 
   const openInputPicker = async () => {
@@ -151,10 +166,8 @@ export function useFileSelectionActions({
   };
 
   const openWatermarkPicker = async () => {
-    const file = await window.watermarkApi.pickWatermarkFile();
-    if (file?.kind === "image") {
-      await selectWatermarkFile(file);
-    }
+    const files = await window.watermarkApi.pickWatermarkFiles();
+    await selectWatermarkFiles(files);
   };
 
   const removeInputFile = (pathToRemove: string) => {

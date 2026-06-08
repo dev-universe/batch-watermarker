@@ -90,9 +90,9 @@ app.whenReady().then(() => {
     return result.filePaths.map(toInputFile).filter(Boolean);
   });
 
-  ipcMain.handle("dialog:pick-watermark-file", async () => {
+  ipcMain.handle("dialog:pick-watermark-files", async () => {
     const result = await dialog.showOpenDialog({
-      properties: ["openFile"],
+      properties: ["openFile", "multiSelections"],
       filters: [
         {
           name: "Images",
@@ -101,11 +101,11 @@ app.whenReady().then(() => {
       ]
     });
 
-    if (result.canceled || !result.filePaths[0]) {
-      return null;
+    if (result.canceled) {
+      return [];
     }
 
-    return toInputFile(result.filePaths[0]);
+    return result.filePaths.map(toInputFile).filter(Boolean);
   });
 
   ipcMain.handle("dialog:pick-output-folder", async () => {
