@@ -686,7 +686,7 @@ input[type="range"] {
   color: #922f24;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1180px) {
   body {
     min-width: 0;
   }
@@ -695,8 +695,13 @@ input[type="range"] {
     grid-template-columns: 1fr;
   }
 
+  .sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
   .preview-pane {
-    padding: 0 1.5rem 1.5rem;
+    padding: 0 1rem 1rem;
   }
 
   .preview-sticky {
@@ -705,5 +710,9 @@ input[type="range"] {
 
   .preview-stage {
     min-height: 560px;
+  }
+
+  .preview-image {
+    max-width: calc(100vw - 4rem);
   }
 }
