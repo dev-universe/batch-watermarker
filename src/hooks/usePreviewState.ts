@@ -10,8 +10,10 @@ import {
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import type { InputFile, PreviewPayload, WatermarkLayer } from "../shared/types";
 import {
+  type CachedWatermarkLayerPreview,
   createObjectUrlFromPreview,
   loadPdfJs,
+  reconcileWatermarkLayerPreviews,
   readImageNaturalSize
 } from "./previewStateHelpers";
 
@@ -23,15 +25,6 @@ interface UsePreviewStateOptions {
   activeWatermarkLayerId: string | null;
 }
 
-interface WatermarkLayerPreview {
-  id: string;
-  previewUrl: string;
-  naturalSize: {
-    width: number;
-    height: number;
-  };
-}
-
 export function usePreviewState({
   inputFiles,
   selectedPreviewPath,
@@ -41,9 +34,9 @@ export function usePreviewState({
 }: UsePreviewStateOptions) {
   const [preview, setPreview] = useState<PreviewPayload | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState("");
-  const [watermarkLayerPreviews, setWatermarkLayerPreviews] = useState<WatermarkLayerPreview[]>(
-    []
-  );
+  const [watermarkLayerPreviews, setWatermarkLayerPreviews] = useState<
+    CachedWatermarkLayerPreview[]
+  >([]);
   const [previewCoordinateSize, setPreviewCoordinateSize] = useState({ width: 0, height: 0 });
   const [previewDisplaySize, setPreviewDisplaySize] = useState({ width: 0, height: 0 });
   const [pdfPageCount, setPdfPageCount] = useState(0);
@@ -51,6 +44,7 @@ export function usePreviewState({
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
   const previewImageRef = useRef<HTMLImageElement | null>(null);
+  const watermarkLayerPreviewsRef = useRef<CachedWatermarkLayerPreview[]>([]);
   const pdfRenderTokenRef = useRef(0);
 
   const selectedPreviewFile = useMemo(
@@ -91,22 +85,21 @@ export function usePreviewState({
   }, [preview]);
 
   useEffect(() => {
-    const nextLayerPreviews = watermarkLayers.map((layer) => {
-      const previewUrl = createObjectUrlFromPreview(layer.previewPayload);
-      return {
-        id: layer.id,
-        previewUrl,
-        naturalSize: { ...layer.naturalSize }
-      };
+    setWatermarkLayerPreviews((previousPreviews) => {
+      const nextPreviews = reconcileWatermarkLayerPreviews(watermarkLayers, previousPreviews);
+      watermarkLayerPreviewsRef.current = nextPreviews;
+      return nextPreviews;
     });
-    setWatermarkLayerPreviews(nextLayerPreviews);
+  }, [watermarkLayers]);
 
+  useEffect(() => {
     return () => {
-      for (const layerPreview of nextLayerPreviews) {
+      for (const layerPreview of watermarkLayerPreviewsRef.current) {
         URL.revokeObjectURL(layerPreview.previewUrl);
       }
+      watermarkLayerPreviewsRef.current = [];
     };
-  }, [watermarkLayers]);
+  }, []);
 
   useEffect(() => {
     if (selectedPreviewFile && selectedPreviewFile.path !== selectedPreviewPath) {

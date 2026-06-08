@@ -1,5 +1,8 @@
 import type { CSSProperties, MutableRefObject } from "react";
-import type { ResizeHandle } from "../shared/watermarkGeometry";
+import {
+  isPointInsideRotatedBox,
+  type ResizeHandle
+} from "../shared/watermarkGeometry";
 import { getWatermarkLayerStatusLabels } from "../shared/watermarkLayerState";
 
 const RESIZE_HANDLES = ["n", "ne", "e", "se", "s", "sw", "w", "nw"] as const;
@@ -37,6 +40,11 @@ interface PreviewPaneWatermarkLayer {
   overlayImageStyle: CSSProperties;
   isActive: boolean;
   zIndex: number;
+  hitTestBox: {
+    width: number;
+    height: number;
+    rotation: number;
+  };
   visible: boolean;
   locked: boolean;
 }
@@ -62,6 +70,50 @@ interface PreviewPaneProps {
   interaction: PreviewPaneInteractionProps;
   watermarkLayers: PreviewPaneWatermarkLayer[];
 }
+
+const getCssPixelValue = (value: CSSProperties[keyof CSSProperties]) => {
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return 0;
+  }
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+export const getTopmostWatermarkLayerAtPoint = (
+  layers: PreviewPaneWatermarkLayer[],
+  pointX: number,
+  pointY: number
+) =>
+  [...layers]
+    .filter((layer) => layer.visible)
+    .sort((left, right) => right.zIndex - left.zIndex)
+    .find((layer) => {
+      const left = getCssPixelValue(layer.overlayStyle.left);
+      const top = getCssPixelValue(layer.overlayStyle.top);
+      const width = getCssPixelValue(layer.overlayStyle.width);
+      const height = getCssPixelValue(layer.overlayStyle.height);
+      const localX = pointX - left;
+      const localY = pointY - top;
+
+      if (localX < 0 || localY < 0 || localX > width || localY > height) {
+        return false;
+      }
+
+      return isPointInsideRotatedBox(
+        width / 2,
+        height / 2,
+        layer.hitTestBox.width,
+        layer.hitTestBox.height,
+        layer.hitTestBox.rotation,
+        localX,
+        localY
+      );
+    }) ?? null;
 
 export function PreviewPane({
   preview,
@@ -118,7 +170,28 @@ export function PreviewPane({
 
         <div className="preview-stage" onPointerDown={onClearWatermarkSelection}>
           {previewBaseUrl ? (
-            <div className="preview-artboard">
+            <div
+              className="preview-artboard"
+              onPointerDown={(event) => {
+                const rect = event.currentTarget.getBoundingClientRect();
+                const targetLayer = getTopmostWatermarkLayerAtPoint(
+                  watermarkLayers,
+                  event.clientX - rect.left,
+                  event.clientY - rect.top
+                );
+                if (!targetLayer) {
+                  return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                event.currentTarget.setPointerCapture(event.pointerId);
+                onSelectWatermarkLayer(targetLayer.id);
+                if (!targetLayer.locked) {
+                  onWatermarkPointerDown(event);
+                }
+              }}
+            >
               <img
                 ref={previewImageRef}
                 className="preview-image"
@@ -136,12 +209,6 @@ export function PreviewPane({
                   style={{
                     ...layer.overlayStyle,
                     zIndex: layer.zIndex
-                  }}
-                  onPointerDown={(event) => {
-                    event.preventDefault();
-                    event.currentTarget.setPointerCapture(event.pointerId);
-                    onSelectWatermarkLayer(layer.id);
-                    onWatermarkPointerDown(event);
                   }}
                   onDragStart={(event) => event.preventDefault()}
                   onPointerEnter={() => {

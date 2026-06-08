@@ -36,6 +36,9 @@ export const getActiveWatermarkLayerState = (
 export const canEditActiveWatermarkLayer = (activeLayerState: ActiveWatermarkLayerState) =>
   Boolean(activeLayerState.activeWatermarkLayerId && !activeLayerState.locked);
 
+export const getWatermarkLayerZIndex = (index: number, layerCount: number) =>
+  Math.max(1, layerCount - index);
+
 export const persistActiveWatermarkLayerSettings = (
   snapshot: EditableStateSnapshot
 ): EditableStateSnapshot => {
