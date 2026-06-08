@@ -36,6 +36,45 @@ export const getActiveWatermarkLayerState = (
 export const canEditActiveWatermarkLayer = (activeLayerState: ActiveWatermarkLayerState) =>
   Boolean(activeLayerState.activeWatermarkLayerId && !activeLayerState.locked);
 
+export const persistActiveWatermarkLayerSettings = (
+  snapshot: EditableStateSnapshot
+): EditableStateSnapshot => {
+  const activeLayer = snapshot.activeWatermarkLayerId
+    ? snapshot.watermarkLayers.find((layer) => layer.id === snapshot.activeWatermarkLayerId) ?? null
+    : null;
+
+  if (!activeLayer) {
+    return snapshot;
+  }
+
+  return {
+    ...snapshot,
+    watermarkFile: activeLayer.file,
+    watermarkLayers: snapshot.watermarkLayers.map((layer) =>
+      layer.id === activeLayer.id
+        ? {
+            ...layer,
+            settings: { ...snapshot.settings }
+          }
+        : layer
+    )
+  };
+};
+
+export const hydrateSnapshotFromActiveWatermarkLayer = (
+  snapshot: EditableStateSnapshot,
+  fallbackSettings: WatermarkSettings
+): EditableStateSnapshot => {
+  const activeLayerState = getActiveWatermarkLayerState(snapshot, fallbackSettings);
+
+  return {
+    ...snapshot,
+    watermarkFile: activeLayerState.watermarkFile,
+    settings: { ...activeLayerState.settings },
+    activeWatermarkLayerId: activeLayerState.activeWatermarkLayerId
+  };
+};
+
 export const getWatermarkLayerStatusLabels = ({
   isActive,
   locked,

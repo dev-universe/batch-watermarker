@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   canEditActiveWatermarkLayer,
   getActiveWatermarkLayerState,
-  getWatermarkLayerStatusLabels
+  getWatermarkLayerStatusLabels,
+  hydrateSnapshotFromActiveWatermarkLayer,
+  persistActiveWatermarkLayerSettings
 } from "./watermarkLayerState";
 import type { EditableStateSnapshot } from "./history";
 
@@ -99,6 +101,120 @@ describe("getActiveWatermarkLayerState", () => {
       activeWatermarkLayerId: null,
       locked: false
     });
+  });
+});
+
+describe("active watermark layer snapshot sync", () => {
+  it("persists top-level editing settings into the active layer", () => {
+    const snapshot = makeSnapshot();
+    const inactiveSettings = {
+      ...snapshot.settings,
+      opacity: 15
+    };
+    const editedSettings = {
+      ...snapshot.settings,
+      opacity: 82,
+      placementMode: "free" as const,
+      position: null,
+      freeCenterXRatio: 0.2,
+      freeCenterYRatio: 0.7
+    };
+
+    snapshot.settings = editedSettings;
+    snapshot.watermarkLayers = [
+      {
+        id: "layer-1",
+        file: {
+          path: "/tmp/inactive.png",
+          name: "inactive.png",
+          kind: "image" as const
+        },
+        label: "inactive",
+        locked: false,
+        settings: inactiveSettings,
+        visible: true,
+        previewPayload: {
+          kind: "image",
+          data: new Uint8Array([1]),
+          mimeType: "image/png",
+          name: "inactive.png"
+        },
+        naturalSize: { width: 10, height: 10 }
+      },
+      {
+        id: "layer-2",
+        file: {
+          path: "/tmp/active.png",
+          name: "active.png",
+          kind: "image" as const
+        },
+        label: "active",
+        locked: false,
+        settings: {
+          ...snapshot.settings,
+          opacity: 25
+        },
+        visible: true,
+        previewPayload: {
+          kind: "image",
+          data: new Uint8Array([2]),
+          mimeType: "image/png",
+          name: "active.png"
+        },
+        naturalSize: { width: 20, height: 20 }
+      }
+    ];
+    snapshot.activeWatermarkLayerId = "layer-2";
+
+    const synced = persistActiveWatermarkLayerSettings(snapshot);
+
+    expect(synced.watermarkLayers[0].settings).toEqual(inactiveSettings);
+    expect(synced.watermarkLayers[1].settings).toEqual(editedSettings);
+    expect(synced.settings).toEqual(editedSettings);
+    expect(synced.watermarkFile).toEqual(snapshot.watermarkLayers[1].file);
+  });
+
+  it("hydrates top-level editing settings from the selected active layer", () => {
+    const snapshot = makeSnapshot();
+    const selectedSettings = {
+      ...snapshot.settings,
+      opacity: 33,
+      rotation: 27
+    };
+    const selectedFile = {
+      path: "/tmp/selected.png",
+      name: "selected.png",
+      kind: "image" as const
+    };
+
+    snapshot.settings = {
+      ...snapshot.settings,
+      opacity: 88
+    };
+    snapshot.watermarkLayers = [
+      {
+        id: "layer-1",
+        file: selectedFile,
+        label: "selected",
+        locked: false,
+        settings: selectedSettings,
+        visible: true,
+        previewPayload: {
+          kind: "image",
+          data: new Uint8Array([1]),
+          mimeType: "image/png",
+          name: "selected.png"
+        },
+        naturalSize: { width: 10, height: 10 }
+      }
+    ];
+    snapshot.activeWatermarkLayerId = "layer-1";
+
+    const hydrated = hydrateSnapshotFromActiveWatermarkLayer(snapshot, makeSnapshot().settings);
+
+    expect(hydrated.settings).toEqual(selectedSettings);
+    expect(hydrated.watermarkFile).toEqual(selectedFile);
+    expect(hydrated.activeWatermarkLayerId).toBe("layer-1");
   });
 });
 
