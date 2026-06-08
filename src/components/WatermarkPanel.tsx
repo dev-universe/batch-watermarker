@@ -160,12 +160,6 @@ export function WatermarkPanel({
                 </button>
                 <button
                   className="subtle-action"
-                  onClick={() => onToggleWatermarkLayerVisibility(layer.id)}
-                >
-                  {layer.visible ? "숨김" : "표시"}
-                </button>
-                <button
-                  className="subtle-action"
                   disabled={index === 0}
                   onClick={() => onMoveWatermarkLayer(layer.id, -1)}
                 >
@@ -173,16 +167,22 @@ export function WatermarkPanel({
                 </button>
                 <button
                   className="subtle-action"
+                  onClick={() => onDuplicateWatermarkLayer(layer.id)}
+                >
+                  복제
+                </button>
+                <button
+                  className="subtle-action"
+                  onClick={() => onToggleWatermarkLayerVisibility(layer.id)}
+                >
+                  {layer.visible ? "숨김" : "표시"}
+                </button>
+                <button
+                  className="subtle-action"
                   disabled={index === watermarkLayers.length - 1}
                   onClick={() => onMoveWatermarkLayer(layer.id, 1)}
                 >
                   아래
-                </button>
-                <button
-                  className="subtle-action"
-                  onClick={() => onDuplicateWatermarkLayer(layer.id)}
-                >
-                  복제
                 </button>
                 <button className="layer-remove subtle-action" onClick={() => onRemoveWatermarkLayer(layer.id)}>
                   삭제

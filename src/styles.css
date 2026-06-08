@@ -260,10 +260,13 @@ label {
 
 .layer-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.55rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "select texts"
+    "actions actions";
+  gap: 0.65rem;
   align-items: center;
-  padding: 0.55rem;
+  padding: 0.7rem;
   border-radius: 16px;
   background: rgba(241, 232, 220, 0.55);
   border: 1px solid transparent;
@@ -283,6 +286,9 @@ label {
 }
 
 .layer-select {
+  grid-area: select;
+  min-width: 76px;
+  align-self: center;
   background: #8c5d35;
   color: #fffaf5;
   white-space: nowrap;
@@ -297,8 +303,9 @@ label {
 }
 
 .layer-texts {
+  grid-area: texts;
   display: grid;
-  gap: 0.35rem;
+  gap: 0.32rem;
   min-width: 0;
 }
 
@@ -340,15 +347,19 @@ label {
 }
 
 .layer-actions {
-  display: flex;
+  grid-area: actions;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.4rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  width: 100%;
 }
 
 .layer-actions .subtle-action,
 .layer-remove {
-  padding: 0.45rem 0.7rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.5rem 0.45rem;
+  justify-self: stretch;
 }
 
 .position-grid button.selected,
