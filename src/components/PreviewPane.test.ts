@@ -26,6 +26,7 @@ const makeLayer = ({
     height: "100px"
   },
   overlayImageStyle: {},
+  rasterStyle: {},
   isActive: false,
   zIndex,
   hitTestBox: {

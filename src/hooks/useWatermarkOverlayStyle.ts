@@ -55,8 +55,7 @@ export const createWatermarkOverlayStyle = ({
     width: `${metrics.rotated.width * displayScaleX}px`,
     height: `${metrics.rotated.height * displayScaleY}px`,
     left: `${(anchorCenter.x - metrics.rotated.width / 2) * displayScaleX}px`,
-    top: `${(anchorCenter.y - metrics.rotated.height / 2) * displayScaleY}px`,
-    opacity: settings.opacity / 100
+    top: `${(anchorCenter.y - metrics.rotated.height / 2) * displayScaleY}px`
   };
 };
 
@@ -97,6 +96,12 @@ export const createWatermarkOverlayImageStyle = ({
     top: "50%"
   };
 };
+
+export const createWatermarkOverlayRasterStyle = (
+  settings: Pick<WatermarkSettings, "opacity">
+): CSSProperties => ({
+  opacity: settings.opacity / 100
+});
 
 export function useWatermarkOverlayStyle({
   settings,

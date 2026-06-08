@@ -11,6 +11,7 @@ import { usePreviewState } from "./hooks/usePreviewState";
 import { useWatermarkInteraction } from "./hooks/useWatermarkInteraction";
 import {
   createWatermarkOverlayImageStyle,
+  createWatermarkOverlayRasterStyle,
   createWatermarkOverlayStyle
 } from "./hooks/useWatermarkOverlayStyle";
 import { useWatermarkSettingsActions } from "./hooks/useWatermarkSettingsActions";
@@ -228,6 +229,7 @@ function App() {
             previewUrl: layerPreview.previewUrl,
             overlayStyle,
             overlayImageStyle,
+            rasterStyle: createWatermarkOverlayRasterStyle(layer.settings),
             isActive: layer.id === activeWatermarkLayerId,
             zIndex: getWatermarkLayerZIndex(index, watermarkLayers.length),
             hitTestBox: {
@@ -248,6 +250,7 @@ function App() {
             previewUrl: string;
             overlayStyle: CSSProperties;
             overlayImageStyle: CSSProperties;
+            rasterStyle: CSSProperties;
             isActive: boolean;
             zIndex: number;
             hitTestBox: {
