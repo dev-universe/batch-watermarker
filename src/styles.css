@@ -461,62 +461,64 @@ input[type="range"] {
 
 .position-grid button.selected,
 .primary {
-  background: #8c5d35;
-  color: #fffaf5;
+  background: var(--color-accent);
+  color: #ffffff;
 }
 
 .primary {
   width: 100%;
-  margin-top: 1rem;
-  padding: 1rem;
+  margin-top: 0.9rem;
+  padding: 0.82rem;
+  font-weight: 850;
 }
 
 .preview-stage {
   position: relative;
   display: grid;
   place-items: center;
-  min-height: calc(100vh - 8rem);
-  border-radius: 30px;
-  border: 1px solid rgba(78, 54, 34, 0.1);
+  min-height: calc(100vh - 7rem);
+  border-radius: 24px;
+  border: 1px solid var(--color-border);
   background:
-    linear-gradient(180deg, rgba(255, 251, 246, 0.72), rgba(239, 232, 222, 0.9)),
-    linear-gradient(45deg, rgba(120, 86, 60, 0.05) 25%, transparent 25%, transparent 75%, rgba(120, 86, 60, 0.05) 75%),
-    linear-gradient(45deg, rgba(120, 86, 60, 0.05) 25%, transparent 25%, transparent 75%, rgba(120, 86, 60, 0.05) 75%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(241, 245, 249, 0.94)),
+    linear-gradient(45deg, rgba(15, 23, 42, 0.045) 25%, transparent 25%, transparent 75%, rgba(15, 23, 42, 0.045) 75%),
+    linear-gradient(45deg, rgba(15, 23, 42, 0.045) 25%, transparent 25%, transparent 75%, rgba(15, 23, 42, 0.045) 75%);
   background-size: auto, 22px 22px, 22px 22px;
   background-position: 0 0, 0 0, 11px 11px;
   overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .preview-image {
   display: block;
-  max-width: calc(100vw - 560px);
-  max-height: calc(100vh - 12rem);
+  max-width: calc(100vw - 500px);
+  max-height: calc(100vh - 11rem);
   object-fit: contain;
-  box-shadow: 0 24px 55px rgba(71, 51, 36, 0.18);
-  border-radius: 12px;
+  box-shadow: var(--shadow-canvas);
+  border-radius: 10px;
 }
 
 .preview-artboard {
   position: relative;
   display: inline-block;
   line-height: 0;
-  max-width: calc(100% - 4rem);
-  max-height: calc(100vh - 12rem);
+  max-width: calc(100% - 3rem);
+  max-height: calc(100vh - 11rem);
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 .pdf-pager {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  justify-self: center;
+  gap: 0.48rem;
+  justify-self: end;
 }
 
 .pdf-pager span {
-  min-width: 72px;
+  min-width: 68px;
   text-align: center;
-  color: #614632;
+  color: var(--color-text-muted);
 }
 
 .pdf-pager button:disabled {
@@ -551,11 +553,13 @@ input[type="range"] {
   position: absolute;
   inset: 0;
   border: 1.5px dashed var(--color-accent);
-  border-radius: 8px;
+  border-radius: 7px;
   opacity: 0;
   transition: opacity 120ms ease;
   pointer-events: none;
-  box-shadow: 0 0 0 1px rgba(255, 250, 245, 0.5) inset;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.75) inset,
+    0 10px 24px rgba(37, 99, 235, 0.12);
 }
 
 .watermark-transform-box {
@@ -565,7 +569,7 @@ input[type="range"] {
 .watermark-status-badges {
   position: absolute;
   left: 0;
-  top: -1.65rem;
+  top: -1.55rem;
   pointer-events: none;
 }
 
@@ -574,9 +578,9 @@ input[type="range"] {
   left: 50%;
   top: 1px;
   width: 2px;
-  height: 28px;
+  height: 26px;
   transform: translate(-50%, -100%);
-  background: rgba(140, 93, 53, 0.75);
+  background: var(--color-accent);
   border-radius: 999px;
   pointer-events: none;
 }
@@ -587,11 +591,11 @@ input[type="range"] {
   top: 1px;
   width: 14px;
   height: 14px;
-  transform: translate(-50%, calc(-100% - 28px));
-  border: 2px solid #8c5d35;
-  background: #fffaf5;
+  transform: translate(-50%, calc(-100% - 26px));
+  border: 2px solid var(--color-accent);
+  background: var(--color-surface-raised);
   border-radius: 999px;
-  box-shadow: 0 2px 6px rgba(71, 51, 36, 0.15);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.2);
   cursor: grab;
   pointer-events: auto;
 }
@@ -600,11 +604,26 @@ input[type="range"] {
   position: absolute;
   width: 12px;
   height: 12px;
-  border: 2px solid #8c5d35;
-  background: #fffaf5;
+  border: 2px solid var(--color-accent);
+  background: var(--color-surface-raised);
   border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(71, 51, 36, 0.15);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.2);
   pointer-events: auto;
+}
+
+.watermark-overlay-image {
+  position: absolute;
+  display: block;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.empty-preview {
+  color: var(--color-text-muted);
+  font-size: 1rem;
 }
 
 .watermark-resize-handle.n {
@@ -661,24 +680,6 @@ input[type="range"] {
   left: 1px;
   transform: translate(-50%, -50%);
   cursor: nwse-resize;
-}
-
-.watermark-overlay-image {
-  -webkit-user-drag: none;
-  user-select: none;
-}
-
-.watermark-overlay-image {
-  position: absolute;
-  display: block;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.empty-preview {
-  color: #75553f;
-  font-size: 1.1rem;
 }
 
 .error {
