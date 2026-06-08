@@ -3,6 +3,7 @@ import {
   canEditActiveWatermarkLayer,
   getActiveWatermarkLayerState,
   getWatermarkLayerStatusLabels,
+  getWatermarkLayerZIndex,
   hydrateSnapshotFromActiveWatermarkLayer,
   persistActiveWatermarkLayerSettings
 } from "./watermarkLayerState";
@@ -283,6 +284,19 @@ describe("canEditActiveWatermarkLayer", () => {
     const activeLayerState = getActiveWatermarkLayerState(makeSnapshot(), makeSnapshot().settings);
 
     expect(canEditActiveWatermarkLayer(activeLayerState)).toBe(false);
+  });
+});
+
+describe("getWatermarkLayerZIndex", () => {
+  it("places the sidebar top layer above lower layers in the preview", () => {
+    const layerCount = 3;
+
+    expect(getWatermarkLayerZIndex(0, layerCount)).toBeGreaterThan(
+      getWatermarkLayerZIndex(1, layerCount)
+    );
+    expect(getWatermarkLayerZIndex(1, layerCount)).toBeGreaterThan(
+      getWatermarkLayerZIndex(2, layerCount)
+    );
   });
 });
 

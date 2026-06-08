@@ -18,7 +18,8 @@ import type { WatermarkSettings } from "./shared/types";
 import { getOutputSummary } from "./shared/outputSummary";
 import {
   canEditActiveWatermarkLayer,
-  getActiveWatermarkLayerState
+  getActiveWatermarkLayerState,
+  getWatermarkLayerZIndex
 } from "./shared/watermarkLayerState";
 import {
   getLongestEdge,
@@ -228,7 +229,7 @@ function App() {
             overlayStyle,
             overlayImageStyle,
             isActive: layer.id === activeWatermarkLayerId,
-            zIndex: index + 1,
+            zIndex: getWatermarkLayerZIndex(index, watermarkLayers.length),
             visible: layer.visible,
             locked: layer.locked
           };
