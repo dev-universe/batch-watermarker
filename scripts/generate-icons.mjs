@@ -12,7 +12,8 @@ const outputDir = path.join(root, "build");
 const pngDir = path.join(outputDir, "generated-icons");
 const iconsetDir = path.join(outputDir, "icon.iconset");
 
-const sizes = [16, 32, 64, 128, 256, 512, 1024];
+const sizes = [16, 32, 48, 64, 128, 256, 512, 1024];
+const icoSizes = [16, 32, 48, 64, 128, 256];
 
 await mkdir(outputDir, { recursive: true });
 await rm(pngDir, { recursive: true, force: true });
@@ -25,7 +26,8 @@ for (const size of sizes) {
   await sharp(sourceSvg).resize(size, size).png().toFile(pngPath);
 }
 
-const icoBuffer = await pngToIco(sizes.map((size) => path.join(pngDir, `icon-${size}.png`)));
+// Windows ICO files should stay within the standard 16..256px range.
+const icoBuffer = await pngToIco(icoSizes.map((size) => path.join(pngDir, `icon-${size}.png`)));
 await writeFile(path.join(outputDir, "icon.ico"), icoBuffer);
 await sharp(sourceSvg).resize(512, 512).png().toFile(path.join(outputDir, "icon.png"));
 
