@@ -101,7 +101,9 @@ input[type="number"]:focus {
   align-content: start;
   gap: 0.85rem;
   padding: 1rem;
-  overflow: auto;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   border-right: 1px solid var(--color-border);
   background: rgba(248, 250, 252, 0.82);
 }
@@ -121,6 +123,7 @@ input[type="number"]:focus {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-panel);
+  min-width: 0;
 }
 
 .hero h1 {
@@ -133,6 +136,7 @@ input[type="number"]:focus {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+  min-width: 0;
 }
 
 .panel-head,
@@ -202,6 +206,8 @@ p {
   min-height: 76px;
   display: grid;
   place-items: center;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .dropzone.compact {
@@ -215,6 +221,7 @@ p {
   margin-top: 0.75rem;
   max-height: 220px;
   overflow: auto;
+  min-width: 0;
 }
 
 .file-item,
@@ -226,6 +233,7 @@ p {
   background: var(--color-surface-muted);
   padding: 0.35rem;
   border: 1px solid transparent;
+  min-width: 0;
   transition:
     border-color 120ms ease,
     background-color 120ms ease,
@@ -245,6 +253,7 @@ p {
   background: transparent;
   padding: 0.52rem;
   border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
 .file-pick span {
@@ -263,6 +272,7 @@ p {
 .file-remove {
   background: #e8edf4;
   border-radius: var(--radius-sm);
+  flex-shrink: 0;
 }
 
 .field-grid {
@@ -355,6 +365,7 @@ input[type="range"] {
   border-radius: var(--radius-md);
   background: rgba(241, 245, 249, 0.86);
   border: 1px solid transparent;
+  min-width: 0;
 }
 
 .layer-row.active {

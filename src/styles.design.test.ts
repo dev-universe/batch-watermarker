@@ -21,6 +21,14 @@ describe("cross-platform pro tool UI CSS", () => {
     expect(css).toContain("grid-template-columns: minmax(360px, 420px) minmax(0, 1fr);");
   });
 
+  it("keeps the sidebar from growing horizontally on long filenames", () => {
+    expect(css).toContain("overflow-x: hidden;");
+    expect(css).toContain(".sidebar {");
+    expect(css).toContain(".panel {");
+    expect(css).toContain("min-width: 0;");
+    expect(css).toContain("overflow-wrap: anywhere;");
+  });
+
   it("keeps the old warm landing-page palette out of the root app theme", () => {
     const rootBlock = css.match(/:root\s*{[\s\S]*?}\n/)?.[0] ?? "";
 
