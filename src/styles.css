@@ -32,6 +32,109 @@
   box-sizing: border-box;
 }
 
+[hidden] { display: none !important; }
+.workspace-header { height: 64px; display: flex; align-items: center; gap: 42px; padding: 0 24px; border-bottom: 1px solid var(--color-border); background: var(--color-surface-raised); position: sticky; top: 0; z-index: 50; }
+.workspace-brand { font-size: 15px; font-weight: 750; letter-spacing: -0.4px; white-space: nowrap; }
+.workspace-brand small { font-size: 11px; font-weight: 500; margin-left: 4px; color: var(--color-text-muted); }
+.workspace-tabs { display: flex; height: 100%; gap: 8px; align-items: center; }
+.workspace-tabs button { border-radius: 8px; background: transparent; padding: 11px 19px; font-size: 14px; color: var(--color-text-muted); }
+.workspace-tabs button[aria-selected="true"] { background: var(--color-accent-soft); color: var(--color-accent); font-weight: 700; }
+.app-workspace .shell { min-height: calc(100vh - 64px); }
+.app-workspace .preview-sticky { top: 80px; }
+.ti-shell { align-items: start; }
+.ti-sidebar { height: calc(100vh - 64px); position: sticky; top: 64px; display: block; }
+.ti-sidebar > *, .ti-editor-fields > * { margin-bottom: 14px; }
+.ti-sidebar .panel { padding: 16px; }
+.ti-editor-fields, .ti-transform-controls { border: 0; min-width: 0; padding: 0; margin: 0; }
+.ti-editor-fields:disabled .panel { opacity: 0.7; }
+.ti-sidebar .panel-head h2 { font-size: 14px; }
+.ti-sidebar button, .ti-sidebar input, .ti-sidebar select { font-size: 12px; }
+.ti-sidebar .subtle, .ti-sidebar .panel-hint { font-size: 12px; line-height: 1.65; }
+.ti-sidebar .hero h1 { font-size: 23px; }
+.ti-sidebar .hero p { margin-bottom: 0; }
+.ti-group-list { display: grid; gap: 7px; margin: 12px 0; }
+.ti-group-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) 28px; gap: 7px; align-items: center; border: 1px solid var(--color-border); padding: 6px; border-radius: 11px; }
+.ti-group-row.active { border-color: var(--color-accent); background: var(--color-accent-soft); }
+.ti-group-row input { padding: 8px; background: transparent; border-color: transparent; }
+.ti-group-select { padding: 4px; font-size: 17px !important; font-weight: 700; color: var(--color-accent); background: transparent; }
+.ti-group-select small { display: block; font-size: 9px; color: var(--color-text-muted); font-weight: 400; }
+.ti-delete { color: var(--color-danger); padding: 5px; background: transparent; }
+.ti-file-drop { display: flex; align-items: center; gap: 10px; text-align: left; margin-top: 12px; }
+.ti-file-drop span { font-size: 11px; line-height: 1.6; }
+.ti-file-drop button { flex-shrink: 0; }
+.ti-pages { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 5px; max-height: 300px; overflow-y: auto; }
+.ti-pages li { border: 1px solid transparent; border-radius: 8px; padding: 4px; }
+.ti-pages li.active { background: var(--color-accent-soft); border-color: rgba(37,99,235,.25); }
+.ti-page-select { display: flex; gap: 9px; align-items: center; background: transparent; text-align: left; width: 100%; padding: 5px; }
+.ti-page-select > span { color: var(--color-accent); flex-shrink: 0; width: 18px; }
+.ti-page-select strong { font-weight: 500; overflow-wrap: anywhere; font-size: 12px; }
+.ti-page-actions { display: flex; gap: 4px; padding-left: 28px; margin-top: 3px; }
+.ti-page-actions button { padding: 3px 9px; }
+.ti-page-actions select { min-width: 0; max-width: 150px; padding: 3px; }
+.ti-scope { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 11px 0; font-size: 12px; color: var(--color-text-muted); }
+select { font: inherit; border: 1px solid var(--color-border); background: white; color: var(--color-text); border-radius: 7px; padding: 7px; }
+.ti-toolbar { display: flex; gap: 5px; margin-top: 10px; align-items: center; }
+.ti-toolbar select { flex: 1; min-width: 0; }
+.ti-toolbar button { flex-shrink: 0; }
+.ti-watermarks { display: grid; gap: 8px; margin-top: 10px; }
+.ti-watermark-row { border: 1px solid var(--color-border); border-radius: 9px; padding: 8px; }
+.ti-watermark-row.active { border-color: var(--color-accent); background: var(--color-accent-soft); }
+.ti-layer-title { display: flex; align-items: center; gap: 6px; }
+.ti-layer-title button { flex-shrink: 0; }
+.ti-layer-title input { min-width: 0; padding: 6px; }
+.ti-layer-actions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 7px; }
+.ti-layer-actions button { padding: 4px 7px; font-size: 11px; }
+.ti-two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.ti-transform-controls { display: grid; gap: 10px; }
+.ti-two-columns label, .ti-transform-controls > label { display: grid; gap: 6px; font-size: 12px; color: var(--color-text-muted); min-width: 0; }
+.ti-transform-controls .ti-two-columns { margin: 0; }
+.ti-transform-controls input[type="range"] { width: 100%; }
+.ti-inline-check { display: flex !important; flex-direction: row; align-items: center; }
+.ti-badge { font-size: 10px; font-weight: 700; color: var(--color-accent); padding: 5px 8px; background: var(--color-accent-soft); border-radius: 20px; }
+.ti-output-path { font-size: 11px; color: var(--color-text-muted); overflow-wrap: anywhere; line-height: 1.6; }
+.ti-primary { width: 100%; color: white; background: var(--color-accent); padding: 12px !important; font-weight: 650; }
+.ti-primary:hover:not(:disabled) { background: #1d4ed8; }
+.ti-status { white-space: pre-line; overflow-wrap: anywhere; font-size: 12px; line-height: 1.7; }
+.ti-export-results { font-size: 12px; overflow-wrap: anywhere; }
+.ti-export-results small { color: var(--color-text-muted); }
+.ti-error { color: var(--color-danger); font-size: 12px; overflow-wrap: anywhere; }
+.ti-preview-pane { min-width: 0; height: calc(100vh - 64px); display: flex; flex-direction: column; padding: 26px 30px 16px; }
+.ti-preview-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 77px; }
+.ti-eyebrow { font-size: 10px; font-weight: 700; color: var(--color-accent); letter-spacing: 1.8px; }
+.ti-preview-header h2 { font-size: 19px; font-weight: 650; margin: 7px 0; overflow-wrap: anywhere; }
+.ti-preview-header .subtle { font-size: 12px; margin: 5px 0; }
+.ti-history { display: flex; gap: 6px; flex-shrink: 0; }
+.ti-history button { font-size: 12px; }
+.ti-stage { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 40px; margin-top: 15px; border: 1px solid var(--color-border); border-radius: 14px; background-color: #e6e9ee; background-image: radial-gradient(#b8c0ce 0.65px, transparent 0.65px); background-size: 14px 14px; overflow: hidden; }
+.ti-canvas { position: relative; flex-shrink: 0; background: white; box-shadow: 0 10px 32px rgba(15,23,42,.16); touch-action: none; }
+.ti-composed-image { position: absolute; inset: 0; width: 100%; height: 100%; display: block; user-select: none; }
+.ti-hit-layers { position: absolute; inset: 0; overflow: hidden; }
+.ti-hitbox { position: absolute; cursor: move; touch-action: none; }
+.ti-transform-outline { position: absolute; border: 1.5px dashed var(--color-accent); pointer-events: none; }
+.ti-transform-outline.locked { border-color: #d97706; }
+.ti-resize-handle, .ti-rotation-handle { position: absolute; width: 10px; height: 10px; border-radius: 2px; background: white; border: 1.5px solid var(--color-accent); pointer-events: auto; touch-action: none; }
+.ti-resize-handle.nw { left: -5px; top: -5px; cursor: nwse-resize; }
+.ti-resize-handle.ne { right: -5px; top: -5px; cursor: nesw-resize; }
+.ti-resize-handle.se { right: -5px; bottom: -5px; cursor: nwse-resize; }
+.ti-resize-handle.sw { left: -5px; bottom: -5px; cursor: nesw-resize; }
+.ti-rotation-stem { position: absolute; width: 1px; height: 23px; background: var(--color-accent); left: 50%; top: -24px; }
+.ti-rotation-handle { border-radius: 50%; left: calc(50% - 6px); top: -34px; width: 12px; height: 12px; cursor: grab; }
+.ti-disabled-canvas .ti-hit-layers, .ti-disabled-canvas .ti-transform-outline { pointer-events: none; }
+.ti-disabled-canvas .ti-resize-handle, .ti-disabled-canvas .ti-rotation-handle { pointer-events: none; }
+.ti-preview-indicator { position: absolute; bottom: 12px; right: 14px; border-radius: 20px; padding: 6px 12px; color: var(--color-text-muted); background: rgba(255,255,255,.9); font-size: 11px; }
+.ti-preview-footer { display: grid; gap: 6px; padding-top: 14px; font-size: 11px; color: var(--color-text-muted); text-align: center; }
+.ti-preview-error { margin: 8px 0 0; }
+.ti-empty-state { text-align: center; color: var(--color-text-muted); }
+.ti-empty-icon { color: #94a3b8; font-size: 74px; line-height: 1.2; }
+.ti-empty-state h3 { color: var(--color-text); font-weight: 600; font-size: 20px; }
+.ti-empty-state p { font-size: 13px; line-height: 1.8; }
+@media (max-width: 1200px) {
+  .ti-preview-pane { padding: 18px; }
+  .ti-preview-header { align-items: start; }
+  .ti-history { flex-direction: column; }
+  .ti-stage { padding: 30px; }
+}
+
 body {
   margin: 0;
   min-width: 1040px;

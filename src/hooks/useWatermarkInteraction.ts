@@ -26,6 +26,7 @@ interface Size {
 }
 
 interface UseWatermarkInteractionParams {
+  enabled?: boolean;
   settings: WatermarkSettings;
   setSettings: React.Dispatch<React.SetStateAction<WatermarkSettings>>;
   isActiveWatermarkLayerLocked: boolean;
@@ -42,6 +43,7 @@ interface UseWatermarkInteractionParams {
 }
 
 export function useWatermarkInteraction({
+  enabled = true,
   settings,
   setSettings,
   isActiveWatermarkLayerLocked,
@@ -106,6 +108,7 @@ export function useWatermarkInteraction({
   };
 
   useEffect(() => {
+    if (!enabled) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.isComposing || event.altKey) {
         return;
@@ -173,6 +176,7 @@ export function useWatermarkInteraction({
     window.addEventListener("keydown", onKeyDown, { capture: true });
     return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
   }, [
+    enabled,
     commitSnapshot,
     currentSnapshotRef,
     isActiveWatermarkLayerLocked,
@@ -183,6 +187,7 @@ export function useWatermarkInteraction({
   ]);
 
   useEffect(() => {
+    if (!enabled) return;
     const onPointerEnd = () => {
       endContinuousEdit();
     };
@@ -209,9 +214,10 @@ export function useWatermarkInteraction({
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onPointerEnd);
     };
-  }, [endContinuousEdit]);
+  }, [enabled, endContinuousEdit]);
 
   useEffect(() => {
+    if (!enabled) return;
     const onPointerMove = (event: PointerEvent) => {
       const dragState = dragStateRef.current;
       if (
@@ -385,6 +391,7 @@ export function useWatermarkInteraction({
       window.removeEventListener("pointercancel", onPointerUp);
     };
   }, [
+    enabled,
     currentSnapshotRef,
     previewCoordinateSize,
     previewDisplaySize,

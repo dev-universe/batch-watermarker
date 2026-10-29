@@ -1,5 +1,16 @@
 # Architecture Notes
 
+## Transparent Image Editor
+
+- `App` owns the top-level tabs. Both editors stay mounted; only the active editor registers editing shortcuts. The existing editor lives in `WatermarkEditor`.
+- `useTransparentProject` owns independent immutable project snapshots and undo/redo. `useTransparentEditor` owns group/page selection, import actions, output submission and progress.
+- Background and watermark overrides use `undefined` for inheritance; `null` / `[]` explicitly removes a local setting. Switching to a local setting deep-copies the effective value.
+- `useImageTransformInteraction` reuses shared watermark geometry for move/resize/rotate. Page source transforms are converted into the same normalized geometry used by the overlay controls.
+- The transparent-image IPC API is separate from the existing watermark API. SVG inspection resolves physical sizes and canonicalizes the viewport before native rasterization; raw SVG markup is never inserted into the renderer DOM.
+- Preview and export call the same Sharp compositor, at different resolutions. Each runs off the main thread; superseded preview requests are terminated and stale renderer responses are ignored.
+- Export processes groups and pages sequentially. A fresh PDF contains one opaque, lossless 600 DPI image per page. Completed temporary PDFs are published with an exclusive hard link in the output directory, preventing overwrites even when names collide concurrently. A failed page discards its group and other groups continue.
+- `scripts/verify-transparent-editor.cjs` drives both development Electron and the packaged EXE through the real IPC/worker/export path using synthetic fixtures.
+
 This document records the current module boundaries and refactoring rules for
 Batch Watermarker. Keep it short and update it when responsibility boundaries
 change.

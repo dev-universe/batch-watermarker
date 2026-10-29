@@ -4,6 +4,7 @@ import { promises as fs } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { getExistingPaths } from "./outputPlanning";
 import { processWatermarkRequest } from "./processWatermarkRequest";
+import { registerTransparentImageIpc } from "./transparentImageIpc";
 import type {
   InputFile,
   PreviewPayload,
@@ -72,6 +73,7 @@ const createWindow = async () => {
 };
 
 app.whenReady().then(() => {
+  registerTransparentImageIpc();
   ipcMain.handle("dialog:pick-input-files", async () => {
     const result = await dialog.showOpenDialog({
       properties: ["openFile", "multiSelections"],

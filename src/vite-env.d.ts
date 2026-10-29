@@ -1,9 +1,11 @@
 /// <reference types="vite/client" />
 
 import type { InputFile, PreviewPayload, ProcessRequest, ProcessResponse } from "./shared/types";
+import type { TransparentImageApi } from "./shared/transparentImageTypes";
 
 declare global {
   interface Window {
+    transparentImageApi: TransparentImageApi;
     watermarkApi: {
       pickInputFiles: () => Promise<InputFile[]>;
       pickWatermarkFiles: () => Promise<InputFile[]>;
