@@ -10,6 +10,7 @@ Desktop app for batch-applying image watermarks to PDF and image files on macOS 
 - Preview image and PDF files before processing
 - Batch output to a selected folder, save beside the source files, or overwrite originals
 - Preserve image DPI metadata when exporting supported image formats
+- Optionally flatten watermarked PDFs to image-only PDFs (600 DPI, lossless compression)
 
 ## Tech Stack
 
@@ -44,7 +45,18 @@ npm run dev
 3. Adjust opacity, size, rotation, and position.
 4. Optionally choose an output folder.
 5. Set a suffix.
-6. Start processing.
+6. Optionally enable image-only PDF output using the checkbox below the start button.
+7. Start processing.
+
+The checkbox below the start button, `PDF의 경우 이미지 형식으로 변환 후 PDF로 저장`,
+creates a fresh PDF with one flattened image per page. Text, vectors, forms,
+attachments, and separate watermark objects are not copied. Text recognition
+requires OCR; the page image can still be extracted or edited as an image.
+Pages retain their displayed physical size and orientation. Rendering uses
+600 DPI with lossless PNG compression, but rasterization cannot retain the
+unlimited zoom quality of vectors. Files and processing time can grow substantially.
+Oversized pages fail explicitly rather than exporting at a reduced resolution.
+The option defaults to off and does not change image-file processing.
 
 ### Direct Manipulation
 
@@ -75,6 +87,16 @@ npm run dev
 ```bash
 npm test
 ```
+
+To verify both PDF export modes against a real PDF and watermark after building:
+
+```bash
+npm run build:electron
+node scripts/verify-raster-pdf.cjs input.pdf watermark.png output/pdf
+```
+
+This checks page sizes, image-only structure, text removal, unchanged source bytes,
+and exact rendered RGB pixels at 600 DPI. It writes PDFs, preview images, and a JSON report.
 
 ## Project Notes
 

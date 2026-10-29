@@ -5,6 +5,8 @@ interface OutputPanelProps {
   settings: WatermarkSettings;
   outputSummary: string;
   isProcessing: boolean;
+  rasterizePdf: boolean;
+  onRasterizePdfChange: (checked: boolean) => void;
   statusMessage: string;
   lastResult: ProcessResponse | null;
   onOpenOutputFolderPicker: () => void;
@@ -18,6 +20,8 @@ export function OutputPanel({
   settings,
   outputSummary,
   isProcessing,
+  rasterizePdf,
+  onRasterizePdfChange,
   statusMessage,
   lastResult,
   onOpenOutputFolderPicker,
@@ -54,6 +58,20 @@ export function OutputPanel({
       <button className="primary" disabled={isProcessing} onClick={onStartProcessing}>
         {isProcessing ? "처리 중..." : "워터마크 적용 시작"}
       </button>
+      <label className="pdf-raster-option">
+        <input
+          type="checkbox"
+          checked={rasterizePdf}
+          disabled={isProcessing}
+          onChange={(event) => onRasterizePdfChange(event.target.checked)}
+          aria-describedby="pdf-raster-description"
+        />
+        <span>PDF의 경우 이미지 형식으로 변환 후 PDF로 저장</span>
+      </label>
+      <p id="pdf-raster-description" className="subtle pdf-raster-description">
+        600 DPI · 무손실 압축. 워터마크까지 하나의 이미지로 합쳐 텍스트 선택과 개별 요소 추출을 막습니다.
+        확대 시 벡터와 차이가 있으며, 파일 크기와 처리 시간이 늘어납니다.
+      </p>
       <p className="status">{statusMessage}</p>
       {lastResult && (
         <div className="result-list">

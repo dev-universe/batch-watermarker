@@ -44,6 +44,7 @@ export function useProcessingState({
   settings
 }: UseProcessingStateOptions) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [rasterizePdf, setRasterizePdf] = useState(false);
   const [statusMessage, setStatusMessage] = useState("입력 파일과 워터마크를 넣으면 바로 처리할 수 있습니다.");
   const [lastResult, setLastResult] = useState<ProcessResponse | null>(null);
 
@@ -92,12 +93,15 @@ export function useProcessingState({
     }
 
     setIsProcessing(true);
-    setStatusMessage("워터마크를 적용하는 중입니다.");
+    setStatusMessage(rasterizePdf
+      ? "워터마크 적용 및 PDF 이미지 변환 중입니다. 고해상도 변환에는 시간이 걸릴 수 있습니다."
+      : "워터마크를 적용하는 중입니다.");
 
     try {
       const response = await window.watermarkApi.process({
         inputFiles,
         watermarkLayers,
+        rasterizePdf,
         settings: {
           ...settings,
           suffix: settings.suffix,
@@ -120,6 +124,8 @@ export function useProcessingState({
 
   return {
     isProcessing,
+    rasterizePdf,
+    setRasterizePdf,
     statusMessage,
     lastResult,
     startProcessing

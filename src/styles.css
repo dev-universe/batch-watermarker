@@ -483,6 +483,26 @@ input[type="range"] {
   font-weight: 850;
 }
 
+.pdf-raster-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.pdf-raster-option input {
+  flex: 0 0 auto;
+  margin: 0.24rem 0 0;
+  accent-color: var(--color-accent);
+}
+
+.pdf-raster-description {
+  margin: 0.4rem 0 0;
+}
+
 .preview-stage {
   position: relative;
   display: grid;

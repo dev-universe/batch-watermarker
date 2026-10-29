@@ -5,6 +5,7 @@ import { getWatermarkCenterPoint, getWatermarkMetrics } from "../src/shared/wate
 import { writeOutputBufferSafely } from "./outputFileWrites";
 import { getOutputWritePaths } from "./outputPlanning";
 import type { ResolvedWatermarkLayer } from "./watermarkLayerAssets";
+import { rasterizePdfInWorker } from "./rasterizePdfInWorker";
 
 export const processPdfFile = async (
   inputFile: InputFile,
@@ -72,7 +73,10 @@ export const processPdfFile = async (
     }
   }
 
-  const outputBytes = await pdf.save();
+  const watermarkedBytes = await pdf.save();
+  const outputBytes = request.rasterizePdf
+    ? await rasterizePdfInWorker(watermarkedBytes)
+    : watermarkedBytes;
   await writeOutputBufferSafely(outputPaths, outputBytes);
   return outputPaths.finalOutputPath;
 };

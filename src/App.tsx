@@ -99,6 +99,8 @@ function App() {
   });
   const {
     isProcessing,
+    rasterizePdf,
+    setRasterizePdf,
     statusMessage,
     lastResult,
     startProcessing
@@ -323,6 +325,8 @@ function App() {
     settings,
     outputSummary,
     isProcessing,
+    rasterizePdf,
+    onRasterizePdfChange: setRasterizePdf,
     statusMessage,
     lastResult,
     onOpenOutputFolderPicker: openOutputFolderPicker,
