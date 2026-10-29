@@ -11,6 +11,38 @@ Desktop app for batch-applying image watermarks to PDF and image files on macOS 
 - Batch output to a selected folder, save beside the source files, or overwrite originals
 - Preserve image DPI metadata when exporting supported image formats
 - Optionally flatten watermarked PDFs to image-only PDFs (600 DPI, lossless compression)
+- Compose grouped transparent SVG/image pages with a background and multiple watermark images
+- Export each group as a separate 600 DPI lossless, image-only PDF
+
+## Transparent Image Editor (1.1)
+
+Open the **투명 이미지 편집** tab to assemble SVG or image pages into grouped PDFs.
+
+1. Create and name groups. Each nonempty group becomes one PDF named after the group.
+2. Add SVG, PNG, JPEG, WebP, or TIFF files to each group. New selections use natural filename order; use the page buttons to reorder, remove, or move pages between groups.
+3. Optionally add a background. Choose proportional **fill** (cropped to the page) or **fit** (the entire image is visible).
+4. Add any number of watermark images. Every visible watermark is applied to every page, in layer-list order; the last layer is on top. Edit position, width/height, opacity, rotation, visibility, lock, and order independently.
+5. Background and watermark settings default to **전체 공통**. Select **이 그룹만** to copy the current setting into an independent group override. Returning to common resumes following the shared setting. Removing a local background does not remove other groups' backgrounds.
+6. Select an input image to change its scale, margin in mm, position, or rotation. Page size stays fixed. Select an image first, then drag to move, use corner handles to resize, or use the top circle to rotate. Shift snaps rotation to 15 degrees. Arrow keys nudge by 1 document pixel, Shift + arrow keys by 10. Ctrl/Cmd + Z and redo apply to the active tab.
+7. Select an output folder and choose **그룹별 PDF 저장**. Existing files are never overwritten: duplicate names get `(2)`, `(3)`, etc. Empty groups are skipped.
+
+SVG physical units retain their printed size. Pixel/unitless dimensions and a viewBox-only size use 96 PPI; raster images use valid density metadata or 96 PPI. A group can contain differently sized pages. The composition order is white, background, input image, then watermark layers. SVG scripts and external image/style references are rejected; include external images in the SVG and use installed fonts or outlined text for portable rendering.
+
+Output embeds one opaque, lossless 600 DPI image per page. It preserves the displayed result rather than editable SVG objects. Oversized pages fail explicitly instead of silently reducing quality. If any page fails, that group's incomplete PDF is discarded and other groups continue. Input files are never modified. Tab contents and independent undo histories survive tab switching within the session; projects are not saved between app launches.
+
+Build both Windows x64 installers and portable executables with `npm run dist:win`:
+
+- `release/Batch Watermarker Setup 1.1.0.exe` — installer
+- `release/Batch Watermarker 1.1.0.exe` — portable app
+
+For an end-to-end smoke test after `npm run build`, run:
+
+```powershell
+node scripts/verify-transparent-editor.cjs <folder-containing-playwright>
+# Optional final argument: absolute path to release/win-unpacked/Batch Watermarker.exe
+```
+
+The smoke test uses synthetic score fixtures and the real renderer → IPC → worker → PDF pipeline. It replaces only file-picker responses and writes screenshots, sample PDFs, and a JSON report under `tmp/transparent-qa` (or `tmp/transparent-packaged-qa`).
 
 ## Tech Stack
 
