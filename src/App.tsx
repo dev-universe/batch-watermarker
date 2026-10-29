@@ -6,7 +6,7 @@ export default function App() {
   const [tab, setTab] = useState<"watermark" | "transparent">("watermark");
   return <div className="app-workspace">
     <header className="workspace-header">
-      <span className="workspace-brand">Batch Watermarker <small>1.1</small></span>
+      <span className="workspace-brand">Batch Watermarker <small>1.2</small></span>
       <nav className="workspace-tabs" role="tablist" aria-label="편집 도구">
         <button id="watermark-tab" role="tab" aria-selected={tab === "watermark"} aria-controls="watermark-workspace" onClick={() => setTab("watermark")}>워터마크 편집</button>
         <button id="transparent-tab" role="tab" aria-selected={tab === "transparent"} aria-controls="transparent-workspace" onClick={() => setTab("transparent")}>투명 이미지 편집</button>

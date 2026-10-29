@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createCanvas } from "@napi-rs/canvas";
-import { PDFDict, PDFDocument, PDFName, PDFRawStream, decodePDFRawStream, degrees, rgb } from "pdf-lib";
+import { PDFDict, PDFDocument, PDFName, PDFRawStream, degrees, rgb } from "pdf-lib";
+import { readLosslessImageRgb } from "./testUtils/pdfImagePixels";
 import sharp from "sharp";
 import { PDF_RASTER_DPI, rasterizePdf } from "./rasterizePdf";
 
@@ -56,7 +57,7 @@ describe("rasterizePdf", () => {
       try {
         await inputPage.render({ canvas: canvas as unknown as HTMLCanvasElement, viewport, background: "rgb(255,255,255)" }).promise;
         const expectedRgb = await sharp(await canvas.encode("png")).removeAlpha().raw().toBuffer();
-        const actualRgb = Buffer.from(decodePDFRawStream(image).decode());
+        const actualRgb = readLosslessImageRgb(image);
         expect(actualRgb.equals(expectedRgb)).toBe(true);
       } finally {
         canvas.width = canvas.height = 1;
@@ -90,5 +91,17 @@ describe("rasterizePdf", () => {
 
   it("rejects invalid input instead of returning a partially rendered PDF", async () => {
     await expect(rasterizePdf(new Uint8Array([1, 2, 3]))).rejects.toThrow();
+  });
+  it.each([["quality", 450], ["distribution", 300]] as const)("renders %s at the chosen resolution", async (profile, dpi) => {
+    const input = await PDFDocument.create();
+    input.addPage([72, 36]).drawText("Sharp music", { x: 2, y: 16, size: 8 });
+    const result = await PDFDocument.load(await rasterizePdf(await input.save(), profile));
+    const page = result.getPage(0);
+    expect(page.getSize()).toEqual({ width: 72, height: 36 });
+    const images = page.node.Resources()!.lookup(PDFName.of("XObject"), PDFDict);
+    const image = images.lookup(images.keys()[0]);
+    if (!(image instanceof PDFRawStream)) throw new Error("Expected image stream");
+    expect(image.dict.get(PDFName.of("Width"))?.toString()).toBe(String(dpi));
+    expect(image.dict.get(PDFName.of("Height"))?.toString()).toBe(String(dpi / 2));
   });
 });

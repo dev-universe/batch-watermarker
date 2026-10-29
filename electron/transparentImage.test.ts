@@ -3,7 +3,8 @@ import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import sharp from "sharp";
-import { decodePDFRawStream, PDFDict, PDFDocument, PDFName, PDFRawStream } from "pdf-lib";
+import { PDFDict, PDFDocument, PDFName, PDFRawStream } from "pdf-lib";
+import { readLosslessImageRgb } from "./testUtils/pdfImagePixels";
 import { importImages, inspectImage, normalizeSvg } from "./transparentImageAssets";
 import { composeTransparentPage } from "./transparentImageComposition";
 import { commitNewPdf, exportTransparentGroups, sanitizeGroupFilename } from "./transparentImageExport";
@@ -125,7 +126,7 @@ describe("group PDF export", () => {
       if (!index) {
         const { png } = await composeTransparentPage({ page: page(), background: project.background, watermarks: project.watermarks });
         const expected = await sharp(png).removeAlpha().raw().toBuffer();
-        expect(Buffer.from(decodePDFRawStream(image).decode())).toEqual(expected);
+        expect(readLosslessImageRgb(image)).toEqual(expected);
       }
     }
     expect(await fs.readFile(source.path)).toEqual(original);
@@ -160,5 +161,18 @@ describe("group PDF export", () => {
     const result = await exportTransparentGroups({ jobId: "empty", project, outputDirectory: directory });
     expect(result.errors).toEqual([]); expect(result.results).toHaveLength(1);
     await expect(exportTransparentGroups({ jobId: "empty", project: { ...project, groups: [empty] }, outputDirectory: directory })).rejects.toThrow("입력 이미지");
+  });
+  it.each([["quality", 450, 225], ["distribution", 300, 150]] as const)("exports %s with the chosen DPI without changing page size", async (profile, width, height) => {
+    const project: TransparentProject = { groups: [{ id: profile, name: profile, pages: [page()] }], background: null, watermarks: [] };
+    const result = await exportTransparentGroups({ jobId: profile, project, outputDirectory: directory, pdfExportProfile: profile });
+    expect(result.errors).toEqual([]);
+    const pdf = await PDFDocument.load(await fs.readFile(result.results[0].outputPath));
+    expect(pdf.getPage(0).getSize()).toEqual({ width: 72, height: 36 });
+    const objects = pdf.getPage(0).node.Resources()!.lookup(PDFName.of("XObject"), PDFDict);
+    const image = objects.lookup(objects.keys()[0]);
+    if (!(image instanceof PDFRawStream)) throw new Error("Expected image");
+    expect(image.dict.get(PDFName.of("Width"))?.toString()).toBe(String(width));
+    expect(image.dict.get(PDFName.of("Height"))?.toString()).toBe(String(height));
+    expect(image.dict.get(PDFName.of("SMask"))).toBeUndefined();
   });
 });

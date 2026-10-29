@@ -75,7 +75,7 @@ export const processPdfFile = async (
 
   const watermarkedBytes = await pdf.save();
   const outputBytes = request.rasterizePdf
-    ? await rasterizePdfInWorker(watermarkedBytes)
+    ? await rasterizePdfInWorker(watermarkedBytes, request.pdfExportProfile)
     : watermarkedBytes;
   await writeOutputBufferSafely(outputPaths, outputBytes);
   return outputPaths.finalOutputPath;

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type DragEvent } from "react";
 import { useTransparentProject } from "./useTransparentProject";
 import type { ImageAsset, ImageBackground, ImageGroup, ImageImportResult, TransparentExportResponse, TransparentWatermark } from "../shared/transparentImageTypes";
 import { DEFAULT_IMAGE_WATERMARK_SETTINGS, DEFAULT_PAGE_TRANSFORM, naturalSortAssets, resolveGroupComposition } from "../shared/transparentImageState";
+import { getPdfExportProfile, type PdfExportProfileId } from "../shared/pdfExportProfiles";
 
 export function useTransparentEditor() {
   const history = useTransparentProject();
@@ -10,6 +11,7 @@ export function useTransparentEditor() {
   const [pageId, setPageId] = useState("");
   const [selection, setSelection] = useState("source");
   const [outputDirectory, setOutputDirectory] = useState("");
+  const [pdfExportProfile, setPdfExportProfile] = useState<PdfExportProfileId>("original");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -94,9 +96,10 @@ export function useTransparentEditor() {
       setOutputDirectory(directory);
     }
     setBusy(true); setLastResult(null); activeJob.current = crypto.randomUUID();
-    setStatus("600 DPI PDF 생성을 시작합니다.");
+    const profile = getPdfExportProfile(pdfExportProfile);
+    setStatus(`${profile.label} · ${profile.dpi} DPI PDF 생성을 시작합니다.`);
     try {
-      const result = await window.transparentImageApi.exportGroups({ jobId: activeJob.current, project, outputDirectory: directory });
+      const result = await window.transparentImageApi.exportGroups({ jobId: activeJob.current, project, outputDirectory: directory, pdfExportProfile });
       setLastResult(result);
       setStatus(`PDF ${result.results.length}개 저장 완료${result.errors.length ? ` · 오류 ${result.errors.length}개` : ""}`);
     } catch (error) { setStatus(error instanceof Error ? error.message : String(error)); }
@@ -104,5 +107,5 @@ export function useTransparentEditor() {
   };
 
   return { ...history, group, page, resolved, groupId, setGroupId, pageId, setPageId, selection, setSelection,
-    outputDirectory, status, busy, importing, lastResult, addGroup, updateGroup, updateBackground, updateWatermarks, importFiles, dropFiles, pickOutput, exportGroups };
+    outputDirectory, pdfExportProfile, setPdfExportProfile, status, busy, importing, lastResult, addGroup, updateGroup, updateBackground, updateWatermarks, importFiles, dropFiles, pickOutput, exportGroups };
 }

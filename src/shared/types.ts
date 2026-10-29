@@ -1,3 +1,5 @@
+import type { PdfExportProfileId } from "./pdfExportProfiles";
+
 export type AnchorPosition =
   | "NW"
   | "N"
@@ -53,6 +55,7 @@ export interface ProcessRequest {
   watermarkLayers: WatermarkLayer[];
   settings: WatermarkSettings;
   rasterizePdf?: boolean;
+  pdfExportProfile?: PdfExportProfileId;
 }
 
 export interface ProcessResult {

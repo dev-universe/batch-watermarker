@@ -1,5 +1,7 @@
 import type { ChangeEvent } from "react";
 import type { ProcessResponse, WatermarkSettings } from "../shared/types";
+import type { PdfExportProfileId } from "../shared/pdfExportProfiles";
+import { PdfExportOptions } from "./PdfExportOptions";
 
 interface OutputPanelProps {
   settings: WatermarkSettings;
@@ -7,6 +9,8 @@ interface OutputPanelProps {
   isProcessing: boolean;
   rasterizePdf: boolean;
   onRasterizePdfChange: (checked: boolean) => void;
+  pdfExportProfile: PdfExportProfileId;
+  onPdfExportProfileChange: (value: PdfExportProfileId) => void;
   statusMessage: string;
   lastResult: ProcessResponse | null;
   onOpenOutputFolderPicker: () => void;
@@ -22,6 +26,8 @@ export function OutputPanel({
   isProcessing,
   rasterizePdf,
   onRasterizePdfChange,
+  pdfExportProfile,
+  onPdfExportProfileChange,
   statusMessage,
   lastResult,
   onOpenOutputFolderPicker,
@@ -69,9 +75,10 @@ export function OutputPanel({
         <span>PDF의 경우 이미지 형식으로 변환 후 PDF로 저장</span>
       </label>
       <p id="pdf-raster-description" className="subtle pdf-raster-description">
-        600 DPI · 무손실 압축. 워터마크까지 하나의 이미지로 합쳐 텍스트 선택과 개별 요소 추출을 막습니다.
+        워터마크까지 페이지마다 하나의 이미지로 합칩니다. 텍스트 인식에는 OCR이 필요합니다.
         확대 시 벡터와 차이가 있으며, 파일 크기와 처리 시간이 늘어납니다.
       </p>
+      {rasterizePdf && <PdfExportOptions value={pdfExportProfile} onChange={onPdfExportProfileChange} disabled={isProcessing} />}
       <p className="status">{statusMessage}</p>
       {lastResult && (
         <div className="result-list">

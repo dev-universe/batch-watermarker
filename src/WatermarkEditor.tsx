@@ -101,6 +101,8 @@ function WatermarkEditor({ active }: { active: boolean }) {
     isProcessing,
     rasterizePdf,
     setRasterizePdf,
+    pdfExportProfile,
+    setPdfExportProfile,
     statusMessage,
     lastResult,
     startProcessing
@@ -328,6 +330,8 @@ function WatermarkEditor({ active }: { active: boolean }) {
     isProcessing,
     rasterizePdf,
     onRasterizePdfChange: setRasterizePdf,
+    pdfExportProfile,
+    onPdfExportProfileChange: setPdfExportProfile,
     statusMessage,
     lastResult,
     onOpenOutputFolderPicker: openOutputFolderPicker,

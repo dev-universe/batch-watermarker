@@ -1,11 +1,12 @@
 import path from "node:path";
 import { Worker } from "node:worker_threads";
+import type { PdfExportProfileId } from "../src/shared/pdfExportProfiles";
 
-export const rasterizePdfInWorker = (bytes: Uint8Array): Promise<Uint8Array> =>
+export const rasterizePdfInWorker = (bytes: Uint8Array, profileId?: PdfExportProfileId): Promise<Uint8Array> =>
   new Promise((resolve, reject) => {
     // Rendering and PNG encoding must not block Electron's main event loop.
     const worker = new Worker(path.join(__dirname, "rasterizePdfWorker.js"), {
-      workerData: bytes
+      workerData: { bytes, profileId }
     });
     let receivedResult = false;
     worker.once("message", (result: { bytes?: Uint8Array; error?: string }) => {
