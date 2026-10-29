@@ -20,6 +20,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.100",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^5.6.205",
     "react": "^19.2.5",

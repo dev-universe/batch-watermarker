@@ -52,6 +52,7 @@ export interface ProcessRequest {
   inputFiles: InputFile[];
   watermarkLayers: WatermarkLayer[];
   settings: WatermarkSettings;
+  rasterizePdf?: boolean;
 }
 
 export interface ProcessResult {
