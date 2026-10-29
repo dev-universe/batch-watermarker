@@ -1,6 +1,6 @@
 {
   "name": "pdf-watermark",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Batch PDF/image watermark desktop app",
   "main": "dist-electron/electron/main.js",
   "scripts": {
@@ -70,7 +70,10 @@
     },
     "win": {
       "icon": "build/icon.ico",
-      "target": ["nsis", "portable"]
+      "target": [
+        "nsis",
+        "portable"
+      ]
     },
     "nsis": {
       "artifactName": "Batch Watermarker Setup ${version}.${ext}"

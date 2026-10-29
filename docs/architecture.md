@@ -8,8 +8,16 @@
 - `useImageTransformInteraction` reuses shared watermark geometry for move/resize/rotate. Page source transforms are converted into the same normalized geometry used by the overlay controls.
 - The transparent-image IPC API is separate from the existing watermark API. SVG inspection resolves physical sizes and canonicalizes the viewport before native rasterization; raw SVG markup is never inserted into the renderer DOM.
 - Preview and export call the same Sharp compositor, at different resolutions. Each runs off the main thread; superseded preview requests are terminated and stale renderer responses are ignored.
-- Export processes groups and pages sequentially. A fresh PDF contains one opaque, lossless 600 DPI image per page. Completed temporary PDFs are published with an exclusive hard link in the output directory, preventing overwrites even when names collide concurrently. A failed page discards its group and other groups continue.
+- Export processes groups and pages sequentially. A fresh PDF contains one opaque image per page at the selected profile's resolution (600 DPI lossless by default). Completed temporary PDFs are published with an exclusive hard link in the output directory, preventing overwrites even when names collide concurrently. A failed page discards its group and other groups continue.
 - `scripts/verify-transparent-editor.cjs` drives both development Electron and the packaged EXE through the real IPC/worker/export path using synthetic fixtures.
+
+## PDF image encoding
+
+- Shared profile definitions own IDs, labels, DPI, and JPEG quality. Each editor stores its own export profile separately from editable page/layer history; missing API profile IDs default to original for compatibility, and unknown IDs fail explicitly.
+- `pdfPageImage` serves grouped SVG export and the legacy PDF rasterization worker. It compares plain RGB Deflate at levels 6/9 with native PNG adaptive filtering and writes the smallest lossless stream as a PDF image, including PNG predictor parameters when needed. It preserves opaque RGB pixels exactly.
+- Quality/distribution profiles rasterize at 450/300 DPI and compare lossless encoding with JPEG quality 95/90 using 4:4:4 sampling. The smaller image stream is selected; simple notation can remain lossless.
+- The encoder registers a single image XObject and draws it on a new PDF page. No source vectors, text, attachments, annotations, or individual watermark layers are retained. Physical page dimensions stay independent of raster resolution.
+- Tests independently reverse PNG row predictors and compare exact RGB bytes. PDF.js rendering also verifies the predictor stream's colours and orientation. The benchmark compares actual PDFs for a synthetic five-page textured score against the previous encoder.
 
 This document records the current module boundaries and refactoring rules for
 Batch Watermarker. Keep it short and update it when responsibility boundaries

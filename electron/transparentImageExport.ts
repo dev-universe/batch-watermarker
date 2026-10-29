@@ -6,6 +6,8 @@ import type { TransparentExportProgress, TransparentExportRequest, TransparentEx
 import { resolveGroupComposition } from "../src/shared/transparentImageState";
 import { composeTransparentPage } from "./transparentImageComposition";
 import { inspectImage } from "./transparentImageAssets";
+import { getPdfExportProfile } from "../src/shared/pdfExportProfiles";
+import { drawPageImage } from "./pdfPageImage";
 
 export const sanitizeGroupFilename = (name: string) => {
   const clean = name.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_").replace(/[. ]+$/g, "").trim().slice(0, 120).replace(/[. ]+$/g, "") || "그룹";
@@ -25,6 +27,7 @@ export async function commitNewPdf(tempPath: string, directory: string, groupNam
 }
 
 export async function exportTransparentGroups(request: TransparentExportRequest, onProgress: (progress: TransparentExportProgress) => void = () => {}): Promise<TransparentExportResponse> {
+  const profile = getPdfExportProfile(request.pdfExportProfile);
   if (!request.outputDirectory || !path.isAbsolute(request.outputDirectory)) throw new Error("출력 폴더를 선택해 주세요.");
   const stat = await fs.stat(request.outputDirectory);
   if (!stat.isDirectory()) throw new Error("출력 경로가 폴더가 아닙니다.");
@@ -46,10 +49,9 @@ export async function exportTransparentGroups(request: TransparentExportRequest,
       for (const page of group.pages) {
         onProgress({ jobId: request.jobId, groupName: group.name, completedPages, totalPages });
         const actualPage = { ...page, asset: await inspectImage(page.asset.path) };
-        const { png } = await composeTransparentPage({ page: actualPage, background, watermarks });
-        const image = await pdf.embedPng(png);
+        const { png } = await composeTransparentPage({ page: actualPage, background, watermarks }, { dpi: profile.dpi });
         const outputPage = pdf.addPage([actualPage.asset.widthPt, actualPage.asset.heightPt]);
-        outputPage.drawImage(image, { x: 0, y: 0, width: actualPage.asset.widthPt, height: actualPage.asset.heightPt });
+        await drawPageImage(pdf, outputPage, png, profile.id);
         completedPages++;
       }
       await fs.writeFile(tempPath, await pdf.save(), { flag: "wx" });

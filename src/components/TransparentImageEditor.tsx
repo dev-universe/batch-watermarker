@@ -8,6 +8,8 @@ import type { WatermarkSettings } from "../shared/types";
 import { getWatermarkBaseSize, getWatermarkCenterPoint, type ResizeHandle } from "../shared/watermarkGeometry";
 import { ImageTransformControls } from "./ImageTransformControls";
 import { ImageGroupsPanel } from "./ImageGroupsPanel";
+import { PdfExportOptions } from "./PdfExportOptions";
+import { getPdfExportProfile } from "../shared/pdfExportProfiles";
 
 const handles: ResizeHandle[] = ["nw", "ne", "se", "sw"];
 
@@ -120,8 +122,9 @@ export function TransparentImageEditor({ active }: { active: boolean }) {
         </section>}
       </fieldset>
       <section className="panel ti-export-panel">
-        <div className="panel-head"><h2>PDF 내보내기</h2><span className="ti-badge">600 DPI</span></div>
-        <p className="subtle">원본 페이지 크기 · 무손실 이미지형 PDF</p>
+        <div className="panel-head"><h2>PDF 내보내기</h2><span className="ti-badge">{getPdfExportProfile(editor.pdfExportProfile).dpi} DPI</span></div>
+        <p className="subtle">원본 페이지 크기를 유지하는 이미지형 PDF</p>
+        <PdfExportOptions value={editor.pdfExportProfile} onChange={editor.setPdfExportProfile} disabled={busy || importing} />
         <button disabled={busy || importing} onClick={() => void editor.pickOutput()}>저장 폴더 선택</button>
         <p className="ti-output-path">{editor.outputDirectory || "내보낼 때 저장 폴더를 선택합니다."}</p>
         <button className="ti-primary" disabled={busy || importing || !project.groups.some(group => group.pages.length)} onClick={() => void editor.exportGroups()}>{busy ? "PDF 생성 중…" : importing ? "이미지 불러오는 중…" : `그룹별 PDF 저장 (${project.groups.filter(group => group.pages.length).length}개)`}</button>

@@ -91,6 +91,10 @@ select { font: inherit; border: 1px solid var(--color-border); background: white
 .ti-transform-controls input[type="range"] { width: 100%; }
 .ti-inline-check { display: flex !important; flex-direction: row; align-items: center; }
 .ti-badge { font-size: 10px; font-weight: 700; color: var(--color-accent); padding: 5px 8px; background: var(--color-accent-soft); border-radius: 20px; }
+.pdf-export-options { display: grid; gap: 8px; margin: 14px 0; min-width: 0; }
+.pdf-export-options > label { font-size: 12px; font-weight: 600; }
+.pdf-export-options select { width: 100%; min-width: 0; padding: 10px; }
+.pdf-export-options .subtle { margin: 0; font-size: 12px; line-height: 1.6; }
 .ti-output-path { font-size: 11px; color: var(--color-text-muted); overflow-wrap: anywhere; line-height: 1.6; }
 .ti-primary { width: 100%; color: white; background: var(--color-accent); padding: 12px !important; font-weight: 650; }
 .ti-primary:hover:not(:disabled) { background: #1d4ed8; }

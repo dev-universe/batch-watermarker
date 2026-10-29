@@ -10,11 +10,11 @@ Desktop app for batch-applying image watermarks to PDF and image files on macOS 
 - Preview image and PDF files before processing
 - Batch output to a selected folder, save beside the source files, or overwrite originals
 - Preserve image DPI metadata when exporting supported image formats
-- Optionally flatten watermarked PDFs to image-only PDFs (600 DPI, lossless compression)
+- Optionally flatten watermarked PDFs to image-only PDFs with selectable compression profiles
 - Compose grouped transparent SVG/image pages with a background and multiple watermark images
-- Export each group as a separate 600 DPI lossless, image-only PDF
+- Export each group as a separate image-only PDF, with 600 DPI lossless output by default
 
-## Transparent Image Editor (1.1)
+## Transparent Image Editor
 
 Open the **투명 이미지 편집** tab to assemble SVG or image pages into grouped PDFs.
 
@@ -24,16 +24,30 @@ Open the **투명 이미지 편집** tab to assemble SVG or image pages into gro
 4. Add any number of watermark images. Every visible watermark is applied to every page, in layer-list order; the last layer is on top. Edit position, width/height, opacity, rotation, visibility, lock, and order independently.
 5. Background and watermark settings default to **전체 공통**. Select **이 그룹만** to copy the current setting into an independent group override. Returning to common resumes following the shared setting. Removing a local background does not remove other groups' backgrounds.
 6. Select an input image to change its scale, margin in mm, position, or rotation. Page size stays fixed. Select an image first, then drag to move, use corner handles to resize, or use the top circle to rotate. Shift snaps rotation to 15 degrees. Arrow keys nudge by 1 document pixel, Shift + arrow keys by 10. Ctrl/Cmd + Z and redo apply to the active tab.
-7. Select an output folder and choose **그룹별 PDF 저장**. Existing files are never overwritten: duplicate names get `(2)`, `(3)`, etc. Empty groups are skipped.
+7. Choose a PDF save profile, select an output folder, and choose **그룹별 PDF 저장**. Existing files are never overwritten: duplicate names get `(2)`, `(3)`, etc. Empty groups are skipped.
 
 SVG physical units retain their printed size. Pixel/unitless dimensions and a viewBox-only size use 96 PPI; raster images use valid density metadata or 96 PPI. A group can contain differently sized pages. The composition order is white, background, input image, then watermark layers. SVG scripts and external image/style references are rejected; include external images in the SVG and use installed fonts or outlined text for portable rendering.
 
-Output embeds one opaque, lossless 600 DPI image per page. It preserves the displayed result rather than editable SVG objects. Oversized pages fail explicitly instead of silently reducing quality. If any page fails, that group's incomplete PDF is discarded and other groups continue. Input files are never modified. Tab contents and independent undo histories survive tab switching within the session; projects are not saved between app launches.
+Output embeds one opaque image per page using the selected save profile. It preserves the displayed result rather than editable SVG objects. Oversized pages fail explicitly instead of silently reducing quality. If any page fails, that group's incomplete PDF is discarded and other groups continue. Input files are never modified. Tab contents and independent undo histories survive tab switching within the session; projects are not saved between app launches.
+
+### PDF Save Profiles (1.2)
+
+Both the transparent editor and the existing editor's image-only PDF option offer:
+
+| Save option | Resolution | Encoding |
+| --- | --- | --- |
+| **원본 보존** (default) | 600 DPI | Lossless; exact same RGB pixels as the previous 600 DPI output |
+| **고화질·작은 용량** | 450 DPI | JPEG quality 95, or lossless when that produces a smaller image |
+| **배포용** | 300 DPI | JPEG quality 90, or lossless when that produces a smaller image |
+
+Lossless export compares unfiltered RGB compression at levels 6/9 against adaptive PNG row filtering and preserves the smaller compressed stream directly in the PDF. It does not quantize colours or change pixels. JPEG profiles retain full 4:4:4 colour sampling but are lossy; compare fine notation at your intended viewing/printing size. File savings depend on the page content and background; a simple flat-colour score may use lossless compression even in the smaller-file profiles.
+
+Every profile preserves physical page dimensions and flattens the score, background, and all visible watermarks into one image. Selecting a profile changes only future exports. Each tab retains its own selected profile for the session. The normal vector-preserving PDF workflow and standalone image exports do not use these profiles.
 
 Build both Windows x64 installers and portable executables with `npm run dist:win`:
 
-- `release/Batch Watermarker Setup 1.1.0.exe` — installer
-- `release/Batch Watermarker 1.1.0.exe` — portable app
+- `release/Batch Watermarker Setup 1.2.0.exe` — installer
+- `release/Batch Watermarker 1.2.0.exe` — portable app
 
 For an end-to-end smoke test after `npm run build`, run:
 
@@ -42,7 +56,15 @@ node scripts/verify-transparent-editor.cjs <folder-containing-playwright>
 # Optional final argument: absolute path to release/win-unpacked/Batch Watermarker.exe
 ```
 
-The smoke test uses synthetic score fixtures and the real renderer → IPC → worker → PDF pipeline. It replaces only file-picker responses and writes screenshots, sample PDFs, and a JSON report under `tmp/transparent-qa` (or `tmp/transparent-packaged-qa`).
+The smoke test uses synthetic score fixtures and the real renderer → IPC → worker → PDF pipeline. It tests all three save profiles, their resolutions and page counts, and each tab's independent profile selection. It replaces only file-picker responses and writes screenshots, sample PDFs, and a JSON report under `tmp/transparent-qa` (or `tmp/transparent-packaged-qa`).
+
+To compare the previous encoder with all profiles using a synthetic five-page score and textured background:
+
+```powershell
+node scripts/benchmark-pdf-profiles.cjs
+```
+
+Reports and comparison PDFs are written under `tmp/compression-qa/`. The benchmark verifies that original mode retains every 600 DPI pixel and does not modify the input SVGs.
 
 ## Tech Stack
 
@@ -85,8 +107,8 @@ creates a fresh PDF with one flattened image per page. Text, vectors, forms,
 attachments, and separate watermark objects are not copied. Text recognition
 requires OCR; the page image can still be extracted or edited as an image.
 Pages retain their displayed physical size and orientation. Rendering uses
-600 DPI with lossless PNG compression, but rasterization cannot retain the
-unlimited zoom quality of vectors. Files and processing time can grow substantially.
+the selected save profile (600 DPI lossless by default), but rasterization cannot
+retain the unlimited zoom quality of vectors. Files and processing time depend on the profile and page content.
 Oversized pages fail explicitly rather than exporting at a reduced resolution.
 The option defaults to off and does not change image-file processing.
 

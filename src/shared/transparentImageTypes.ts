@@ -1,4 +1,5 @@
 import type { WatermarkSettings } from "./types";
+import type { PdfExportProfileId } from "./pdfExportProfiles";
 
 export interface ImageAsset {
   path: string;
@@ -67,6 +68,7 @@ export interface TransparentExportRequest {
   jobId: string;
   project: TransparentProject;
   outputDirectory: string;
+  pdfExportProfile?: PdfExportProfileId;
 }
 
 export interface TransparentExportProgress {
