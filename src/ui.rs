@@ -297,31 +297,40 @@ impl Workbench {
     }
     fn undo(&mut self) {
         self.commit_gesture();
+        let profile = self.batch.profile;
         if self.tab == 0 {
             self.batch_history.undo(&mut self.batch)
         } else {
             self.project_history.undo(&mut self.project)
         }
+        self.batch.profile = profile;
         self.selected = None;
         self.source_selected = false;
         self.history_travel = true;
     }
     fn redo(&mut self) {
         self.commit_gesture();
+        let profile = self.batch.profile;
         if self.tab == 0 {
             self.batch_history.redo(&mut self.batch)
         } else {
             self.project_history.redo(&mut self.project)
         }
+        self.batch.profile = profile;
         self.selected = None;
         self.source_selected = false;
         self.history_travel = true;
     }
     fn commit_gesture(&mut self) {
         if let Some((batch, project)) = self.gesture.take() {
-            self.batch_history.record(batch, &self.batch);
+            self.record_batch(batch);
             self.project_history.record(project, &self.project);
         }
+    }
+    fn record_batch(&mut self, mut before: Batch) {
+        // Save profiles configure future exports and are independent of editing history.
+        before.profile = self.batch.profile;
+        self.batch_history.record(before, &self.batch);
     }
     fn clamp_selection(&mut self) {
         self.group = self.group.min(self.project.groups.len().saturating_sub(1));
@@ -1122,7 +1131,7 @@ impl Workbench {
             && let Some(drag) = self.drag.take()
         {
             if self.tab == 0 {
-                self.batch_history.record(drag.before_batch, &self.batch);
+                self.record_batch(drag.before_batch);
             } else {
                 self.project_history
                     .record(drag.before_project, &self.project);
@@ -1333,7 +1342,7 @@ impl Workbench {
                 self.gesture = Some((before_batch, before_project));
             }
             if !ongoing && let Some((batch, project)) = self.gesture.take() {
-                self.batch_history.record(batch, &self.batch);
+                self.record_batch(batch);
                 self.project_history.record(project, &self.project);
             }
         }
@@ -1522,7 +1531,18 @@ mod tests {
         let ctx = egui::Context::default();
         let mut app = Workbench::from_context(&ctx);
         frame(&mut app, &ctx, vec![]);
+        let before = app.batch.clone();
+        app.batch.suffix = "_changed".into();
+        app.record_batch(before);
+        let before = app.batch.clone();
         app.batch.profile = Profile::Quality;
+        app.record_batch(before);
+        app.undo();
+        assert_eq!(app.batch.suffix, "_watermarked");
+        assert_eq!(app.batch.profile, Profile::Quality);
+        app.redo();
+        assert_eq!(app.batch.suffix, "_changed");
+        assert_eq!(app.batch.profile, Profile::Quality);
         app.tab = 1;
         app.group_profile = Profile::Distribution;
         frame(&mut app, &ctx, vec![]);
