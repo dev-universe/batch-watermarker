@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.0.0 — 2026-11-05
+
+- Ported both desktop editors and the complete processing pipeline to Rust.
+- Replaced Electron/React/TypeScript, Sharp, PDF.js, and pdf-lib with egui,
+  tiny-skia, image/resvg, Hayro, and lopdf. No JavaScript runtime ships.
+- Preserved layers, direct manipulation, independent undo/redo, grouped pages,
+  shared/local backgrounds and watermarks, DPI, and three PDF profiles.
+- Correctly maps watermark placement through PDF crop/rotation transforms while
+  retaining original content and inherited resources in vector-preserving mode.
+- Added bounded decode/transform caches, cached PDF preview bases, a sleeping
+  preview worker with request coalescing, and fewer full-image copies.
+- Added a CLI for inspect, preview, JSON batches, and grouped project exports.
+- Hardened atomic output publication, overwrite preflight, cancellation, and
+  group-name collision handling. SVG inputs in the normal editor export as PNG.
+- Added 34 engine, CLI, native pointer, and GUI-state regression tests and a
+  reproducible A4 benchmark. See docs/rust-validation.md for measured results.
+- Added Windows/macOS/Linux CI, native Windows installer/portable packaging,
+  Apple Silicon/Intel Mac packages, and checksum-verified release publishing.
+
 ## 1.3.0 — 2026-11-05
 
 - Preserved the 1.2.0 transparent-image editor and PDF compression profiles.

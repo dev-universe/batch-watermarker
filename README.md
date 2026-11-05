@@ -1,259 +1,91 @@
 # Batch Watermarker
 
-Desktop app for batch-applying image watermarks to PDF and image files on macOS and Windows.
+Native Rust desktop workbench for batch watermarking PDFs and images on Windows and macOS. Both editors, preview rendering, compositing, PDF processing, image codecs, and the CLI are implemented in Rust. The application ships without Electron, Node.js, a browser, PDFium, Sharp, or JavaScript.
 
-## Features
+## Download
 
-- Drag and drop PDF and image files as inputs
-- Drag and drop a watermark image
-- Adjust watermark opacity, size, rotation, and 9-position placement
-- Preview image and PDF files before processing
-- Batch output to a selected folder, save beside the source files, or overwrite originals
-- Preserve image DPI metadata when exporting supported image formats
-- Optionally flatten watermarked PDFs to image-only PDFs with selectable compression profiles
-- Compose grouped transparent SVG/image pages with a background and multiple watermark images
-- Export each group as a separate image-only PDF, with 600 DPI lossless output by default
+Get packages from [GitHub Releases](https://github.com/dev-universe/batch-watermarker/releases/latest).
 
-## Transparent Image Editor
+- Windows x64: portable ZIP (GUI and CLI) or per-user Setup EXE.
+- macOS Apple Silicon / Intel: DMG (app and CLI) or ZIP (app).
 
-Open the **투명 이미지 편집** tab to assemble SVG or image pages into grouped PDFs.
+Windows packages are unsigned. macOS apps are ad-hoc signed, without Apple notarization. OS distribution warnings can occur. Document processing requires no network connection.
 
-1. Create and name groups. Each nonempty group becomes one PDF named after the group.
-2. Add SVG, PNG, JPEG, WebP, or TIFF files to each group. New selections use natural filename order; use the page buttons to reorder, remove, or move pages between groups.
-3. Optionally add a background. Choose proportional **fill** (cropped to the page) or **fit** (the entire image is visible).
-4. Add any number of watermark images. Every visible watermark is applied to every page, in layer-list order; the last layer is on top. Edit position, width/height, opacity, rotation, visibility, lock, and order independently.
-5. Background and watermark settings default to **전체 공통**. Select **이 그룹만** to copy the current setting into an independent group override. Returning to common resumes following the shared setting. Removing a local background does not remove other groups' backgrounds.
-6. Select an input image to change its scale, margin in mm, position, or rotation. Page size stays fixed. Select an image first, then drag to move, use corner handles to resize, or use the top circle to rotate. Shift snaps rotation to 15 degrees. Arrow keys nudge by 1 document pixel, Shift + arrow keys by 10. Ctrl/Cmd + Z and redo apply to the active tab.
-7. Choose a PDF save profile, select an output folder, and choose **그룹별 PDF 저장**. Existing files are never overwritten: duplicate names get `(2)`, `(3)`, etc. Empty groups are skipped.
+## Watermark editor
 
-SVG physical units retain their printed size. Pixel/unitless dimensions and a viewBox-only size use 96 PPI; raster images use valid density metadata or 96 PPI. A group can contain differently sized pages. The composition order is white, background, input image, then watermark layers. SVG scripts and external image/style references are rejected; include external images in the SVG and use installed fonts or outlined text for portable rendering.
+1. Add PDFs, PNG, JPEG, WebP, TIFF, or SVG images. Drop files into the source or preview area to import them; drop images onto the right settings panel to add watermark layers.
+2. Add watermark images. Adjust visibility, lock, order, name, opacity, size, rotation, and nine placement presets. Duplicate and remove layers independently.
+3. Select a watermark in the preview. Drag to move, use edge/corner handles to resize, or use the round handle to rotate. Ctrl/Cmd + corner drag preserves the box aspect ratio; Shift snaps rotation to 15°. Arrow keys move by one document pixel, Shift + arrow by ten. Escape clears selection.
+4. Choose an output folder and filename suffix. An empty folder saves beside the source. Empty suffix and folder replace the original **after confirmation**. Existing outputs also require confirmation. Duplicate planned outputs and writes over another input are rejected.
+5. Export with original PDF text/vectors, or enable image-only PDF export. Image-only output contains one opaque image per page, without source text, vectors, attachments, or separate watermark objects.
 
-Output embeds one opaque image per page using the selected save profile. It preserves the displayed result rather than editable SVG objects. Oversized pages fail explicitly instead of silently reducing quality. If any page fails, that group's incomplete PDF is discarded and other groups continue. Input files are never modified. Tab contents and independent undo histories survive tab switching within the session; projects are not saved between app launches.
+SVG sources in this editor export as PNG. Raster formats retain their file type; PNG, JPEG, TIFF, and WebP retain DPI. JPEG uses quality 95 and 4:4:4 sampling. PNG/WebP/TIFF retain alpha. PDF crop boxes, rotation, displayed dimensions, inherited resources, and watermark alpha are handled explicitly.
 
-### PDF Save Profiles (1.2)
+Ctrl/Cmd + Z undoes; Ctrl + Y or Ctrl/Cmd + Shift + Z redoes. Slider gestures form one undo entry. Both tabs retain their state, profiles, and independent histories during the session.
 
-Both the transparent editor and the existing editor's image-only PDF option offer:
+## Transparent image editor
 
-| Save option | Resolution | Encoding |
+Create named groups and import SVG or raster pages. Imports use natural filename order; reorder pages or move them between groups. A group may contain different physical page sizes.
+
+Add a proportional fill/fit background and watermark layers. Backgrounds and watermarks follow common settings by default. Enable **이 그룹만** to copy the effective setting into an independent override; disable it to resume inheritance. An empty local background or layer list clears that setting only for the group.
+
+Select the source image to edit scale, margin in mm, position, or rotation. Direct dragging, resizing, rotation, and keyboard nudging retain page size. Composition order is white → background → source → visible watermark layers. Each nonempty group exports to a separate image-only PDF. Existing outputs are never replaced; collisions use (2), (3), etc. A failed page discards its entire group while other groups continue. Cancel stops before publishing the active incomplete file/group.
+
+SVG physical dimensions retain print size. Pixel/unitless and viewBox dimensions use 96 PPI; raster inputs use density metadata or 96 PPI. SVG scripts, event handlers, foreign objects, external images, external CSS URLs, and document/entity declarations are rejected. Embed images and use installed fonts or outlined text. GUI projects remain in memory for the session; CLI project JSON can be saved separately.
+
+## PDF profiles
+
+| Profile | Resolution | Encoding |
 | --- | --- | --- |
-| **원본 보존** (default) | 600 DPI | Lossless; exact same RGB pixels as the previous 600 DPI output |
-| **고화질·작은 용량** | 450 DPI | JPEG quality 95, or lossless when that produces a smaller image |
-| **배포용** | 300 DPI | JPEG quality 90, or lossless when that produces a smaller image |
+| Original / 원본 보존 | 600 DPI | Exact lossless RGB |
+| Quality / 고화질 | 450 DPI | JPEG quality 95 or smaller lossless stream |
+| Distribution / 배포용 | 300 DPI | JPEG quality 90 or smaller lossless stream |
 
-Lossless export compares unfiltered RGB compression at levels 6/9 against adaptive PNG row filtering and preserves the smaller compressed stream directly in the PDF. It does not quantize colours or change pixels. JPEG profiles retain full 4:4:4 colour sampling but are lossy; compare fine notation at your intended viewing/printing size. File savings depend on the page content and background; a simple flat-colour score may use lossless compression even in the smaller-file profiles.
+The encoder compares plain RGB Deflate and adaptive PNG row predictors. JPEG uses 4:4:4 sampling. Profiles preserve physical page dimensions, but lower resolutions and JPEG change raster quality. Pages exceeding 150 million pixels or 32767px on either edge fail explicitly; quality is never silently reduced. Encrypted PDFs are unsupported. Hayro's [renderer limitations](https://docs.rs/hayro/0.9.0/hayro/) apply to unusual PDF features.
 
-Every profile preserves physical page dimensions and flattens the score, background, and all visible watermarks into one image. Selecting a profile changes only future exports. Each tab retains its own selected profile for the session. The normal vector-preserving PDF workflow and standalone image exports do not use these profiles.
+## Build and verify
 
-Build both Windows x64 installers and portable executables with `npm run dist:win`:
+Install [Rust](https://rustup.rs/) (MSVC Build Tools on Windows; Xcode command line tools on macOS). The locked dependencies require Rust 1.92 or newer.
 
-- `release/Batch Watermarker Setup 1.2.0.exe` — installer
-- `release/Batch Watermarker 1.2.0.exe` — portable app
+~~~sh
+cargo run --release
+cargo fmt --all -- --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked --all-targets
+cargo build --release --locked --bins
+~~~
 
-For an end-to-end smoke test after `npm run build`, run:
+Linux development also needs libxkbcommon-dev, libwayland-dev, libxcb-shape0-dev, libxcb-xfixes0-dev, and libegl1-mesa-dev. Linux is tested in CI; published desktop packages target Windows and macOS.
 
-```powershell
-node scripts/verify-transparent-editor.cjs <folder-containing-playwright>
-# Optional final argument: absolute path to release/win-unpacked/Batch Watermarker.exe
-```
+~~~powershell
+# Windows ZIP and NSIS installer (install NSIS or supply -NsisPath)
+./scripts/package-windows.ps1
+~~~
 
-The smoke test uses synthetic score fixtures and the real renderer → IPC → worker → PDF pipeline. It tests all three save profiles, their resolutions and page counts, and each tab's independent profile selection. It replaces only file-picker responses and writes screenshots, sample PDFs, and a JSON report under `tmp/transparent-qa` (or `tmp/transparent-packaged-qa`).
+~~~sh
+# macOS DMG and app ZIP
+cargo build --release --locked --bins --target aarch64-apple-darwin
+bash scripts/package-macos.sh aarch64-apple-darwin
+~~~
 
-To compare the previous encoder with all profiles using a synthetic five-page score and textured background:
+Packages and SHA-256 files are written to release/rust/. CI validates Windows, macOS, and Linux, builds both Mac architectures and Windows x64, and publishes verified assets after a v2.* tag passes the complete workflow.
 
-```powershell
-node scripts/benchmark-pdf-profiles.cjs
-```
+## CLI
 
-Reports and comparison PDFs are written under `tmp/compression-qa/`. The benchmark verifies that original mode retains every 600 DPI pixel and does not modify the input SVGs.
+~~~sh
+watermark-cli watermark input.pdf image.png --watermark logo.png --output exports
+watermark-cli watermark input.pdf --watermark logo.png --flatten --profile distribution
+watermark-cli watermark input.pdf --watermark logo.png --suffix "" --replace
+watermark-cli preview input.pdf preview.png --page 2 --edge 1400
+watermark-cli inspect score.svg
+watermark-cli batch batch.json
+watermark-cli groups project.json --output exports --profile original
+~~~
 
-## Tech Stack
+The CLI prints JSON and exits nonzero on any file error. Replacement requires --replace. Batch and project JSON match the public structures in [src/model.rs](src/model.rs). A null group layers value inherits; [] clears. Group background uses "inherit", null, or a background object. See [architecture](docs/architecture.md), [validation](docs/rust-validation.md), and [release notes](docs/release-2.0.0.md).
 
-- Electron
-- React
-- TypeScript
-- `pdf-lib`
-- `sharp`
-- `pdfjs-dist`
+~~~sh
+cargo run --release --example benchmark -- tmp/rust-benchmark
+~~~
 
-## Requirements
-
-- macOS or Windows
-- Node.js 20+
-
-## Install
-
-```bash
-npm install
-```
-
-## Development
-
-```bash
-npm run dev
-```
-
-## Usage
-
-1. Add one or more PDF or image files.
-2. Add a watermark image.
-3. Adjust opacity, size, rotation, and position.
-4. Optionally choose an output folder.
-5. Set a suffix.
-6. Optionally enable image-only PDF output using the checkbox below the start button.
-7. Start processing.
-
-The checkbox below the start button, `PDF의 경우 이미지 형식으로 변환 후 PDF로 저장`,
-creates a fresh PDF with one flattened image per page. Text, vectors, forms,
-attachments, and separate watermark objects are not copied. Text recognition
-requires OCR; the page image can still be extracted or edited as an image.
-Pages retain their displayed physical size and orientation. Rendering uses
-the selected save profile (600 DPI lossless by default), but rasterization cannot
-retain the unlimited zoom quality of vectors. Files and processing time depend on the profile and page content.
-Oversized pages fail explicitly rather than exporting at a reduced resolution.
-The option defaults to off and does not change image-file processing.
-
-### Direct Manipulation
-
-- Click the watermark in the preview to select it.
-- Drag the watermark to move it. The center snaps near the built-in 3x3 placement points.
-- Drag any edge handle to resize on a single axis.
-- Drag any corner handle to resize both axes.
-- Hold `Cmd` on macOS or `Ctrl` on Windows while dragging a corner handle to keep the current box aspect ratio.
-- Drag the top rotation handle to rotate the watermark directly.
-- Hold `Shift` while rotating to snap rotation to 15-degree steps.
-- Use the arrow keys to nudge the selected watermark by 1 document pixel.
-- Use `Shift + arrow keys` to nudge by 10 document pixels.
-- Press `Esc` to clear the current watermark selection.
-- Undo and redo are supported with:
-  - macOS: `Cmd + Z`, `Shift + Cmd + Z`
-  - Windows: `Ctrl + Z`, `Ctrl + Y`, `Shift + Ctrl + Z`
-
-### Output Rules
-
-- If both `output folder` and `suffix` are empty, the app warns before overwriting the original files.
-- If `output folder` is empty and `suffix` is set, the result is saved next to each source file.
-- If `output folder` is set and `suffix` is empty, the result is saved in the selected output folder with the original filename.
-- If both `output folder` and `suffix` are set, the result is saved in the selected output folder with the suffix.
-- Before processing starts, the app checks for planned output path conflicts and asks for confirmation if conflicts are found.
-
-## Tests
-
-```bash
-npm test
-```
-
-To verify both PDF export modes against a real PDF and watermark after building:
-
-```bash
-npm run build:electron
-node scripts/verify-raster-pdf.cjs input.pdf watermark.png output/pdf
-```
-
-This checks page sizes, image-only structure, text removal, unchanged source bytes,
-and exact rendered RGB pixels at 600 DPI. It writes PDFs, preview images, and a JSON report.
-
-## Project Notes
-
-- Architecture and refactoring boundaries: [docs/architecture.md](/Users/fd2/dev/pdf-watermark/docs/architecture.md)
-- Release validation checklist: [docs/release-stability-check.md](/Users/fd2/dev/pdf-watermark/docs/release-stability-check.md)
-
-## Build For macOS
-
-Create the app bundle without installer packaging:
-
-```bash
-npm run dist -- --dir
-```
-
-The packaged macOS app is created here:
-
-- `release/mac-arm64/Batch Watermarker.app`
-
-Create a zip file for sharing:
-
-```bash
-ditto -c -k --sequesterRsrc --keepParent "release/mac-arm64/Batch Watermarker.app" "release/mac-arm64/Batch Watermarker-mac.zip"
-```
-
-## macOS Distribution Notes
-
-- The current default build uses ad-hoc signing.
-- Without Apple code signing and notarization, Gatekeeper may block the app on another Mac.
-- In that case, the recipient may need to right-click the app and choose `Open`.
-
-### Notarization
-
-If you want a smoother end-user install experience, configure these environment variables before building:
-
-- `APPLE_ID`
-- `APPLE_APP_SPECIFIC_PASSWORD`
-- `APPLE_TEAM_ID`
-
-The notarization hook is already wired through [scripts/notarize.cjs](/Users/fd2/dev/pdf-watermark/scripts/notarize.cjs).
-
-## Release Signing Policy
-
-- Internal testing or personal use can use the current ad-hoc macOS signing flow.
-- Public macOS distribution should use Apple Developer ID signing and notarization.
-- Public Windows distribution should use Windows code signing to reduce SmartScreen warnings.
-- If code signing is not configured, communicate the expected Gatekeeper or SmartScreen warning before sharing the app.
-
-## Windows Build Notes
-
-- Windows packaging is configured through `electron-builder` with the `nsis` target.
-- Build the Windows installer on a Windows machine for the most reliable result.
-
-### Build On Windows
-
-```bash
-npm install
-npm run dist
-```
-
-The default Windows target is `nsis`.
-
-### Validate Before Release
-
-- installer creation succeeds
-- installer launch succeeds
-- app launch succeeds after install
-- input file drag and drop works
-- watermark image drag and drop works
-- file picker and output folder picker work
-- PDF preview works
-- image preview works
-- PDF page navigation works
-- PDF export works
-- image export works
-- suffix output beside the source file works
-- selected output folder export works
-- overwrite warning appears when output folder and suffix are both empty
-- preflight conflict confirmation appears when output paths collide
-- rotated watermark output matches preview
-- output files open normally after export
-
-### Windows Distribution Notes
-
-- Without Windows code signing, SmartScreen warnings are possible on another machine.
-- If you plan to distribute commercially, add Windows code signing before release.
-- Confirm that the generated installer uses the expected icon from `build/icon.ico`.
-- Test at least one clean machine or VM before shipping.
-
-## Packaging Commands
-
-Build the default distributables:
-
-```bash
-npm run dist
-```
-
-Build the unpacked app only:
-
-```bash
-npm run dist -- --dir
-```
-
-## Notes
-
-- Icons are generated from [assets/app-icon.svg](/Users/fd2/dev/pdf-watermark/assets/app-icon.svg) through [scripts/generate-icons.mjs](/Users/fd2/dev/pdf-watermark/scripts/generate-icons.mjs).
-- macOS entitlements are defined in [build/entitlements.mac.plist](/Users/fd2/dev/pdf-watermark/build/entitlements.mac.plist).
+The synthetic A4 benchmark writes comparison PDFs/report.json, verifies cached preview pixels, and exercises group export. Performance depends on the document and machine. [Third-party notices](THIRD_PARTY_NOTICES.md) ship with packages.
