@@ -831,11 +831,14 @@ impl Workbench {
                 if ui
                     .add_enabled(
                         can_export && self.export_rx.is_none(),
-                        egui::Button::new(if self.tab == 0 {
-                            "워터마크 적용 및 저장"
-                        } else {
-                            "그룹별 PDF 저장"
-                        })
+                        egui::Button::new(
+                            egui::RichText::new(if self.tab == 0 {
+                                "워터마크 적용 및 저장"
+                            } else {
+                                "그룹별 PDF 저장"
+                            })
+                            .color(Color32::WHITE),
+                        )
                         .fill(BLUE),
                     )
                     .clicked()

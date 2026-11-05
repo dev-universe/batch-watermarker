@@ -54,6 +54,17 @@ jobs:
           ./scripts/package-windows.ps1 -Target '${{ matrix.target }}'
       - if: runner.os == 'macOS'
         run: bash scripts/package-macos.sh '${{ matrix.target }}'
+      - name: Verify installed Windows CLI
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $installer = (Get-ChildItem release/rust/*-setup.exe).FullName
+          $installDir = Join-Path $env:RUNNER_TEMP 'watermarker-install'
+          $setup = Start-Process -FilePath $installer -ArgumentList '/S', "/D=$installDir" -Wait -PassThru -WindowStyle Hidden
+          if ($setup.ExitCode -ne 0) { throw 'Installer failed.' }
+          $version = (Select-String Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
+          $actual = & (Join-Path $installDir 'watermark-cli.exe') --version
+          if ($LASTEXITCODE -ne 0 -or $actual -ne "batch-watermarker $version") { throw 'Installed CLI version mismatch.' }
       - uses: actions/upload-artifact@v4
         with:
           name: packages-${{ matrix.target }}
