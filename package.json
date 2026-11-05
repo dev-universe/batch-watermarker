@@ -1,6 +1,6 @@
 {
   "name": "pdf-watermark",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Batch PDF/image watermark desktop app",
   "main": "dist-electron/electron/main.js",
   "scripts": {

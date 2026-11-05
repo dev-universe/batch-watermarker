@@ -4,6 +4,7 @@ import {
   type ResizeHandle
 } from "../shared/watermarkGeometry";
 import { getWatermarkLayerStatusLabels } from "../shared/watermarkLayerState";
+import { Icon } from "./Icon";
 
 const RESIZE_HANDLES = ["n", "ne", "e", "se", "s", "sw", "w", "nw"] as const;
 
@@ -148,11 +149,7 @@ export function PreviewPane({
       <div className="preview-sticky">
         <div className="preview-head">
           <div>
-            <p className="eyebrow">Preview</p>
             <h2>{selectedFileName}</h2>
-            <div className="preview-hint">
-              <p>워터마크를 클릭해 선택하고 드래그해 이동할 수 있습니다.</p>
-            </div>
           </div>
           {previewKind === "pdf" && pdfPageCount > 0 && (
             <div className="pdf-pager">
@@ -197,10 +194,20 @@ export function PreviewPane({
                 ref={previewImageRef}
                 className="preview-image"
                 src={previewBaseUrl}
-                alt="Preview"
+                alt={`${selectedFileName} 미리보기`}
                 draggable={false}
                 onLoad={onPreviewImageLoad}
               />
+              <div className="watermark-raster-clip" aria-hidden="true">
+                {watermarkLayers.filter((layer) => layer.visible).map((layer) => (
+                  <div key={layer.id} className="watermark-raster-layer" style={{ ...layer.overlayStyle, zIndex: layer.zIndex }}>
+                    <div className="watermark-transform-box" style={layer.overlayImageStyle}>
+                      <img className="watermark-overlay-image" style={layer.rasterStyle}
+                        src={layer.previewUrl} alt="" draggable={false} />
+                    </div>
+                  </div>
+                ))}
+              </div>
               {watermarkLayers
                 .filter((layer) => layer.visible)
                 .map((layer) => (
@@ -224,13 +231,6 @@ export function PreviewPane({
                   }}
                 >
                   <div className="watermark-transform-box" style={layer.overlayImageStyle}>
-                    <img
-                      className="watermark-overlay-image"
-                      style={layer.rasterStyle}
-                      src={layer.previewUrl}
-                      alt={`${layer.name} watermark preview`}
-                      draggable={false}
-                    />
                     {layer.isActive && (
                       <>
                         <div className="watermark-status-badges">
@@ -279,15 +279,26 @@ export function PreviewPane({
               ))}
             </div>
           ) : (
-            <div className="empty-preview">미리볼 입력 파일을 선택하세요.</div>
+            <div className="empty-preview">
+              <Icon name="layers" />
+              <h2>미리볼 입력 파일을 선택하세요.</h2>
+              <p className="subtle">워터마크를 클릭해 선택하고 드래그해 이동할 수 있습니다.</p>
+            </div>
           )}
         </div>
 
-        <div className="preview-hint">
-          <p>Cmd/Ctrl + 코너 핸들: 현재 비율 유지</p>
-          <p>Shift + 회전 드래그: 15도 단위 스냅</p>
-          <p>방향키: 1px 이동 / Shift + 방향키: 10px 이동</p>
-          <p>Esc: 선택 해제</p>
+        <div className="canvas-footer">
+          <span>{previewKind === "pdf" ? "PDF 미리보기" : previewKind === "image" ? "이미지 미리보기" : "미리보기"}</span>
+          <details className="shortcut-help">
+            <summary>편집 단축키</summary>
+            <div className="preview-hint">
+              <p>워터마크를 클릭해 선택하고 드래그해 이동할 수 있습니다.</p>
+              <p>Cmd/Ctrl + 코너 핸들: 현재 비율 유지</p>
+              <p>Shift + 회전 드래그: 15도 단위 스냅</p>
+              <p>방향키: 1px 이동 / Shift + 방향키: 10px 이동</p>
+              <p>Esc: 선택 해제</p>
+            </div>
+          </details>
         </div>
       </div>
     </main>

@@ -1,0 +1,13 @@
+{
+  "scanned": "2026-11-05",
+  "findings": {
+    "fonts": "System UI stack, src/styles.css:1",
+    "palette": "Neutral slate with stock blue, nested translucent surfaces, src/styles.css:1",
+    "motion": "CSS transitions only, src/styles.css:52",
+    "framework": "Electron 41, React 19, TypeScript 6, Vite 8, package.json",
+    "screen": "Single desktop editor, src/App.tsx",
+    "existingChanges": ["package-lock.json"]
+  },
+  "preserve": ["product identity", "all panel props and handlers", "layer/history/geometry/export behavior", "pre-existing lockfile edits"],
+  "introduce": ["Wayfind material in app scope", "three-region workbench", "shared tokens", "accessible focus and compact controls"]
+}

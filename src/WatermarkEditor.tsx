@@ -1,4 +1,5 @@
 import { useMemo, type CSSProperties } from "react";
+import { Icon } from "./components/Icon";
 import { InputFilesPanel } from "./components/InputFilesPanel";
 import { OutputPanel } from "./components/OutputPanel";
 import { PreviewPane } from "./components/PreviewPane";
@@ -376,22 +377,26 @@ function WatermarkEditor({ active }: { active: boolean }) {
 
   return (
     <div className="shell">
-      <aside className="sidebar">
-        <div className="hero">
-          <h1>Batch Watermarker</h1>
-          <p className="subtle">
-            PDF와 이미지에 워터마크를 추가합니다.
-          </p>
+      <header className="editor-toolbar">
+        <p className="app-description">PDF와 이미지에 워터마크를 추가합니다.</p>
+        <div className="history-actions">
+          <button onClick={undo} title="실행 취소 (Ctrl/Cmd + Z)" aria-label="실행 취소">
+            <Icon name="undo" />
+          </button>
+          <button onClick={redo} title="다시 실행 (Ctrl + Y / Shift + Cmd + Z)" aria-label="다시 실행">
+            <Icon name="redo" />
+          </button>
         </div>
-
+      </header>
+      <aside className="source-rail" aria-label="입력 파일">
         <InputFilesPanel {...inputFilesPanelProps} />
-
+        <p className="source-note">모든 입력 파일에 같은 워터마크를 적용합니다.</p>
+      </aside>
+      <PreviewPane {...previewPaneProps} />
+      <aside className="sidebar" aria-label="워터마크 속성 및 출력">
         <WatermarkPanel {...watermarkPanelProps} />
-
         <OutputPanel {...outputPanelProps} />
       </aside>
-
-      <PreviewPane {...previewPaneProps} />
     </div>
   );
 }

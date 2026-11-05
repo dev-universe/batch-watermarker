@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Icon } from "./components/Icon";
+import { version } from "../package.json";
 import WatermarkEditor from "./WatermarkEditor";
 import { TransparentImageEditor } from "./components/TransparentImageEditor";
 
@@ -6,7 +8,7 @@ export default function App() {
   const [tab, setTab] = useState<"watermark" | "transparent">("watermark");
   return <div className="app-workspace">
     <header className="workspace-header">
-      <span className="workspace-brand">Batch Watermarker <small>1.2</small></span>
+      <div className="app-brand"><Icon name="layers" /><h1>Batch Watermarker</h1><span className="app-version">v{version}</span></div>
       <nav className="workspace-tabs" role="tablist" aria-label="편집 도구">
         <button id="watermark-tab" role="tab" aria-selected={tab === "watermark"} aria-controls="watermark-workspace" onClick={() => setTab("watermark")}>워터마크 편집</button>
         <button id="transparent-tab" role="tab" aria-selected={tab === "transparent"} aria-controls="transparent-workspace" onClick={() => setTab("transparent")}>투명 이미지 편집</button>

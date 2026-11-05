@@ -5,6 +5,7 @@ export default defineConfig({
   base: "./",
   plugins: [react()],
   test: {
+    include: ["src/**/*.test.ts", "electron/**/*.test.ts"],
     exclude: ["dist/**", "dist-electron/**", "release/**", "node_modules/**"]
   },
   server: {

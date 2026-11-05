@@ -56,7 +56,7 @@ const createWindow = async () => {
     height: 980,
     minWidth: 1160,
     minHeight: 760,
-    backgroundColor: "#f3efe7",
+    backgroundColor: "#dfe3e8",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,

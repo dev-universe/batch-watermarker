@@ -150,12 +150,12 @@ async function run() {
     assert.equal(await legacy.getByRole("combobox", { name: "PDF 저장 옵션", exact: true }).count(), 0);
     await legacy.getByRole("checkbox", { name: "PDF의 경우 이미지 형식으로 변환 후 PDF로 저장", exact: true }).check();
     await legacy.getByRole("combobox", { name: "PDF 저장 옵션", exact: true }).selectOption("quality");
-    await legacy.getByRole("button", { name: "파일 선택", exact: true }).click();
+    await legacy.locator(".input-dropzone button").click();
     await page.waitForFunction(() => document.querySelector("#watermark-workspace .file-list")?.textContent.includes("legacy-input.pdf"));
     await legacy.getByRole("button", { name: "이미지 선택", exact: true }).click();
     await page.waitForFunction(() => document.querySelectorAll("#watermark-workspace .layer-row").length === 1);
     await legacy.getByRole("button", { name: "출력 폴더 지정", exact: true }).click();
-    await page.waitForFunction(directory => document.querySelector("#watermark-workspace input[placeholder='원본 덮어쓰기면 비워둘 수 있습니다.']")?.value === directory, legacyOutput);
+    await page.waitForFunction(directory => document.querySelector("#watermark-workspace input[placeholder='비워두면 원본 파일 위치에 저장']")?.value === directory, legacyOutput);
     const legacyProfileReports = [];
     for (const profile of [{ id: "quality", dpi: 450 }, { id: "distribution", dpi: 300 }, { id: "original", dpi: 600 }]) {
       await legacy.getByRole("combobox", { name: "PDF 저장 옵션", exact: true }).selectOption(profile.id);

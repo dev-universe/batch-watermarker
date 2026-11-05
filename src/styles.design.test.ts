@@ -17,13 +17,15 @@ describe("cross-platform pro tool UI CSS", () => {
     expect(css).toContain("--shadow-panel:");
   });
 
-  it("uses a compact inspector sidebar width", () => {
-    expect(css).toContain("grid-template-columns: minmax(360px, 420px) minmax(0, 1fr);");
+  it("keeps source and property rails around a flexible document canvas", () => {
+    expect(css).toContain("grid-template-columns: 240px minmax(0, 1fr) 328px;");
+    expect(css).toContain("grid-template-rows: 52px minmax(0, 1fr);");
+    expect(css).toContain("@media (max-width: 600px)");
   });
 
   it("keeps the sidebar from growing horizontally on long filenames", () => {
-    expect(css).toContain("overflow-x: hidden;");
-    expect(css).toContain(".sidebar {");
+    expect(css).toContain("overflow-x: clip;");
+    expect(css).toContain(".source-rail, .sidebar {");
     expect(css).toContain(".panel {");
     expect(css).toContain("min-width: 0;");
     expect(css).toContain("overflow-wrap: anywhere;");
