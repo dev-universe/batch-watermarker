@@ -1,5 +1,6 @@
 import type { ChangeEvent } from "react";
 import type { ProcessResponse, WatermarkSettings } from "../shared/types";
+import { Icon } from "./Icon";
 
 interface OutputPanelProps {
   settings: WatermarkSettings;
@@ -31,7 +32,7 @@ export function OutputPanel({
   onStartProcessing
 }: OutputPanelProps) {
   return (
-    <section className="panel">
+    <section className="panel output-panel">
       <div className="panel-head">
         <h2>출력</h2>
         <div className="output-actions">
@@ -47,7 +48,7 @@ export function OutputPanel({
           type="text"
           value={settings.outputDirectory}
           onChange={onOutputDirectoryChange}
-          placeholder="원본 덮어쓰기면 비워둘 수 있습니다."
+          placeholder="비워두면 원본 파일 위치에 저장"
         />
       </label>
       <label>
@@ -55,7 +56,8 @@ export function OutputPanel({
         <input type="text" value={settings.suffix} onChange={onSuffixChange} placeholder="_wm" />
       </label>
       <p className="subtle">{outputSummary}</p>
-      <button className="primary" disabled={isProcessing} onClick={onStartProcessing}>
+      <button className="primary" disabled={isProcessing} aria-busy={isProcessing} onClick={onStartProcessing}>
+        <Icon name="export" />
         {isProcessing ? "처리 중..." : "워터마크 적용 시작"}
       </button>
       <label className="pdf-raster-option">
@@ -72,7 +74,7 @@ export function OutputPanel({
         600 DPI · 무손실 압축. 워터마크까지 하나의 이미지로 합쳐 텍스트 선택과 개별 요소 추출을 막습니다.
         확대 시 벡터와 차이가 있으며, 파일 크기와 처리 시간이 늘어납니다.
       </p>
-      <p className="status">{statusMessage}</p>
+      <p className="status" role="status" aria-live="polite">{statusMessage}</p>
       {lastResult && (
         <div className="result-list">
           {lastResult.results.map((result) => (
