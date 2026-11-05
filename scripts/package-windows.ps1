@@ -22,5 +22,5 @@ if (!(Test-Path -LiteralPath $nsisPath)) { throw 'NSIS is required to create the
 if ($LASTEXITCODE -ne 0) { throw 'NSIS installer creation failed.' }
 foreach ($path in @($zip, (Join-Path $outputDir "Batch-Watermarker-$version-windows-x64-setup.exe"))) {
     $hash = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
-    "$hash  $([IO.Path]::GetFileName($path))" | Set-Content -LiteralPath "$path.sha256" -Encoding ascii
+    [IO.File]::WriteAllText("$path.sha256", "$hash  $([IO.Path]::GetFileName($path))`n", [Text.Encoding]::ASCII)
 }

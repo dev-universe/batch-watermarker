@@ -71,9 +71,21 @@ jobs:
           path: release/rust/*
           if-no-files-found: error
           retention-days: 14
+  verify_packages:
+    needs: package
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: packages-*
+          path: release/rust
+          merge-multiple: true
+      - name: Verify checksums across platforms
+        working-directory: release/rust
+        run: sha256sum --check *.sha256
   publish:
     if: startsWith(github.ref, 'refs/tags/v2.')
-    needs: package
+    needs: verify_packages
     runs-on: ubuntu-24.04
     permissions:
       contents: write

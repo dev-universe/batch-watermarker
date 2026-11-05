@@ -21,4 +21,4 @@ Reproduce with cargo run --release --example benchmark -- tmp/rust-benchmark. Th
 
 The 600 DPI profile is checked for exact decoded RGB. Lower profiles preserve physical dimensions and choose smaller JPEG/lossless streams; this flat artwork often stays lossless.
 
-Native GUI smoke checks use synthetic files only. Windows installer packaging is verified with portable NSIS. CI verifies macOS bundles and ad-hoc signatures. Apple notarization and Windows code signing are not configured.
+Native GUI smoke checks use synthetic files only. Windows installer packaging is verified with portable NSIS; CI installs the generated installer and checks the installed CLI version. CI verifies macOS bundles and ad-hoc signatures. A Linux job checks every Windows/Mac checksum manifest before merge and publishing; Windows manifests explicitly use LF so carriage returns cannot become part of filenames. Apple notarization and Windows code signing are not configured.
