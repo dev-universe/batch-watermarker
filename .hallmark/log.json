@@ -1,38 +1,39 @@
 [
- {
-  "mode": "redesign",
-  "depth": "full",
-  "scope": "app",
-  "theme": "wayfind",
-  "shape": "app screen",
-  "axes": "light/system-sans/cool",
-  "nav": "kept editor shell",
-  "footer": "canvas shortcuts",
-  "signature": "direct document watermark manipulation",
-  "states": [
-   "empty",
-   "full",
-   "processing",
-   "result",
-   "error",
-   "locked",
-   "hidden"
-  ],
-  "prompt": "Batch watermark editor for PDF and images; remove AI-slop",
-  "waived": [],
-  "audit": {
-   "beforeFloor": 38,
-   "beforeReflex": 1,
-   "afterFloor": 0,
-   "afterReflex": 0
-  },
-  "finishReview": {
-   "reviewer": "subagent",
-   "findings": 3,
-   "resolved": 3
-  },
-  "version": "1.1.0",
-  "referenceCommit": "de4999e0cd7a7a41df0b4e6903fa02fe9f1492a8",
-  "date": "2026-11-05"
- }
+  {
+    "mode": "redesign",
+    "depth": "full",
+    "scope": "app",
+    "theme": "wayfind",
+    "shape": "app screen",
+    "axes": "light/system-sans/cool",
+    "nav": "kept editor shell",
+    "footer": "canvas shortcuts",
+    "signature": "direct document watermark manipulation",
+    "states": [
+      "empty",
+      "full",
+      "processing",
+      "result",
+      "error",
+      "locked",
+      "hidden"
+    ],
+    "prompt": "Batch watermark editor for PDF and images; remove AI-slop",
+    "waived": [],
+    "audit": {
+      "beforeFloor": 38,
+      "beforeReflex": 1,
+      "afterFloor": 0,
+      "afterReflex": 0
+    },
+    "finishReview": {
+      "reviewer": "subagent",
+      "findings": 3,
+      "resolved": 3
+    },
+    "version": "1.3.0",
+    "referenceCommit": "de4999e0cd7a7a41df0b4e6903fa02fe9f1492a8",
+    "date": "2026-11-05",
+    "integration": "Preserve main 1.2.0 tool router, transparent editor and PDF profiles"
+  }
 ]

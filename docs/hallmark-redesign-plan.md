@@ -80,3 +80,17 @@ The renderer checks exercise the application's existing states. Dedicated
 preview-loading and preview-error presentations have no existing UI state and
 were not introduced in this design-only pass. Windows installer signing and
 macOS packaging were not part of this validation.
+
+## Merge integration
+
+Latest main already ships 1.2.0 with a transparent-image editor and PDF export
+profiles. The final release is therefore 1.3.0. Keep the two-tool router, active
+keyboard guards and all export profiles; apply the new watermark layout within
+WatermarkEditor and retain the transparent tool with compatible shared styles.
+Initial audit/test figures above describe the original redesign baseline.
+
+Integrated validation: 19 test files and 137 tests pass; typecheck and production
+build pass. The existing Electron end-to-end script also passes both tabs,
+group overrides, drag/undo and 600/450/300 DPI export profiles through real
+IPC workers, with zero renderer errors. UI selectors in that script were
+updated for the redesigned picker and output-folder placeholder.

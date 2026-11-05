@@ -1,5 +1,20 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
 import type { InputFile, PreviewPayload, ProcessRequest, ProcessResponse } from "../src/shared/types";
+import type { TransparentImageApi, TransparentExportProgress } from "../src/shared/transparentImageTypes";
+
+const transparentImageApi: TransparentImageApi = {
+  pickImages: () => ipcRenderer.invoke("transparent:pick-images"),
+  normalizeDroppedImages: paths => ipcRenderer.invoke("transparent:normalize-images", paths),
+  inspectImage: path => ipcRenderer.invoke("transparent:inspect-image", path),
+  renderPreview: request => ipcRenderer.invoke("transparent:preview", request),
+  exportGroups: request => ipcRenderer.invoke("transparent:export", request),
+  onProgress: callback => {
+    const listener = (_event: Electron.IpcRendererEvent, progress: TransparentExportProgress) => callback(progress);
+    ipcRenderer.on("transparent:progress", listener);
+    return () => ipcRenderer.removeListener("transparent:progress", listener);
+  }
+};
+contextBridge.exposeInMainWorld("transparentImageApi", transparentImageApi);
 
 contextBridge.exposeInMainWorld("watermarkApi", {
   pickInputFiles: () => ipcRenderer.invoke("dialog:pick-input-files") as Promise<InputFile[]>,

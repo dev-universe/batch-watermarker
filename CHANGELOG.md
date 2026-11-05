@@ -1,8 +1,9 @@
 # Changelog
 
-## 1.1.0 — 2026-11-05
+## 1.3.0 — 2026-11-05
 
-- Rebuilt the editor as a three-region desktop workbench: source files, a
+- Preserved the 1.2.0 transparent-image editor and PDF compression profiles.
+- Rebuilt the watermark editor as a three-region desktop workbench: source files, a
   persistent document preview, and watermark/output controls.
 - Applied Hallmark's Wayfind material in app scope: cool neutral surfaces,
   square controls, restrained cobalt selection, and system fonts for offline

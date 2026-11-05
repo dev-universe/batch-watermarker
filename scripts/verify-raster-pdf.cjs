@@ -6,7 +6,8 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { createCanvas } = require("@napi-rs/canvas");
 const sharp = require("sharp");
-const { PDFDocument, PDFDict, PDFName, PDFRawStream, decodePDFRawStream } = require("pdf-lib");
+const { PDFDocument, PDFDict, PDFName, PDFRawStream } = require("pdf-lib");
+const { readLosslessImageRgb } = require("../dist-electron/electron/testUtils/pdfImagePixels.js");
 const { processWatermarkRequest } = require("../dist-electron/electron/processWatermarkRequest.js");
 const { PDF_RASTER_DPI } = require("../dist-electron/electron/rasterizePdf.js");
 
@@ -75,7 +76,7 @@ async function main() {
         await referencePage.render({ canvas, viewport, background: "rgb(255,255,255)" }).promise;
         const png = await canvas.encode("png");
         const expectedRgb = await sharp(png).removeAlpha().raw().toBuffer();
-        const actualRgb = decodePDFRawStream(image).decode();
+        const actualRgb = readLosslessImageRgb(image);
         assert.equal(hash(actualRgb), hash(expectedRgb), `Page ${index + 1} pixels differ`);
         await sharp(png).resize({ width: 1200 }).png().toFile(path.join(outputDirectory, `page-${index + 1}-preview.png`));
         pages.push({ page: index + 1, width: canvas.width, height: canvas.height, exactPixels: true,
